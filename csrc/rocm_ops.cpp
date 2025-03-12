@@ -25,6 +25,7 @@
 #include "quant.h"
 #include "moe_ck.h"
 #include "rope.h"
+#include "fmla.h"
 #include "rocsolgemm.cuh"
 #include "hipbsolgemm.cuh"
 #include "aiter_enum.h"
@@ -80,5 +81,6 @@ PYBIND11_MODULE(TORCH_EXTENSION_NAME, m)
       CACHE_PYBIND;
       HIPBSOLGEMM_PYBIND;
       ROCSOLGEMM_PYBIND;
+      FLASH_MLA_FWD_PYBIND;
 }
 #endif
