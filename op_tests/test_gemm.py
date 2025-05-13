@@ -69,8 +69,16 @@ def test_gemm(dtype, m, n, k, bias=False, otype=None, scaleA=None, scaleB=None):
 
 
 def test_normal_gemm():
-
-    test_gemm(dtypes.fp8, 128, 768, 4096, bias=False, otype=dtypes.bf16, scaleA=0.5, scaleB=0.5)
+    test_gemm(
+        dtypes.fp8,
+        128,
+        768,
+        4096,
+        bias=False,
+        otype=dtypes.bf16,
+        scaleA=0.5,
+        scaleB=0.5,
+    )
     test_gemm(dtypes.bf16, 128, 32, 8192)
     for dtype in [dtypes.fp16, dtypes.bf16]:
         test_gemm(dtype, 128, 32, 8192)
@@ -124,12 +132,11 @@ def test_skinny_gemm():
                 (4, 9, 1024),
                 (4, 11, 512),
                 (4, 32, 8192),
-
                 (1, 4, 8192),
                 (1, 8, 4096),
                 (1, 12, 2048),
-                ]
-            for (m, n, k) in mnk_list:
+            ]
+            for m, n, k in mnk_list:
                 test_gemm(dtype, m, n, k)
 
 

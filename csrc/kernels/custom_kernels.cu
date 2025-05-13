@@ -10,10 +10,9 @@
 #include <algorithm>
 #include "hip_compat.h"
 
-#define AT_DISPATCH_FP8_CASE(enum_type, ...) \
-  AT_PRIVATE_CASE_TYPE_USING_HINT(enum_type, fp8_t, __VA_ARGS__)
+#define AT_DISPATCH_FP8_CASE(enum_type, ...) AT_PRIVATE_CASE_TYPE_USING_HINT(enum_type, fp8_t, __VA_ARGS__)
 
-#define AITER_DISPATCH_CASE_FP8_TYPES(...)                          \
+#define AITER_DISPATCH_CASE_FP8_TYPES(...)                         \
   AT_DISPATCH_FP8_CASE(at::ScalarType::Float8_e4m3fn, __VA_ARGS__) \
   AT_DISPATCH_FP8_CASE(at::ScalarType::Float8_e4m3fnuz, __VA_ARGS__)
 
@@ -127,26 +126,23 @@ __device__ __forceinline__ float __hmul_fp32(const __hip_bfloat16 a, const __hip
 __device__ __forceinline__ float2 __hmul2_fp32(const __hip_bfloat162 a, const __hip_bfloat162 b) {
   return float2(__hmul_fp32(a.x, b.x), __hmul_fp32(a.y, b.y));
 }
-// __device__ __forceinline__ __hip_bfloat162 __hmul2_fp32(const __hip_bfloat162 a, const __hip_bfloat162 b) {
+// __device__ __forceinline__ __hip_bfloat162 __hmul2_fp32(const __hip_bfloat162
+// a, const __hip_bfloat162 b) {
 //   return __hmul2(a, b);
 // }
-__device__ __forceinline__ __half2 __hmul2_fp32(const __half2 a, const __half2 b) {
-  return __hmul2(a, b);
-}
+__device__ __forceinline__ __half2 __hmul2_fp32(const __half2 a, const __half2 b) { return __hmul2(a, b); }
 
 __device__ __forceinline__ float __hfma_fp32(const __hip_bfloat16 a, const __hip_bfloat16 b, const float c) {
   return __ocml_fma_f32(__bfloat162float(a), __bfloat162float(b), c);
 }
-__device__ __forceinline__ float2 __hfma2_fp32(const __hip_bfloat162 a,
-  const __hip_bfloat162 b, const float2 c) {
+__device__ __forceinline__ float2 __hfma2_fp32(const __hip_bfloat162 a, const __hip_bfloat162 b, const float2 c) {
   return float2(__hfma_fp32(a.x, b.x, c.x), __hfma_fp32(a.y, b.y, c.y));
 }
-__device__ __forceinline__ __hip_bfloat162 __hfma2_fp32(const __hip_bfloat162 a,
-  const __hip_bfloat162 b, const __hip_bfloat162 c) {
+__device__ __forceinline__ __hip_bfloat162 __hfma2_fp32(const __hip_bfloat162 a, const __hip_bfloat162 b,
+                                                        const __hip_bfloat162 c) {
   return __hfma2(a, b, c);
 }
-__device__ __forceinline__ __half2 __hfma2_fp32(const __half2 a,
-  const __half2 b, const __half2 c) {
+__device__ __forceinline__ __half2 __hfma2_fp32(const __half2 a, const __half2 b, const __half2 c) {
   return __hfma2(a, b, c);
 }
 
@@ -167,8 +163,7 @@ __device__ __forceinline__ float4 load_ntmprl(const float4* addr) {
 // TBlock fetches entire rows of A, and entire col of B (K dimension); assume
 // N=1 for time being grid is M/A_NUM_ROWS blocks
 template <typename scalar_t, int NUM_A_ROWS_PER_BLOCK>
-__global__ void LLGemm1_kernel(const scalar_t* in_a, const scalar_t* in_b,
-                               scalar_t* out_c, const int K) {
+__global__ void LLGemm1_kernel(const scalar_t* in_a, const scalar_t* in_b, scalar_t* out_c, const int K) {
   using scalar2_t = typename scalar2<scalar_t>::type;
   using fmul2_out_t = typename fmul2_out<scalar_t>::type;
 
@@ -261,14 +256,11 @@ __global__ void LLGemm1_kernel(const scalar_t* in_a, const scalar_t* in_b,
 }
 
 // template <typename T>
-void LLGemm1(void *in_a, void *in_b, void *out_c, const int M, const int K,
-             cudaStream_t stream, const int rows_per_block, const c10::ScalarType scalar_type) {
+void LLGemm1(void* in_a, void* in_b, void* out_c, const int M, const int K, cudaStream_t stream,
+             const int rows_per_block, const c10::ScalarType scalar_type) {
   // NUM_TREADS need to be a multiple of WARP_SIZE, as we are using warp shuffle
   // operations.
-  const int NUM_THREADS =
-      K * 2 / 16 % WARP_SIZE == 0
-          ? K * 2 / 16
-          : K * 2 / 16 + (WARP_SIZE - K * 2 / 16 % WARP_SIZE);
+  const int NUM_THREADS = K * 2 / 16 % WARP_SIZE == 0 ? K * 2 / 16 : K * 2 / 16 + (WARP_SIZE - K * 2 / 16 % WARP_SIZE);
 
   int NUM_BLOCKS = M / rows_per_block;
 
@@ -278,44 +270,35 @@ void LLGemm1(void *in_a, void *in_b, void *out_c, const int M, const int K,
     scalar_t* b_ptr = reinterpret_cast<scalar_t*>(in_b);
     scalar_t* c_ptr = reinterpret_cast<scalar_t*>(out_c);
     if (rows_per_block == 2) {
-      LLGemm1_kernel<scalar_t, 2>
-          <<<NUM_BLOCKS, NUM_THREADS, 0, stream>>>(a_ptr, b_ptr, c_ptr, K);
+      LLGemm1_kernel<scalar_t, 2><<<NUM_BLOCKS, NUM_THREADS, 0, stream>>>(a_ptr, b_ptr, c_ptr, K);
     } else if (rows_per_block == 4) {
-      LLGemm1_kernel<scalar_t, 4>
-          <<<NUM_BLOCKS, NUM_THREADS, 0, stream>>>(a_ptr, b_ptr, c_ptr, K);
+      LLGemm1_kernel<scalar_t, 4><<<NUM_BLOCKS, NUM_THREADS, 0, stream>>>(a_ptr, b_ptr, c_ptr, K);
     } else if (rows_per_block == 8) {
-      LLGemm1_kernel<scalar_t, 8>
-          <<<NUM_BLOCKS, NUM_THREADS, 0, stream>>>(a_ptr, b_ptr, c_ptr, K);
+      LLGemm1_kernel<scalar_t, 8><<<NUM_BLOCKS, NUM_THREADS, 0, stream>>>(a_ptr, b_ptr, c_ptr, K);
     } else if (rows_per_block == 16) {
-      LLGemm1_kernel<scalar_t, 16>
-          <<<NUM_BLOCKS, NUM_THREADS, 0, stream>>>(a_ptr, b_ptr, c_ptr, K);
+      LLGemm1_kernel<scalar_t, 16><<<NUM_BLOCKS, NUM_THREADS, 0, stream>>>(a_ptr, b_ptr, c_ptr, K);
     } else {
       NUM_BLOCKS = M / 4;
-      LLGemm1_kernel<scalar_t, 4>
-          <<<NUM_BLOCKS, NUM_THREADS, 0, stream>>>(a_ptr, b_ptr, c_ptr, K);
+      LLGemm1_kernel<scalar_t, 4><<<NUM_BLOCKS, NUM_THREADS, 0, stream>>>(a_ptr, b_ptr, c_ptr, K);
     }
   });
 }
 
-#define DOT2C(V0, V2, V3)                                                     \
-  if constexpr (std::is_same_v<scalar_t, half>) {                             \
-    asm("v_dot2c_f32_f16 %0, %2, %3" : "=v"(V0) : "0"(V0), "v"(V2), "v"(V3)); \
-  } else if constexpr (std::is_same_v<scalar_t, __hip_bfloat16>) {            \
-    float2 s = __bfloat1622float2(*((__hip_bfloat162*)(&(V2)))) *             \
-               __bfloat1622float2(*((__hip_bfloat162*)(&(V3))));              \
-    V0 += (s.x + s.y);                                                        \
+#define DOT2C(V0, V2, V3)                                                                                           \
+  if constexpr (std::is_same_v<scalar_t, half>) {                                                                   \
+    asm("v_dot2c_f32_f16 %0, %2, %3" : "=v"(V0) : "0"(V0), "v"(V2), "v"(V3));                                       \
+  } else if constexpr (std::is_same_v<scalar_t, __hip_bfloat16>) {                                                  \
+    float2 s = __bfloat1622float2(*((__hip_bfloat162*)(&(V2)))) * __bfloat1622float2(*((__hip_bfloat162*)(&(V3)))); \
+    V0 += (s.x + s.y);                                                                                              \
   }
 
 #if defined(__HIP__MI300_MI250__)  // TODO: Add NAVI support
 // This version targets cases where A[] fits LDS capacity
-template <typename scalar_t, int THRDS, int YTILE, int WvPrGrp, int A_CHUNK,
-          int UNRL, int N>
+template <typename scalar_t, int THRDS, int YTILE, int WvPrGrp, int A_CHUNK, int UNRL, int N>
 __global__ void __launch_bounds__(WvPrGrp* THRDS)
-    wvSplitK_hf_sml_(const int K, const int M, const scalar_t* B,
-                     const scalar_t* __restrict__ A, scalar_t* C,
+    wvSplitK_hf_sml_(const int K, const int M, const scalar_t* B, const scalar_t* __restrict__ A, scalar_t* C,
                      const int _WvPrGrp, const int CuCount) {
-  using scalar8 =
-      __attribute__((__vector_size__((A_CHUNK / 2) * sizeof(float)))) float;
+  using scalar8 = __attribute__((__vector_size__((A_CHUNK / 2) * sizeof(float)))) float;
   union bigType {
     scalar_t h[A_CHUNK];
     float f[A_CHUNK / 2];
@@ -342,8 +325,7 @@ __global__ void __launch_bounds__(WvPrGrp* THRDS)
   // - Then the WG will move to another 8 K elements
   // TODO: Logic below will only work when K is multiple of 8
   //----------------------------------------------------
-  for (uint32_t k = 0; k < min(K * N, 32 * 1024);
-       k += THRDS * WvPrGrp * A_CHUNK) {
+  for (uint32_t k = 0; k < min(K * N, 32 * 1024); k += THRDS * WvPrGrp * A_CHUNK) {
     uint32_t k_in = k + ((threadIdx.y * THRDS + threadIdx.x) * A_CHUNK);
 
     if (k_in >= min(K * N, 32 * 1024)) break;
@@ -417,20 +399,13 @@ __global__ void __launch_bounds__(WvPrGrp* THRDS)
         //----------------------------------------------------
         // The following code with YTILE > 1 has to be deleted
         //----------------------------------------------------
-        if constexpr (YTILE >= 2)
-          bigB[1][k2].h8 = (loadnt((scalar8*)(&B_[1 * K])));
-        if constexpr (YTILE >= 3)
-          bigB[2][k2].h8 = (loadnt((scalar8*)(&B_[2 * K])));
-        if constexpr (YTILE >= 4)
-          bigB[3][k2].h8 = (loadnt((scalar8*)(&B_[3 * K])));
-        if constexpr (YTILE >= 5)
-          bigB[4][k2].h8 = (loadnt((scalar8*)(&B_[4 * K])));
-        if constexpr (YTILE >= 6)
-          bigB[5][k2].h8 = (loadnt((scalar8*)(&B_[5 * K])));
-        if constexpr (YTILE >= 7)
-          bigB[6][k2].h8 = (loadnt((scalar8*)(&B_[6 * K])));
-        if constexpr (YTILE >= 8)
-          bigB[7][k2].h8 = (loadnt((scalar8*)(&B_[7 * K])));
+        if constexpr (YTILE >= 2) bigB[1][k2].h8 = (loadnt((scalar8*)(&B_[1 * K])));
+        if constexpr (YTILE >= 3) bigB[2][k2].h8 = (loadnt((scalar8*)(&B_[2 * K])));
+        if constexpr (YTILE >= 4) bigB[3][k2].h8 = (loadnt((scalar8*)(&B_[3 * K])));
+        if constexpr (YTILE >= 5) bigB[4][k2].h8 = (loadnt((scalar8*)(&B_[4 * K])));
+        if constexpr (YTILE >= 6) bigB[5][k2].h8 = (loadnt((scalar8*)(&B_[5 * K])));
+        if constexpr (YTILE >= 7) bigB[6][k2].h8 = (loadnt((scalar8*)(&B_[6 * K])));
+        if constexpr (YTILE >= 8) bigB[7][k2].h8 = (loadnt((scalar8*)(&B_[7 * K])));
       }
 
       // Fetch activation matrix from either just LDS or from both LDS / memory
@@ -527,25 +502,20 @@ __global__ void __launch_bounds__(WvPrGrp* THRDS)
   }
 }
 #else   // !defined(__HIP__MI300_MI250__) TODO: Add NAVI support
-template <typename scalar_t, int THRDS, int YTILE, int WvPrGrp, int A_CHUNK,
-          int UNRL, int N>
-__global__ void wvSplitK_hf_sml_(const int K, const int M, const scalar_t* B,
-                                 const scalar_t* __restrict__ A, scalar_t* C,
-                                 const int _WvPrGrp, const int CuCount) {
+template <typename scalar_t, int THRDS, int YTILE, int WvPrGrp, int A_CHUNK, int UNRL, int N>
+__global__ void wvSplitK_hf_sml_(const int K, const int M, const scalar_t* B, const scalar_t* __restrict__ A,
+                                 scalar_t* C, const int _WvPrGrp, const int CuCount) {
   UNREACHABLE_CODE
 }
 #endif  // defined(__HIP__MI300_MI250__) TODO: Add NAVI support
 
 #if defined(__HIP__MI300_MI250__)  // TODO: Add NAVI support
 // This version targets cases where A[] marginally exceeds LDS capacity
-template <typename scalar_t, int THRDS, int YTILE, int WvPrGrp, int A_CHUNK,
-          int UNRL, int N>
+template <typename scalar_t, int THRDS, int YTILE, int WvPrGrp, int A_CHUNK, int UNRL, int N>
 __global__ void __launch_bounds__(WvPrGrp* THRDS)
-    wvSplitK_hf_(const int K, const int M, const scalar_t* B,
-                 const scalar_t* __restrict__ A, scalar_t* C,
+    wvSplitK_hf_(const int K, const int M, const scalar_t* B, const scalar_t* __restrict__ A, scalar_t* C,
                  const int _WvPrGrp, const int CuCount) {
-  using scalar8 =
-      __attribute__((__vector_size__((A_CHUNK / 2) * sizeof(float)))) float;
+  using scalar8 = __attribute__((__vector_size__((A_CHUNK / 2) * sizeof(float)))) float;
   union bigType {
     scalar_t h[A_CHUNK];
     float f[A_CHUNK / 2];
@@ -598,8 +568,7 @@ __global__ void __launch_bounds__(WvPrGrp* THRDS)
   // - Then the WG will move to another 8 K elements
   // TODO: Logic below will only work when K is multiple of 8
   //----------------------------------------------------
-  for (uint32_t k = 0; k < min(K * N, 32 * 1024);
-       k += THRDS * WvPrGrp * A_CHUNK) {
+  for (uint32_t k = 0; k < min(K * N, 32 * 1024); k += THRDS * WvPrGrp * A_CHUNK) {
     uint32_t k_in = k + ((threadIdx.y * THRDS + threadIdx.x) * A_CHUNK);
 
     if (k_in >= min(K * N, 32 * 1024)) break;
@@ -671,20 +640,13 @@ __global__ void __launch_bounds__(WvPrGrp* THRDS)
         //----------------------------------------------------
         // The following code with YTILE > 1 has to be deleted
         //----------------------------------------------------
-        if constexpr (YTILE >= 2)
-          bigB[1][k2].h8 = (loadnt((scalar8*)(&B_[1 * K])));
-        if constexpr (YTILE >= 3)
-          bigB[2][k2].h8 = (loadnt((scalar8*)(&B_[2 * K])));
-        if constexpr (YTILE >= 4)
-          bigB[3][k2].h8 = (loadnt((scalar8*)(&B_[3 * K])));
-        if constexpr (YTILE >= 5)
-          bigB[4][k2].h8 = (loadnt((scalar8*)(&B_[4 * K])));
-        if constexpr (YTILE >= 6)
-          bigB[5][k2].h8 = (loadnt((scalar8*)(&B_[5 * K])));
-        if constexpr (YTILE >= 7)
-          bigB[6][k2].h8 = (loadnt((scalar8*)(&B_[6 * K])));
-        if constexpr (YTILE >= 8)
-          bigB[7][k2].h8 = (loadnt((scalar8*)(&B_[7 * K])));
+        if constexpr (YTILE >= 2) bigB[1][k2].h8 = (loadnt((scalar8*)(&B_[1 * K])));
+        if constexpr (YTILE >= 3) bigB[2][k2].h8 = (loadnt((scalar8*)(&B_[2 * K])));
+        if constexpr (YTILE >= 4) bigB[3][k2].h8 = (loadnt((scalar8*)(&B_[3 * K])));
+        if constexpr (YTILE >= 5) bigB[4][k2].h8 = (loadnt((scalar8*)(&B_[4 * K])));
+        if constexpr (YTILE >= 6) bigB[5][k2].h8 = (loadnt((scalar8*)(&B_[5 * K])));
+        if constexpr (YTILE >= 7) bigB[6][k2].h8 = (loadnt((scalar8*)(&B_[6 * K])));
+        if constexpr (YTILE >= 8) bigB[7][k2].h8 = (loadnt((scalar8*)(&B_[7 * K])));
       }
 
       // Fetch activation matrix from either just LDS or from both LDS / memory
@@ -775,8 +737,7 @@ __global__ void __launch_bounds__(WvPrGrp* THRDS)
     if (threadIdx.x == 63) {
       for (int n = 0; n < N; n++) {
         for (int i = 0; i < YTILE; i++) {
-          if (commitColumn[i])
-            C[m + i + n * M] = __float2s<scalar_t>(sum[n][i]);
+          if (commitColumn[i]) C[m + i + n * M] = __float2s<scalar_t>(sum[n][i]);
         }
       }
     }
@@ -796,10 +757,8 @@ __global__ void __launch_bounds__(WvPrGrp* THRDS)
 }
 
 #else   // !defined(__HIP__MI300_MI250__) TODO: Add NAVI support
-template <typename scalar_t, int THRDS, int YTILE, int WvPrGrp, int A_CHUNK,
-          int UNRL, int N>
-__global__ void wvSplitK_hf_(const int K, const int M, const scalar_t* B,
-                             const scalar_t* __restrict__ A, scalar_t* C,
+template <typename scalar_t, int THRDS, int YTILE, int WvPrGrp, int A_CHUNK, int UNRL, int N>
+__global__ void wvSplitK_hf_(const int K, const int M, const scalar_t* B, const scalar_t* __restrict__ A, scalar_t* C,
                              const int _WvPrGrp, const int CuCount) {
   UNREACHABLE_CODE
 }
@@ -807,14 +766,11 @@ __global__ void wvSplitK_hf_(const int K, const int M, const scalar_t* B,
 
 #if defined(__HIP__MI300_MI250__)  // TODO: Add NAVI support
 // This version targets big A[] cases, where it is much larger than LDS capacity
-template <typename scalar_t, int THRDS, int YTILE, int WvPrGrp, int A_CHUNK,
-          int UNRL, int N>
+template <typename scalar_t, int THRDS, int YTILE, int WvPrGrp, int A_CHUNK, int UNRL, int N>
 __global__ void __launch_bounds__(WvPrGrp* THRDS)
-    wvSplitK_hf_big_(const int K, const int M, const scalar_t* B,
-                     const scalar_t* __restrict__ A, scalar_t* C,
+    wvSplitK_hf_big_(const int K, const int M, const scalar_t* B, const scalar_t* __restrict__ A, scalar_t* C,
                      const int _WvPrGrp, const int CuCount) {
-  using scalar8 =
-      __attribute__((__vector_size__((A_CHUNK / 2) * sizeof(float)))) float;
+  using scalar8 = __attribute__((__vector_size__((A_CHUNK / 2) * sizeof(float)))) float;
 
   union bigType {
     scalar_t h[A_CHUNK];
@@ -872,8 +828,7 @@ __global__ void __launch_bounds__(WvPrGrp* THRDS)
   //----------------------------------------------------
   #define PCML
   #ifndef PCML
-  for (uint32_t k = 0; k < min(K * N, 32 * 1024);
-       k += THRDS * WvPrGrp * A_CHUNK) {
+  for (uint32_t k = 0; k < min(K * N, 32 * 1024); k += THRDS * WvPrGrp * A_CHUNK) {
     uint32_t k_in = k + ((threadIdx.y * THRDS + threadIdx.x) * A_CHUNK);
 
     if (k_in >= min(K * N, 32 * 1024)) break;
@@ -889,9 +844,7 @@ __global__ void __launch_bounds__(WvPrGrp* THRDS)
   uint32_t kFit = (32 * 1024) / N;
   // kFit = (kFit%TWC==0) ? kFit : (kFit-kFit%TWC+TWC); //round up to multiple
   // of TUC
-  kFit = (kFit % TUC == 0)
-             ? kFit
-             : (kFit - kFit % TUC);  // round up to multiple of TUC
+  kFit = (kFit % TUC == 0) ? kFit : (kFit - kFit % TUC);  // round up to multiple of TUC
   // if (kFit == 0) kFit = TUC;
   kFit = min(kFit, K);
 
@@ -980,20 +933,13 @@ __global__ void __launch_bounds__(WvPrGrp* THRDS)
         //----------------------------------------------------
         // The following code with YTILE > 1 has to be deleted
         //----------------------------------------------------
-        if constexpr (YTILE >= 2)
-          bigB[1][k2].h8 = (loadnt((scalar8*)(&B_[1 * K])));
-        if constexpr (YTILE >= 3)
-          bigB[2][k2].h8 = (loadnt((scalar8*)(&B_[2 * K])));
-        if constexpr (YTILE >= 4)
-          bigB[3][k2].h8 = (loadnt((scalar8*)(&B_[3 * K])));
-        if constexpr (YTILE >= 5)
-          bigB[4][k2].h8 = (loadnt((scalar8*)(&B_[4 * K])));
-        if constexpr (YTILE >= 6)
-          bigB[5][k2].h8 = (loadnt((scalar8*)(&B_[5 * K])));
-        if constexpr (YTILE >= 7)
-          bigB[6][k2].h8 = (loadnt((scalar8*)(&B_[6 * K])));
-        if constexpr (YTILE >= 8)
-          bigB[7][k2].h8 = (loadnt((scalar8*)(&B_[7 * K])));
+        if constexpr (YTILE >= 2) bigB[1][k2].h8 = (loadnt((scalar8*)(&B_[1 * K])));
+        if constexpr (YTILE >= 3) bigB[2][k2].h8 = (loadnt((scalar8*)(&B_[2 * K])));
+        if constexpr (YTILE >= 4) bigB[3][k2].h8 = (loadnt((scalar8*)(&B_[3 * K])));
+        if constexpr (YTILE >= 5) bigB[4][k2].h8 = (loadnt((scalar8*)(&B_[4 * K])));
+        if constexpr (YTILE >= 6) bigB[5][k2].h8 = (loadnt((scalar8*)(&B_[5 * K])));
+        if constexpr (YTILE >= 7) bigB[6][k2].h8 = (loadnt((scalar8*)(&B_[6 * K])));
+        if constexpr (YTILE >= 8) bigB[7][k2].h8 = (loadnt((scalar8*)(&B_[7 * K])));
       }
 
       // Fetch activation matrix from either just LDS or from both LDS / memory
@@ -1096,8 +1042,7 @@ __global__ void __launch_bounds__(WvPrGrp* THRDS)
     if (threadIdx.x == 63) {
       for (int n = 0; n < N; n++) {
         for (int i = 0; i < YTILE; i++) {
-          if (commitColumn[i])
-            C[m + i + n * M] = __float2s<scalar_t>(sum[n][i]);
+          if (commitColumn[i]) C[m + i + n * M] = __float2s<scalar_t>(sum[n][i]);
         }
       }
     }
@@ -1117,11 +1062,9 @@ __global__ void __launch_bounds__(WvPrGrp* THRDS)
   }
 }
 #else   // !defined(__HIP__MI300_MI250__) TODO: Add NAVI support
-template <typename scalar_t, int THRDS, int YTILE, int WvPrGrp, int A_CHUNK,
-          int UNRL, int N>
-__global__ void wvSplitK_hf_big_(const int K, const int M, const scalar_t* B,
-                                 const scalar_t* __restrict__ A, scalar_t* C,
-                                 const int _WvPrGrp, const int CuCount) {
+template <typename scalar_t, int THRDS, int YTILE, int WvPrGrp, int A_CHUNK, int UNRL, int N>
+__global__ void wvSplitK_hf_big_(const int K, const int M, const scalar_t* B, const scalar_t* __restrict__ A,
+                                 scalar_t* C, const int _WvPrGrp, const int CuCount) {
   UNREACHABLE_CODE
 }
 #endif  // defined(__HIP__MI300_MI250__) TODO: Add NAVI support
@@ -1155,31 +1098,26 @@ int mindiv(int N, int div1, int div2) {
   return rtn;
 }
 
-void wvSplitK_(void *in_a, void *in_b, void *out_c, const int M_in,
-              const int K_in, const int N_in, cudaStream_t stream,
-              const int CuCount, const c10::ScalarType scalar_type) {
+void wvSplitK_(void* in_a, void* in_b, void* out_c, const int M_in, const int K_in, const int N_in, cudaStream_t stream,
+               const int CuCount, const c10::ScalarType scalar_type) {
   dim3 grid(CuCount);
 
-#define WVSPLITK(_WvPrGrp, _YTILEs, _YTILEm, _YTILEb, _UNRLs, _UNRLm, _UNRLb, \
-                 _N)                                                          \
-  {                                                                           \
-    dim3 block(64, _WvPrGrp);                                                 \
-    if ((K_in * N_in <= 32 * 1024) && (M_in % _YTILEs == 0)) {                \
-      int __wvPrGrp = mindiv(M_in, CuCount * _YTILEs, _WvPrGrp);              \
-      wvSplitK_hf_sml_<fptype, 64, _YTILEs, _WvPrGrp, 8, _UNRLs, _N>          \
-          <<<grid, block, 0, stream>>>(K_in, M_in, af4, bf4, c, __wvPrGrp,    \
-                                       CuCount);                              \
-    } else if (K_in * N_in <= 32 * 1024 * 1.2) {                              \
-      int __wvPrGrp = mindiv(M_in, CuCount * _YTILEm, _WvPrGrp);              \
-      wvSplitK_hf_<fptype, 64, _YTILEm, _WvPrGrp, 8, _UNRLm, _N>              \
-          <<<grid, block, 0, stream>>>(K_in, M_in, af4, bf4, c, __wvPrGrp,    \
-                                       CuCount);                              \
-    } else {                                                                  \
-      int __wvPrGrp = mindiv(M_in, CuCount * _YTILEb, _WvPrGrp);              \
-      wvSplitK_hf_big_<fptype, 64, _YTILEb, _WvPrGrp, 8, _UNRLb, _N>          \
-          <<<grid, block, 0, stream>>>(K_in, M_in, af4, bf4, c, __wvPrGrp,    \
-                                       CuCount);                              \
-    }                                                                         \
+#define WVSPLITK(_WvPrGrp, _YTILEs, _YTILEm, _YTILEb, _UNRLs, _UNRLm, _UNRLb, _N)    \
+  {                                                                                  \
+    dim3 block(64, _WvPrGrp);                                                        \
+    if ((K_in * N_in <= 32 * 1024) && (M_in % _YTILEs == 0)) {                       \
+      int __wvPrGrp = mindiv(M_in, CuCount * _YTILEs, _WvPrGrp);                     \
+      wvSplitK_hf_sml_<fptype, 64, _YTILEs, _WvPrGrp, 8, _UNRLs, _N>                 \
+          <<<grid, block, 0, stream>>>(K_in, M_in, af4, bf4, c, __wvPrGrp, CuCount); \
+    } else if (K_in * N_in <= 32 * 1024 * 1.2) {                                     \
+      int __wvPrGrp = mindiv(M_in, CuCount * _YTILEm, _WvPrGrp);                     \
+      wvSplitK_hf_<fptype, 64, _YTILEm, _WvPrGrp, 8, _UNRLm, _N>                     \
+          <<<grid, block, 0, stream>>>(K_in, M_in, af4, bf4, c, __wvPrGrp, CuCount); \
+    } else {                                                                         \
+      int __wvPrGrp = mindiv(M_in, CuCount * _YTILEb, _WvPrGrp);                     \
+      wvSplitK_hf_big_<fptype, 64, _YTILEb, _WvPrGrp, 8, _UNRLb, _N>                 \
+          <<<grid, block, 0, stream>>>(K_in, M_in, af4, bf4, c, __wvPrGrp, CuCount); \
+    }                                                                                \
   }
 
   AT_DISPATCH_REDUCED_FLOATING_TYPES(scalar_type, "wvSplitK", [&] {
@@ -1201,24 +1139,19 @@ void wvSplitK_(void *in_a, void *in_b, void *out_c, const int M_in,
         WVSPLITK(16, 4, 7, 7, 1, 1, 1, 4)
         break;
       default:
-        throw std::runtime_error(
-            "Unsupported N value: " + std::to_string(M_in) + "," +
-            std::to_string(K_in) + "," + std::to_string(N_in));
+        throw std::runtime_error("Unsupported N value: " + std::to_string(M_in) + "," + std::to_string(K_in) + "," +
+                                 std::to_string(N_in));
     }
   });
 }
 
 #if defined(__HIP__MI300__)  // TODO: Add NAVI support
-template <typename scalar_t, typename fp8_t, int THRDS, int YTILE, int WvPrGrp,
-          int A_CHUNK, int UNRL, int N>
+template <typename scalar_t, typename fp8_t, int THRDS, int YTILE, int WvPrGrp, int A_CHUNK, int UNRL, int N>
 __global__ void __launch_bounds__(WvPrGrp* THRDS)
-    wvSplitKQ_hf_sml_(const int K, const int Kp, const int M, const fp8_t* B,
-                      const fp8_t* __restrict__ A, scalar_t* C,
-                      const float* __restrict__ s_A,
-                      const float* __restrict__ s_B, const int _WvPrGrp,
+    wvSplitKQ_hf_sml_(const int K, const int Kp, const int M, const fp8_t* B, const fp8_t* __restrict__ A, scalar_t* C,
+                      const float* __restrict__ s_A, const float* __restrict__ s_B, const int _WvPrGrp,
                       const int CuCount) {
-  using scalar8 =
-      __attribute__((__vector_size__((A_CHUNK / 4) * sizeof(float)))) float;
+  using scalar8 = __attribute__((__vector_size__((A_CHUNK / 4) * sizeof(float)))) float;
   using intx2 = __attribute__((__vector_size__(2 * sizeof(int)))) int;
   using intx4 = __attribute__((__vector_size__(4 * sizeof(int)))) int;
   union bigType {
@@ -1234,8 +1167,8 @@ __global__ void __launch_bounds__(WvPrGrp* THRDS)
 
   __shared__ fp8_t s[1024 * 64];
 
-  for (uint32_t k = (threadIdx.y * THRDS + threadIdx.x) * A_CHUNK;
-       k < min(K * N, 64 * 1024); k += THRDS * WvPrGrp * A_CHUNK) {
+  for (uint32_t k = (threadIdx.y * THRDS + threadIdx.x) * A_CHUNK; k < min(K * N, 64 * 1024);
+       k += THRDS * WvPrGrp * A_CHUNK) {
     *((bigType*)(&s[k])) = *((bigType*)(&A[k]));
   }
   __syncthreads();
@@ -1299,9 +1232,8 @@ __global__ void __launch_bounds__(WvPrGrp* THRDS)
         for (uint32_t n = 0; n < N; n++) {
           for (int i = 0; i < A_CHUNK; i += 8) {
             for (int y = 0; y < YTILE; ++y) {
-              sum[n][y] = __builtin_amdgcn_mfma_f32_32x32x16_fp8_fp8(
-                  bigA[n][k2].l[i / 8], bigB[y][k2].l[i / 8], sum[n][y], 0, 0,
-                  0);
+              sum[n][y] = __builtin_amdgcn_mfma_f32_32x32x16_fp8_fp8(bigA[n][k2].l[i / 8], bigB[y][k2].l[i / 8],
+                                                                     sum[n][y], 0, 0, 0);
             }
           }
         }
@@ -1313,45 +1245,31 @@ __global__ void __launch_bounds__(WvPrGrp* THRDS)
       for (int y = 0; y < YTILE; y++) {
         float accm0 = sum[n][y][0];
         float accm16 = sum[n][y][8];
-        asm("v_add_f32 %0, %2, %3 row_shl:1 bound_ctrl:0 "
-            : "=v"(accm0)
-            : "0"(accm0), "v"(sum[n][y][1]), "v"(accm0));
+        asm("v_add_f32 %0, %2, %3 row_shl:1 bound_ctrl:0 " : "=v"(accm0) : "0"(accm0), "v"(sum[n][y][1]), "v"(accm0));
         asm("v_add_f32 %0, %2, %3 row_shl:1 bound_ctrl:0 "
             : "=v"(accm16)
             : "0"(accm16), "v"(sum[n][y][9]), "v"(accm16));
-        asm("v_add_f32 %0, %2, %3 row_shl:2 bound_ctrl:0 "
-            : "=v"(accm0)
-            : "0"(accm0), "v"(sum[n][y][2]), "v"(accm0));
+        asm("v_add_f32 %0, %2, %3 row_shl:2 bound_ctrl:0 " : "=v"(accm0) : "0"(accm0), "v"(sum[n][y][2]), "v"(accm0));
         asm("v_add_f32 %0, %2, %3 row_shl:2 bound_ctrl:0 "
             : "=v"(accm16)
             : "0"(accm16), "v"(sum[n][y][10]), "v"(accm16));
-        asm("v_add_f32 %0, %2, %3 row_shl:3 bound_ctrl:0 "
-            : "=v"(accm0)
-            : "0"(accm0), "v"(sum[n][y][3]), "v"(accm0));
+        asm("v_add_f32 %0, %2, %3 row_shl:3 bound_ctrl:0 " : "=v"(accm0) : "0"(accm0), "v"(sum[n][y][3]), "v"(accm0));
         asm("v_add_f32 %0, %2, %3 row_shl:3 bound_ctrl:0 "
             : "=v"(accm16)
             : "0"(accm16), "v"(sum[n][y][11]), "v"(accm16));
-        asm("v_add_f32 %0, %2, %3 row_shl:8 bound_ctrl:0 "
-            : "=v"(accm0)
-            : "0"(accm0), "v"(sum[n][y][4]), "v"(accm0));
+        asm("v_add_f32 %0, %2, %3 row_shl:8 bound_ctrl:0 " : "=v"(accm0) : "0"(accm0), "v"(sum[n][y][4]), "v"(accm0));
         asm("v_add_f32 %0, %2, %3 row_shl:8 bound_ctrl:0 "
             : "=v"(accm16)
             : "0"(accm16), "v"(sum[n][y][12]), "v"(accm16));
-        asm("v_add_f32 %0, %2, %3 row_shl:9 bound_ctrl:0 "
-            : "=v"(accm0)
-            : "0"(accm0), "v"(sum[n][y][5]), "v"(accm0));
+        asm("v_add_f32 %0, %2, %3 row_shl:9 bound_ctrl:0 " : "=v"(accm0) : "0"(accm0), "v"(sum[n][y][5]), "v"(accm0));
         asm("v_add_f32 %0, %2, %3 row_shl:9 bound_ctrl:0 "
             : "=v"(accm16)
             : "0"(accm16), "v"(sum[n][y][13]), "v"(accm16));
-        asm("v_add_f32 %0, %2, %3 row_shl:10 bound_ctrl:0 "
-            : "=v"(accm0)
-            : "0"(accm0), "v"(sum[n][y][6]), "v"(accm0));
+        asm("v_add_f32 %0, %2, %3 row_shl:10 bound_ctrl:0 " : "=v"(accm0) : "0"(accm0), "v"(sum[n][y][6]), "v"(accm0));
         asm("v_add_f32 %0, %2, %3 row_shl:10 bound_ctrl:0 "
             : "=v"(accm16)
             : "0"(accm16), "v"(sum[n][y][14]), "v"(accm16));
-        asm("v_add_f32 %0, %2, %3 row_shl:11 bound_ctrl:0 "
-            : "=v"(accm0)
-            : "0"(accm0), "v"(sum[n][y][7]), "v"(accm0));
+        asm("v_add_f32 %0, %2, %3 row_shl:11 bound_ctrl:0 " : "=v"(accm0) : "0"(accm0), "v"(sum[n][y][7]), "v"(accm0));
         asm("v_add_f32 %0, %2, %3 row_shl:11 bound_ctrl:0 "
             : "=v"(accm16)
             : "0"(accm16), "v"(sum[n][y][15]), "v"(accm16));
@@ -1373,27 +1291,20 @@ __global__ void __launch_bounds__(WvPrGrp* THRDS)
   }
 }
 #else   // !defined(__HIP__MI300__) TODO: Add NAVI support
-template <typename scalar_t, typename fp8_t, int THRDS, int YTILE, int WvPrGrp,
-          int A_CHUNK, int UNRL, int N>
-__global__ void wvSplitKQ_hf_sml_(const int K, const int Kp, const int M,
-                                  const fp8_t* B, const fp8_t* __restrict__ A,
-                                  scalar_t* C, const float* __restrict__ s_A,
-                                  const float* __restrict__ s_B,
+template <typename scalar_t, typename fp8_t, int THRDS, int YTILE, int WvPrGrp, int A_CHUNK, int UNRL, int N>
+__global__ void wvSplitKQ_hf_sml_(const int K, const int Kp, const int M, const fp8_t* B, const fp8_t* __restrict__ A,
+                                  scalar_t* C, const float* __restrict__ s_A, const float* __restrict__ s_B,
                                   const int _WvPrGrp, const int CuCount) {
   UNREACHABLE_CODE
 }
 #endif  // defined(__HIP__MI300__) TODO: Add NAVI support
 
 #if defined(__HIP__MI300__)  // TODO: Add NAVI support
-template <typename scalar_t, typename fp8_t, int THRDS, int YTILE, int WvPrGrp,
-          int A_CHUNK, int UNRL, int N>
+template <typename scalar_t, typename fp8_t, int THRDS, int YTILE, int WvPrGrp, int A_CHUNK, int UNRL, int N>
 __global__ void __launch_bounds__(WvPrGrp* THRDS)
-    wvSplitKQ_hf_(const int K, const int Kp, const int M, const fp8_t* B,
-                  const fp8_t* __restrict__ A, scalar_t* C,
-                  const float* __restrict__ s_A, const float* __restrict__ s_B,
-                  const int _WvPrGrp, const int CuCount) {
-  using scalar8 =
-      __attribute__((__vector_size__((A_CHUNK / 4) * sizeof(float)))) float;
+    wvSplitKQ_hf_(const int K, const int Kp, const int M, const fp8_t* B, const fp8_t* __restrict__ A, scalar_t* C,
+                  const float* __restrict__ s_A, const float* __restrict__ s_B, const int _WvPrGrp, const int CuCount) {
+  using scalar8 = __attribute__((__vector_size__((A_CHUNK / 4) * sizeof(float)))) float;
   using intx2 = __attribute__((__vector_size__(2 * sizeof(int)))) int;
   using intx4 = __attribute__((__vector_size__(4 * sizeof(int)))) int;
   union bigType {
@@ -1409,8 +1320,8 @@ __global__ void __launch_bounds__(WvPrGrp* THRDS)
 
   __shared__ fp8_t s[1024 * 64];
 
-  for (uint32_t k = (threadIdx.y * THRDS + threadIdx.x) * A_CHUNK;
-       k < min(K * N, 64 * 1024); k += THRDS * WvPrGrp * A_CHUNK) {
+  for (uint32_t k = (threadIdx.y * THRDS + threadIdx.x) * A_CHUNK; k < min(K * N, 64 * 1024);
+       k += THRDS * WvPrGrp * A_CHUNK) {
     *((bigType*)(&s[k])) = *((bigType*)(&A[k]));
   }
   __syncthreads();
@@ -1470,9 +1381,8 @@ __global__ void __launch_bounds__(WvPrGrp* THRDS)
         for (uint32_t n = 0; n < N; n++) {
           for (int i = 0; i < A_CHUNK; i += 8) {
             for (int y = 0; y < YTILE; ++y) {
-              sum[n][y] = __builtin_amdgcn_mfma_f32_32x32x16_fp8_fp8(
-                  bigA[n][k2].l[i / 8], bigB[y][k2].l[i / 8], sum[n][y], 0, 0,
-                  0);
+              sum[n][y] = __builtin_amdgcn_mfma_f32_32x32x16_fp8_fp8(bigA[n][k2].l[i / 8], bigB[y][k2].l[i / 8],
+                                                                     sum[n][y], 0, 0, 0);
             }
           }
         }
@@ -1484,45 +1394,31 @@ __global__ void __launch_bounds__(WvPrGrp* THRDS)
       for (int y = 0; y < YTILE; y++) {
         float accm0 = sum[n][y][0];
         float accm16 = sum[n][y][8];
-        asm("v_add_f32 %0, %2, %3 row_shl:1 bound_ctrl:0 "
-            : "=v"(accm0)
-            : "0"(accm0), "v"(sum[n][y][1]), "v"(accm0));
+        asm("v_add_f32 %0, %2, %3 row_shl:1 bound_ctrl:0 " : "=v"(accm0) : "0"(accm0), "v"(sum[n][y][1]), "v"(accm0));
         asm("v_add_f32 %0, %2, %3 row_shl:1 bound_ctrl:0 "
             : "=v"(accm16)
             : "0"(accm16), "v"(sum[n][y][9]), "v"(accm16));
-        asm("v_add_f32 %0, %2, %3 row_shl:2 bound_ctrl:0 "
-            : "=v"(accm0)
-            : "0"(accm0), "v"(sum[n][y][2]), "v"(accm0));
+        asm("v_add_f32 %0, %2, %3 row_shl:2 bound_ctrl:0 " : "=v"(accm0) : "0"(accm0), "v"(sum[n][y][2]), "v"(accm0));
         asm("v_add_f32 %0, %2, %3 row_shl:2 bound_ctrl:0 "
             : "=v"(accm16)
             : "0"(accm16), "v"(sum[n][y][10]), "v"(accm16));
-        asm("v_add_f32 %0, %2, %3 row_shl:3 bound_ctrl:0 "
-            : "=v"(accm0)
-            : "0"(accm0), "v"(sum[n][y][3]), "v"(accm0));
+        asm("v_add_f32 %0, %2, %3 row_shl:3 bound_ctrl:0 " : "=v"(accm0) : "0"(accm0), "v"(sum[n][y][3]), "v"(accm0));
         asm("v_add_f32 %0, %2, %3 row_shl:3 bound_ctrl:0 "
             : "=v"(accm16)
             : "0"(accm16), "v"(sum[n][y][11]), "v"(accm16));
-        asm("v_add_f32 %0, %2, %3 row_shl:8 bound_ctrl:0 "
-            : "=v"(accm0)
-            : "0"(accm0), "v"(sum[n][y][4]), "v"(accm0));
+        asm("v_add_f32 %0, %2, %3 row_shl:8 bound_ctrl:0 " : "=v"(accm0) : "0"(accm0), "v"(sum[n][y][4]), "v"(accm0));
         asm("v_add_f32 %0, %2, %3 row_shl:8 bound_ctrl:0 "
             : "=v"(accm16)
             : "0"(accm16), "v"(sum[n][y][12]), "v"(accm16));
-        asm("v_add_f32 %0, %2, %3 row_shl:9 bound_ctrl:0 "
-            : "=v"(accm0)
-            : "0"(accm0), "v"(sum[n][y][5]), "v"(accm0));
+        asm("v_add_f32 %0, %2, %3 row_shl:9 bound_ctrl:0 " : "=v"(accm0) : "0"(accm0), "v"(sum[n][y][5]), "v"(accm0));
         asm("v_add_f32 %0, %2, %3 row_shl:9 bound_ctrl:0 "
             : "=v"(accm16)
             : "0"(accm16), "v"(sum[n][y][13]), "v"(accm16));
-        asm("v_add_f32 %0, %2, %3 row_shl:10 bound_ctrl:0 "
-            : "=v"(accm0)
-            : "0"(accm0), "v"(sum[n][y][6]), "v"(accm0));
+        asm("v_add_f32 %0, %2, %3 row_shl:10 bound_ctrl:0 " : "=v"(accm0) : "0"(accm0), "v"(sum[n][y][6]), "v"(accm0));
         asm("v_add_f32 %0, %2, %3 row_shl:10 bound_ctrl:0 "
             : "=v"(accm16)
             : "0"(accm16), "v"(sum[n][y][14]), "v"(accm16));
-        asm("v_add_f32 %0, %2, %3 row_shl:11 bound_ctrl:0 "
-            : "=v"(accm0)
-            : "0"(accm0), "v"(sum[n][y][7]), "v"(accm0));
+        asm("v_add_f32 %0, %2, %3 row_shl:11 bound_ctrl:0 " : "=v"(accm0) : "0"(accm0), "v"(sum[n][y][7]), "v"(accm0));
         asm("v_add_f32 %0, %2, %3 row_shl:11 bound_ctrl:0 "
             : "=v"(accm16)
             : "0"(accm16), "v"(sum[n][y][15]), "v"(accm16));
@@ -1545,52 +1441,42 @@ __global__ void __launch_bounds__(WvPrGrp* THRDS)
   }
 }
 #else   // !defined(__HIP__MI300__) TODO: Add NAVI support
-template <typename scalar_t, typename fp8_t, int THRDS, int YTILE, int WvPrGrp,
-          int A_CHUNK, int UNRL, int N>
-__global__ void wvSplitKQ_hf_(const int K, const int Kp, const int M,
-                              const fp8_t* B, const fp8_t* __restrict__ A,
-                              scalar_t* C, const float* __restrict__ s_A,
-                              const float* __restrict__ s_B, const int _WvPrGrp,
-                              const int CuCount) {
+template <typename scalar_t, typename fp8_t, int THRDS, int YTILE, int WvPrGrp, int A_CHUNK, int UNRL, int N>
+__global__ void wvSplitKQ_hf_(const int K, const int Kp, const int M, const fp8_t* B, const fp8_t* __restrict__ A,
+                              scalar_t* C, const float* __restrict__ s_A, const float* __restrict__ s_B,
+                              const int _WvPrGrp, const int CuCount) {
   UNREACHABLE_CODE
 }
 #endif  // defined(__HIP__MI300__) TODO: Add NAVI support
 
-void wvSplitKQ(at::Tensor& in_a, at::Tensor& in_b, at::Tensor& out_c,
-               at::Tensor& scale_a, at::Tensor& scale_b, cudaStream_t stream,
-               const int64_t CuCount) {
-  static c10::ScalarType kFp8Type = is_fp8_ocp()
-                                        ? c10::ScalarType::Float8_e4m3fn
-                                        : c10::ScalarType::Float8_e4m3fnuz;
+void wvSplitKQ(at::Tensor& in_a, at::Tensor& in_b, at::Tensor& out_c, at::Tensor& scale_a, at::Tensor& scale_b,
+               cudaStream_t stream, const int64_t CuCount) {
+  static c10::ScalarType kFp8Type = is_fp8_ocp() ? c10::ScalarType::Float8_e4m3fn : c10::ScalarType::Float8_e4m3fnuz;
   auto M_in = in_a.size(0);
   auto K_in = in_a.size(1);
   auto N_in = in_b.size(0);
   auto Kp_in = in_a.stride(0);
   TORCH_CHECK(K_in % 16 == 0, "k % 16 == 0");
   TORCH_CHECK(in_a.dtype() == in_b.dtype() && in_a.dtype() == kFp8Type);
-  TORCH_CHECK(out_c.dtype() == torch::kFloat16 ||
-              out_c.dtype() == torch::kBFloat16);
+  TORCH_CHECK(out_c.dtype() == torch::kFloat16 || out_c.dtype() == torch::kBFloat16);
 
   dim3 grid(CuCount);
   // const at::cuda::OptionalCUDAGuard device_guard(device_of(in_a));
   // const cudaStream_t stream = at::cuda::getCurrentCUDAStream();
   // const cudaStream_t stream;
 
-#define WVSPLITKQ(_WvPrGrp, _YTILEs, _YTILEm, _YTILEb, _UNRLs, _UNRLm, _UNRLb, \
-                  _N)                                                          \
-  {                                                                            \
-    dim3 block(64, _WvPrGrp);                                                  \
-    if ((K_in * N_in <= 64 * 1024) && (M_in % _YTILEs == 0)) {                 \
-      int __wvPrGrp = mindiv(M_in, CuCount * _YTILEs, _WvPrGrp);               \
-      wvSplitKQ_hf_sml_<fptype, fp8_t, 64, _YTILEs, _WvPrGrp, 16, _UNRLs, _N>  \
-          <<<grid, block, 0, stream>>>(K_in, Kp_in, M_in, a_ptr, b_ptr, c_ptr, \
-                                       s_a, s_b, __wvPrGrp, CuCount);          \
-    } else {                                                                   \
-      int __wvPrGrp = mindiv(M_in, CuCount * _YTILEm, _WvPrGrp);               \
-      wvSplitKQ_hf_<fptype, fp8_t, 64, _YTILEm, _WvPrGrp, 16, _UNRLm, _N>      \
-          <<<grid, block, 0, stream>>>(K_in, Kp_in, M_in, a_ptr, b_ptr, c_ptr, \
-                                       s_a, s_b, __wvPrGrp, CuCount);          \
-    }                                                                          \
+#define WVSPLITKQ(_WvPrGrp, _YTILEs, _YTILEm, _YTILEb, _UNRLs, _UNRLm, _UNRLb, _N)                            \
+  {                                                                                                           \
+    dim3 block(64, _WvPrGrp);                                                                                 \
+    if ((K_in * N_in <= 64 * 1024) && (M_in % _YTILEs == 0)) {                                                \
+      int __wvPrGrp = mindiv(M_in, CuCount * _YTILEs, _WvPrGrp);                                              \
+      wvSplitKQ_hf_sml_<fptype, fp8_t, 64, _YTILEs, _WvPrGrp, 16, _UNRLs, _N>                                 \
+          <<<grid, block, 0, stream>>>(K_in, Kp_in, M_in, a_ptr, b_ptr, c_ptr, s_a, s_b, __wvPrGrp, CuCount); \
+    } else {                                                                                                  \
+      int __wvPrGrp = mindiv(M_in, CuCount * _YTILEm, _WvPrGrp);                                              \
+      wvSplitKQ_hf_<fptype, fp8_t, 64, _YTILEm, _WvPrGrp, 16, _UNRLm, _N>                                     \
+          <<<grid, block, 0, stream>>>(K_in, Kp_in, M_in, a_ptr, b_ptr, c_ptr, s_a, s_b, __wvPrGrp, CuCount); \
+    }                                                                                                         \
   }
 
   AT_DISPATCH_REDUCED_FLOATING_TYPES(out_c.scalar_type(), "wvSplitKQ", [&] {
@@ -1615,63 +1501,50 @@ void wvSplitKQ(at::Tensor& in_a, at::Tensor& in_b, at::Tensor& out_c,
           WVSPLITKQ(16, 4, 7, 7, 1, 1, 1, 4)
           break;
         default:
-          throw std::runtime_error(
-              "Unsupported N value: " + std::to_string(M_in) + "," +
-              std::to_string(K_in) + "," + std::to_string(N_in));
+          throw std::runtime_error("Unsupported N value: " + std::to_string(M_in) + "," + std::to_string(K_in) + "," +
+                                   std::to_string(N_in));
       }
     });
   });
 }
 
 template <int nThreads_per_row, int CTA, int MT0, int MT1>
-__global__ __launch_bounds__(512) void HGEMV_WFPerRow(
-    int m, int n, const _Float16 *A, int lda, const _Float16 *x, _Float16 *y)
-{
+__global__ __launch_bounds__(512) void HGEMV_WFPerRow(int m, int n, const _Float16* A, int lda, const _Float16* x,
+                                                      _Float16* y) {
   int num_row_per_block = CTA / nThreads_per_row;
   int row_id = (blockIdx.x * num_row_per_block + threadIdx.y) * MT0;
   int inc = (gridDim.x * num_row_per_block) * MT0;
 
-  while (row_id < m)
-  {
+  while (row_id < m) {
     float2 sum2[MT0];
 
 #pragma unroll
-    for (int i = 0; i < MT0; ++i)
-    {
+    for (int i = 0; i < MT0; ++i) {
       sum2[i] = {0.0, 0.0};
     }
 
-    for (int j = threadIdx.x; j < n; j += (nThreads_per_row * MT1))
-    {
+    for (int j = threadIdx.x; j < n; j += (nThreads_per_row * MT1)) {
       bool is_active = j < n;
-      if (is_active)
-      {
+      if (is_active) {
         float2 x2[MT1 >> 1];
 #pragma unroll
-        for (int offset = 0; offset < MT1; offset += 2)
-        {
-          x2[offset >> 1] = {x[j + nThreads_per_row * offset],
-                             x[j + nThreads_per_row * (offset + 1)]};
+        for (int offset = 0; offset < MT1; offset += 2) {
+          x2[offset >> 1] = {x[j + nThreads_per_row * offset], x[j + nThreads_per_row * (offset + 1)]};
         }
         float2 a2[MT0][MT1 >> 1];
 #pragma unroll
-        for (int i = 0; i < MT0; i++)
-        {
+        for (int i = 0; i < MT0; i++) {
 #pragma unroll
-          for (int offset = 0; offset < MT1; offset += 2)
-          {
-            a2[i][offset >> 1] = {
-                A[(row_id + i) * n + j + nThreads_per_row * offset],
-                A[(row_id + i) * n + j + nThreads_per_row * (offset + 1)]};
+          for (int offset = 0; offset < MT1; offset += 2) {
+            a2[i][offset >> 1] = {A[(row_id + i) * n + j + nThreads_per_row * offset],
+                                  A[(row_id + i) * n + j + nThreads_per_row * (offset + 1)]};
           }
         }
 
 #pragma unroll
-        for (int i = 0; i < MT0; i++)
-        {
+        for (int i = 0; i < MT0; i++) {
 #pragma unroll
-          for (int offset = 0; offset < (MT1 >> 1); offset++)
-          {
+          for (int offset = 0; offset < (MT1 >> 1); offset++) {
             sum2[i] += a2[i][offset] * x2[offset];
           }
         }
@@ -1679,26 +1552,20 @@ __global__ __launch_bounds__(512) void HGEMV_WFPerRow(
     }
     float sum[MT0];
 #pragma unroll
-    for (int i = 0; i < MT0; i++)
-    {
+    for (int i = 0; i < MT0; i++) {
       sum[i] = sum2[i].x + sum2[i].y;
     }
 
 #pragma unroll
-    for (int i = 0; i < MT0; i++)
-    {
+    for (int i = 0; i < MT0; i++) {
 #pragma unroll
-      for (int offset = nThreads_per_row >> 1; offset >= 1;
-           offset = offset >> 1)
-      {
+      for (int offset = nThreads_per_row >> 1; offset >= 1; offset = offset >> 1) {
         sum[i] += __shfl_down(sum[i], offset, nThreads_per_row);
       }
     }
-    if (threadIdx.x == 0)
-    {
+    if (threadIdx.x == 0) {
 #pragma unroll
-      for (int i = 0; i < MT0; i++)
-      {
+      for (int i = 0; i < MT0; i++) {
         y[row_id + i] = sum[i];
       }
     }
@@ -1706,43 +1573,30 @@ __global__ __launch_bounds__(512) void HGEMV_WFPerRow(
   }
 }
 
-void LLGemmZZ(void *in_a, void *in_b, void *out_c, const int M, const int K,
-              cudaStream_t stream, const int solidx = 0)
-{
+void LLGemmZZ(void* in_a, void* in_b, void* out_c, const int M, const int K, cudaStream_t stream,
+              const int solidx = 0) {
   // m -> M, n-> K
   dim3 grid(1024);
   dim3 block(64, 8);
-  if (solidx == 0)
-  {
-    HGEMV_WFPerRow<64, 512, 4, 8><<<grid, block, 0, stream>>>(
-        M, K, reinterpret_cast<const _Float16 *>(in_a), K,
-        reinterpret_cast<const _Float16 *>(in_b),
-        reinterpret_cast<_Float16 *>(out_c));
-  }
-  else if (solidx == 1)
-  {
-    HGEMV_WFPerRow<64, 512, 2, 8><<<grid, block, 0, stream>>>(
-        M, K, reinterpret_cast<const _Float16 *>(in_a), K,
-        reinterpret_cast<const _Float16 *>(in_b),
-        reinterpret_cast<_Float16 *>(out_c));
-  }
-  else if (solidx == 2)
-  {
-    HGEMV_WFPerRow<64, 512, 1, 8><<<grid, block, 0, stream>>>(
-        M, K, reinterpret_cast<const _Float16 *>(in_a), K,
-        reinterpret_cast<const _Float16 *>(in_b),
-        reinterpret_cast<_Float16 *>(out_c));
-  }
-  else
-  {
-    HGEMV_WFPerRow<64, 512, 4, 8><<<grid, block, 0, stream>>>(
-        M, K, reinterpret_cast<const _Float16 *>(in_a), K,
-        reinterpret_cast<const _Float16 *>(in_b),
-        reinterpret_cast<_Float16 *>(out_c));
+  if (solidx == 0) {
+    HGEMV_WFPerRow<64, 512, 4, 8><<<grid, block, 0, stream>>>(M, K, reinterpret_cast<const _Float16*>(in_a), K,
+                                                              reinterpret_cast<const _Float16*>(in_b),
+                                                              reinterpret_cast<_Float16*>(out_c));
+  } else if (solidx == 1) {
+    HGEMV_WFPerRow<64, 512, 2, 8><<<grid, block, 0, stream>>>(M, K, reinterpret_cast<const _Float16*>(in_a), K,
+                                                              reinterpret_cast<const _Float16*>(in_b),
+                                                              reinterpret_cast<_Float16*>(out_c));
+  } else if (solidx == 2) {
+    HGEMV_WFPerRow<64, 512, 1, 8><<<grid, block, 0, stream>>>(M, K, reinterpret_cast<const _Float16*>(in_a), K,
+                                                              reinterpret_cast<const _Float16*>(in_b),
+                                                              reinterpret_cast<_Float16*>(out_c));
+  } else {
+    HGEMV_WFPerRow<64, 512, 4, 8><<<grid, block, 0, stream>>>(M, K, reinterpret_cast<const _Float16*>(in_a), K,
+                                                              reinterpret_cast<const _Float16*>(in_b),
+                                                              reinterpret_cast<_Float16*>(out_c));
   }
   cudaError_t err = cudaGetLastError();
-  if (cudaSuccess != err)
-    throw std::runtime_error("CUDA kernel failed : " + std::to_string(err));
+  if (cudaSuccess != err) throw std::runtime_error("CUDA kernel failed : " + std::to_string(err));
 }
 
 // instantiate the kernel template for T=float:
@@ -1750,12 +1604,9 @@ void LLGemmZZ(void *in_a, void *in_b, void *out_c, const int M, const int K,
 // const int M, const int K, cudaStream_t stream);
 const unsigned int TILE_WIDTH = 32;
 // Compute C = A * B
-__global__ void matrixMultiplyShared(float *A, float *B, float *C, int numARows,
-                                     int numAColumns, int numBRows,
-                                     int numBColumns, int numCRows,
-                                     int numCColumns)
-{
-  __shared__ float sA[TILE_WIDTH][TILE_WIDTH]; // Tile size of 32x32
+__global__ void matrixMultiplyShared(float* A, float* B, float* C, int numARows, int numAColumns, int numBRows,
+                                     int numBColumns, int numCRows, int numCColumns) {
+  __shared__ float sA[TILE_WIDTH][TILE_WIDTH];  // Tile size of 32x32
   __shared__ float sB[TILE_WIDTH][TILE_WIDTH];
 
   int Row = blockDim.y * blockIdx.y + threadIdx.y;
@@ -1764,51 +1615,36 @@ __global__ void matrixMultiplyShared(float *A, float *B, float *C, int numARows,
   sA[threadIdx.y][threadIdx.x] = 0.0;
   sB[threadIdx.y][threadIdx.x] = 0.0;
 
-  for (int ph = 0; ph < (((numAColumns - 1) / TILE_WIDTH) + 1); ph++)
-  {
-    if ((Row < numARows) && (threadIdx.x + (ph * TILE_WIDTH)) < numAColumns)
-    {
-      sA[threadIdx.y][threadIdx.x] =
-          A[(Row * numAColumns) + threadIdx.x + (ph * TILE_WIDTH)];
-    }
-    else
-    {
+  for (int ph = 0; ph < (((numAColumns - 1) / TILE_WIDTH) + 1); ph++) {
+    if ((Row < numARows) && (threadIdx.x + (ph * TILE_WIDTH)) < numAColumns) {
+      sA[threadIdx.y][threadIdx.x] = A[(Row * numAColumns) + threadIdx.x + (ph * TILE_WIDTH)];
+    } else {
       sA[threadIdx.y][threadIdx.x] = 0.0;
     }
-    if (Col < numBColumns && (threadIdx.y + ph * TILE_WIDTH) < numBRows)
-    {
-      sB[threadIdx.y][threadIdx.x] =
-          B[(threadIdx.y + ph * TILE_WIDTH) * numBColumns + Col];
-    }
-    else
-    {
+    if (Col < numBColumns && (threadIdx.y + ph * TILE_WIDTH) < numBRows) {
+      sB[threadIdx.y][threadIdx.x] = B[(threadIdx.y + ph * TILE_WIDTH) * numBColumns + Col];
+    } else {
       sB[threadIdx.y][threadIdx.x] = 0.0;
     }
     __syncthreads();
-    for (int j = 0; j < TILE_WIDTH; ++j)
-    {
+    for (int j = 0; j < TILE_WIDTH; ++j) {
       Cvalue += sA[threadIdx.y][j] * sB[j][threadIdx.x];
     }
   }
-  if (Row < numCRows && Col < numCColumns)
-  {
+  if (Row < numCRows && Col < numCColumns) {
     C[Row * numCColumns + Col] = Cvalue;
   }
 }
 
-void MMGPUKernel(float *in_a, float *in_b, float *out_c, int numARows,
-                 int numAColumns, int numBRows, int numBColumns, int numCRows,
-                 int numCColumns, cudaStream_t stream)
-{
+void MMGPUKernel(float* in_a, float* in_b, float* out_c, int numARows, int numAColumns, int numBRows, int numBColumns,
+                 int numCRows, int numCColumns, cudaStream_t stream) {
   // Initialize the grid and block dimensions
   dim3 dimBlock(TILE_WIDTH, TILE_WIDTH, 1);
   dim3 dimGrid((numCColumns / TILE_WIDTH) + 1, (numCRows / TILE_WIDTH) + 1, 1);
   //@@ Launch the GPU Kernel here
-  matrixMultiplyShared<<<dimGrid, dimBlock>>>(
-      in_a, in_b, out_c, numARows, numAColumns, numBRows, numBColumns, numCRows,
-      numCColumns);
+  matrixMultiplyShared<<<dimGrid, dimBlock>>>(in_a, in_b, out_c, numARows, numAColumns, numBRows, numBColumns, numCRows,
+                                              numCColumns);
 
   cudaError_t err = cudaGetLastError();
-  if (cudaSuccess != err)
-    throw std::runtime_error("CUDA kernel failed : " + std::to_string(err));
+  if (cudaSuccess != err) throw std::runtime_error("CUDA kernel failed : " + std::to_string(err));
 }
