@@ -60,7 +60,7 @@ struct FlashMlaPrefillKernelTrait
     static constexpr int32_t kSizeDV                    = kSizeDV_;   // hidden dimension size of value
     static constexpr int32_t kNumWarps                  = kNumWarps_;
     static constexpr int32_t kNumThreads                = kNumWarps * ck_tile::get_warp_size();
-    static constexpr int32_t kWaveOccupancy             = 2;
+    static constexpr int32_t kWaveOccupancy             = 1;
     static constexpr int32_t kNumWarpsSoftmax           = 4;
     static constexpr int32_t kNumThreadsSoftmax         = kNumWarpsSoftmax * ck_tile::get_warp_size();
     static constexpr int32_t kNumWarpsCombine           = 4;
