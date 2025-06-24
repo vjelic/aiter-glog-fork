@@ -8,6 +8,7 @@
 #include <ck_tile/host.hpp>
 #include <ck_tile/ops/fmha.hpp>
 #include <ck_tile/ops/gemm.hpp>
+#include <ck_tile/ops/reduce.hpp>
 #include "block_gemm_areg_bsmem_creg.hpp"
 
 // =====================================================================================================================
@@ -109,7 +110,7 @@ public:
         constexpr int32_t kMPerBlock = Traits::kBlockM;
         constexpr int32_t kKPerBlock = Traits::kBlockK0;
 
-        constexpr int32_t MaxVectorSize = 16 / sizeof(scalar_t);
+        constexpr int32_t MaxVectorSize = 16 / sizeof(InOutType);
 
         // this should align with MakeQDramTileDistribution()
         constexpr int32_t ElemPerThread = (kMPerBlock * kKPerBlock) / kBlockSize;
@@ -123,7 +124,7 @@ public:
         constexpr int32_t kNPerBlock = Traits::kBlockN0;
         constexpr int32_t kKPerBlock = Traits::kBlockK0;
 
-        constexpr int32_t MaxVectorSize = 16 / sizeof(scalar_t);
+        constexpr int32_t MaxVectorSize = 16 / sizeof(InOutType);
         constexpr int32_t ElemPerThread = (kNPerBlock * kKPerBlock) / kBlockSize;
 
         return ck_tile::min(MaxVectorSize, ElemPerThread);
@@ -137,8 +138,8 @@ public:
         constexpr int32_t kKPerBlock   = Traits::kBlockK1;
         constexpr int32_t total_pixels = kNPerBlock * kKPerBlock / kBlockSize;
         constexpr int32_t kMaxVecLoad =
-            ck_tile::min(total_pixels, static_cast<int32_t>(16 / sizeof(scalar_t)));
-        constexpr int32_t kMinVecLoad = 4 / sizeof(scalar_t);
+            ck_tile::min(total_pixels, static_cast<int32_t>(16 / sizeof(InOutType)));
+        constexpr int32_t kMinVecLoad = 4 / sizeof(InOutType);
 
         constexpr int32_t kVecLoad =
             ((total_pixels / kMaxVecLoad) >= kMinVecLoad)
@@ -164,7 +165,7 @@ public:
             constexpr int32_t N1 = kNPerBlock / N0;
 
             // Each thread cannot handle more than 16 bytes
-            result = ck_tile::min(N1, static_cast<int32_t>(16 / sizeof(scalar_t)));
+            result = ck_tile::min(N1, static_cast<int32_t>(16 / sizeof(InOutType)));
         }
 
         return result;
@@ -186,7 +187,7 @@ public:
             constexpr int32_t N1 = kNPerBlock / N0;
 
             // Each thread cannot handle more than 16 bytes
-            result = ck_tile::min(N1, static_cast<int32_t>(16 / sizeof(acc_t)));
+            result = ck_tile::min(N1, static_cast<int32_t>(16 / sizeof(AccType)));
         }
 
         return result;
@@ -197,14 +198,99 @@ public:
         return GetVectorSizeForTile<Traits::kNumWarps,
                                     Traits::kMaxSplits,
                                     Traits::kBlockM,
-                                    acc_t>();
+                                    AccType>();
+    }
+
+    CK_TILE_HOST_DEVICE static constexpr auto GetQKBlockGemm()
+    {
+        constexpr int32_t kWarpGemmM = Traits::QKWarpTile::at(ck_tile::number<0>{});
+        static_assert((kWarpGemmM == 4) || (kWarpGemmM == 16) || (kWarpGemmM == 32));
+
+        constexpr int32_t ColWarps = Traits::kBlockM / kWarpGemmM;
+        constexpr int32_t RowWarps = Traits::kNumWarps / ColWarps;
+        static_assert((Traits::kNumWarps >= ColWarps) && ((Traits::kNumWarps % ColWarps) == 0));
+
+        using BlockTile     = ck_tile::sequence<Traits::kBlockM, Traits::kBlockN0, Traits::kBlockK0>;
+        using BlockWarps    = ck_tile::sequence<ColWarps, RowWarps, 1>;
+        using TileGemmShape = ck_tile::TileGemmShape<BlockTile, BlockWarps, typename Traits::QKWarpTile>;
+
+        using GemmProblem = ck_tile::BlockGemmProblem<InOutType, InOutType, AccType, Traits::kNumThreads, TileGemmShape>;
+
+        constexpr auto warp_gemm = []()
+        {
+            if constexpr (std::is_same_v<InOutType, ck_tile::fp16_t> && std::is_same_v<AccType, float>)
+            {
+                if constexpr(kWarpGemmM == 32)
+                    return ck_tile::WarpGemmMfmaF16F16F32M32N32K16SwizzleBTransposedCDistribution{};
+                else if constexpr(kWarpGemmM == 16)
+                    return ck_tile::WarpGemmMfmaF16F16F32M16N16K16TransposedCDistribution{};
+                else // kWarpGemmM == 4
+                    return ck_tile::WarpGemmMfmaF16F16F32M4N64K16{};
+            }
+            else if constexpr (std::is_same_v<InOutType, ck_tile::bf16_t> && std::is_same_v<AccType, float>)
+            {
+                if constexpr (kWarpGemmM == 32)
+                    return ck_tile::WarpGemmMfmaBf16Bf16F32M32N32K16SwizzleBTransposedCDistribution{};
+                else if constexpr (kWarpGemmM == 16)
+                    return ck_tile::WarpGemmMfmaBf16Bf16F32M16N16K16TransposedCDistribution{};
+                else // kWarpGemmM == 4
+                    return ck_tile::WarpGemmMfmaBf16Bf16F32M4N64K16{};
+            }
+        }();
+
+        using WarpGemm = ck_tile::remove_cvref_t<decltype(warp_gemm)>;
+
+        using BlockGemmPolicy =
+            BlockGemmARegBSmemCRegPolicy<InOutType, InOutType, AccType, BlockWarps, WarpGemm>;
+
+        return BlockGemmARegBSmemCReg<GemmProblem, BlockGemmPolicy>{};
+    }
+
+    CK_TILE_HOST_DEVICE static constexpr auto GetKVBlockGemm()
+    {
+        constexpr int32_t kWarpGemmM = Traits::KVWarpTile::at(ck_tile::number<0>{});
+        static_assert((kWarpGemmM == 4) || (kWarpGemmM == 16) || (kWarpGemmM == 32));
+
+        constexpr int32_t ColWarps = Traits::kBlockM / kWarpGemmM;
+        constexpr int32_t RowWarps = Traits::kNumWarps / ColWarps;
+        static_assert((Traits::kNumWarps >= ColWarps) && ((Traits::kNumWarps % ColWarps) == 0));
+
+        using BlockTile     = ck_tile::sequence<Traits::kBlockM, Traits::kBlockN1, Traits::kBlockK1>;
+        using BlockWarps    = ck_tile::sequence<ColWarps, RowWarps, 1>;
+        using TileGemmShape = ck_tile::TileGemmShape<BlockTile, BlockWarps, typename Traits::KVWarpTile>;
+
+        using GemmProblem = ck_tile::BlockGemmProblem<InOutType, InOutType, AccType, Traits::kNumThreads, TileGemmShape>;
+
+        auto warp_gemm = []()
+        {
+            if constexpr(std::is_same_v<InOutType, ck_tile::fp8_t> && std::is_same_v<AccType, float>)
+            {
+                return ck_tile::WarpGemmMfmaFp8Fp8F32M32N32K16SwizzleBTransposedCDistribution<>{};
+            }
+            else
+            {
+                return ck_tile::WarpGemmMfmaDispatcher<
+                    InOutType, InOutType, AccType,
+                    Traits::KVWarpTile::at(ck_tile::number<0>{}),
+                    Traits::KVWarpTile::at(ck_tile::number<1>{}),
+                    Traits::KVWarpTile::at(ck_tile::number<2>{}),
+                    true>{};
+            }
+        }();
+
+        using WarpGemm = ck_tile::remove_cvref_t<decltype(warp_gemm)>;
+
+        using BlockGemmPolicy =
+            BlockGemmARegBSmemCRegPolicy<InOutType, InOutType, AccType, BlockWarps, WarpGemm>;
+
+        return BlockGemmARegBSmemCReg<GemmProblem, BlockGemmPolicy>{};
     }
 
     CK_TILE_HOST_DEVICE static constexpr auto MakeKLdsBlockDescriptor()
     {
         constexpr int32_t kNPerBlock = Traits::kBlockN0;
         constexpr int32_t kKPerBlock = Traits::kBlockK0;
-        constexpr int32_t kKPack     = 16 / sizeof(scalar_t);
+        constexpr int32_t kKPack     = 16 / sizeof(InOutType);
 
         constexpr auto k_lds_block_desc_0 = ck_tile::make_naive_tensor_descriptor(
             ck_tile::make_tuple(ck_tile::number<kKPerBlock / kKPack>{}, ck_tile::number<kNPerBlock>{}, ck_tile::number<kKPack>{}),
@@ -226,8 +312,8 @@ public:
     CK_TILE_HOST_DEVICE static constexpr auto MakeVLdsBlockDescriptor()
     {
         constexpr int32_t Banks        = 32; /// TODO: need change based on arch
-        constexpr int32_t PixelsPerRow = Banks * 4 / sizeof(scalar_t);
-        constexpr int32_t kKPack       = 16 / sizeof(scalar_t);
+        constexpr int32_t PixelsPerRow = Banks * 4 / sizeof(InOutType);
+        constexpr int32_t kKPack       = 16 / sizeof(InOutType);
         static_assert(PixelsPerRow % kKPack == 0);
         constexpr int32_t NPerRow    = PixelsPerRow / kKPack;
         constexpr int32_t kNPerBlock = Traits::kBlockN1;
@@ -266,8 +352,8 @@ public:
         constexpr int32_t SingleKSize = MakeKLdsBlockDescriptor().get_element_space_size();
         constexpr int32_t SingleVSize =[&]() {
             constexpr int32_t Banks        = 32; /// TODO: need change based on arch
-            constexpr int32_t PixelsPerRow = Banks * 4 / sizeof(scalar_t);
-            constexpr int32_t kKPack       = 16 / sizeof(scalar_t);
+            constexpr int32_t PixelsPerRow = Banks * 4 / sizeof(InOutType);
+            constexpr int32_t kKPack       = 16 / sizeof(InOutType);
             static_assert(PixelsPerRow % kKPack == 0);
             constexpr int32_t NPerRow    = PixelsPerRow / kKPack;
             constexpr int32_t kNPerBlock = Traits::kBlockN1;
@@ -278,97 +364,23 @@ public:
             return (kKPerBlock / kKPack) * (kNPerBlock / NPerRow) * (PixelsPerRow + kKPack);
         }();
 
-        return ck_tile::max(SingleKSize, SingleVSize) * sizeof(scalar_t);
+        return ck_tile::max(SingleKSize, SingleVSize) * sizeof(InOutType);
     }
 
     CK_TILE_HOST_DEVICE static constexpr int32_t GetSmemSize()
     {
-        return Traits::kNumPrefetchKV * GetSmemSizeSingleKV();
-    }
+        using QKGemm               = ck_tile::remove_cvref_t<decltype(GetQKBlockGemm())>;
+        using BlockShape           = ck_tile::remove_cvref_t<decltype(QKGemm::GetCBlockShape())>;
+        using BlockReduce2dProblem = ck_tile::BlockReduce2dProblem<AccType, AccType, BlockShape>;
+        using BlockReduce2d        = ck_tile::BlockReduce2d<BlockReduce2dProblem>;
+        using BlockRedcue2dXWarp   = ck_tile::BlockReduce2dCrossWarpSync<BlockReduce2dProblem>;
+        using XBlockTile           = ck_tile::remove_cvref_t<decltype(QKGemm::MakeCBlockTile())>;
+        using YBlockTile           = ck_tile::remove_cvref_t<decltype(BlockReduce2d::template MakeYBlockTile<XBlockTile>())>;
 
-    CK_TILE_HOST_DEVICE static constexpr auto GetQKBlockGemm()
-    {
-        constexpr int32_t kWarpGemmM = Traits::QKWarpTile::at(ck_tile::number<0>{});
-        static_assert((kWarpGemmM == 4) || (kWarpGemmM == 16) || (kWarpGemmM == 32));
+        constexpr int32_t SmemSizeBlockReduce2D =
+            (QKGemm::GetWarpPerBlockN() > 1) ? BlockRedcue2dXWarp::template GetSmemSize<YBlockTile>() : 0;
 
-        constexpr int32_t ColWarps = Traits::kBlockM / kWarpGemmM;
-        constexpr int32_t RowWarps = Traits::kNumWarps / ColWarps;
-        static_assert((Traits::kNumWarps >= ColWarps) && ((Traits::kNumWarps % ColWarps) == 0));
-
-        using BlockTile     = ck_tile::sequence<Traits::kBlockM, Traits::kBlockN0, Traits::kBlockK0>;
-        using BlockWarps    = ck_tile::sequence<ColWarps, RowWarps, 1>;
-        using TileGemmShape = ck_tile::TileGemmShape<BlockTile, BlockWarps, typename Traits::QKWarpTile>;
-
-        using GemmProblem = ck_tile::BlockGemmProblem<scalar_t, scalar_t, acc_t, Traits::kNumThreads, TileGemmShape>;
-
-        constexpr auto warp_gemm = []()
-        {
-            if constexpr (std::is_same_v<scalar_t, ck_tile::fp16_t> && std::is_same_v<acc_t, float>)
-            {
-                if constexpr(kWarpGemmM == 32)
-                    return ck_tile::WarpGemmMfmaF16F16F32M32N32K16SwizzleBTransposedCDistribution{};
-                else if constexpr(kWarpGemmM == 16)
-                    return ck_tile::WarpGemmMfmaF16F16F32M16N16K16TransposedCDistribution{};
-                else // kWarpGemmM == 4
-                    return ck_tile::WarpGemmMfmaF16F16F32M4N64K16{};
-            }
-            else if constexpr (std::is_same_v<scalar_t, ck_tile::bf16_t> && std::is_same_v<acc_t, float>)
-            {
-                if constexpr (kWarpGemmM == 32)
-                    return ck_tile::WarpGemmMfmaBf16Bf16F32M32N32K16SwizzleBTransposedCDistribution{};
-                else if constexpr (kWarpGemmM == 16)
-                    return ck_tile::WarpGemmMfmaBf16Bf16F32M16N16K16TransposedCDistribution{};
-                else // kWarpGemmM == 4
-                    return ck_tile::WarpGemmMfmaBf16Bf16F32M4N64K16{};
-            }
-        }();
-
-        using WarpGemm = ck_tile::remove_cvref_t<decltype(warp_gemm)>;
-
-        using BlockGemmPolicy =
-            BlockGemmARegBSmemCRegPolicy<scalar_t, scalar_t, acc_t, BlockWarps, WarpGemm>;
-
-        return BlockGemmARegBSmemCReg<GemmProblem, BlockGemmPolicy>{};
-    }
-
-    CK_TILE_HOST_DEVICE static constexpr auto GetKVBlockGemm()
-    {
-        constexpr int32_t kWarpGemmM = Traits::KVWarpTile::at(ck_tile::number<0>{});
-        static_assert((kWarpGemmM == 4) || (kWarpGemmM == 16) || (kWarpGemmM == 32));
-
-        constexpr int32_t ColWarps = Traits::kBlockM / kWarpGemmM;
-        constexpr int32_t RowWarps = Traits::kNumWarps / ColWarps;
-        static_assert((Traits::kNumWarps >= ColWarps) && ((Traits::kNumWarps % ColWarps) == 0));
-
-        using BlockTile     = ck_tile::sequence<Traits::kBlockM, Traits::kBlockN1, Traits::kBlockK1>;
-        using BlockWarps    = ck_tile::sequence<ColWarps, RowWarps, 1>;
-        using TileGemmShape = ck_tile::TileGemmShape<BlockTile, BlockWarps, typename Traits::KVWarpTile>;
-
-        using GemmProblem = ck_tile::BlockGemmProblem<scalar_t, scalar_t, acc_t, Traits::kNumThreads, TileGemmShape>;
-
-        auto warp_gemm = []()
-        {
-            if constexpr(std::is_same_v<scalar_t, ck_tile::fp8_t> && std::is_same_v<acc_t, float>)
-            {
-                return ck_tile::WarpGemmMfmaFp8Fp8F32M32N32K16SwizzleBTransposedCDistribution<>{};
-            }
-            else
-            {
-                return ck_tile::WarpGemmMfmaDispatcher<
-                    scalar_t, scalar_t, acc_t,
-                    Traits::KVWarpTile::at(ck_tile::number<0>{}),
-                    Traits::KVWarpTile::at(ck_tile::number<1>{}),
-                    Traits::KVWarpTile::at(ck_tile::number<2>{}),
-                    true>{};
-            }
-        }();
-
-        using WarpGemm = ck_tile::remove_cvref_t<decltype(warp_gemm)>;
-
-        using BlockGemmPolicy =
-            BlockGemmARegBSmemCRegPolicy<scalar_t, scalar_t, acc_t, BlockWarps, WarpGemm>;
-
-        return BlockGemmARegBSmemCReg<GemmProblem, BlockGemmPolicy>{};
+        return Traits::kNumPrefetchKV * GetSmemSizeSingleKV() + SmemSizeBlockReduce2D;
     }
 
     CK_TILE_HOST_DEVICE static constexpr auto MakeQRegTileDistribution()
@@ -386,7 +398,7 @@ public:
         constexpr int32_t kNPerBlock = Traits::kBlockN0;
         constexpr int32_t kKPerBlock = Traits::kBlockK0;
 
-        constexpr int32_t MaxVectorSize = 16 / sizeof(scalar_t);
+        constexpr int32_t MaxVectorSize = 16 / sizeof(InOutType);
         constexpr int32_t ElemPerThread = (kNPerBlock * kKPerBlock) / kBlockSize;
 
         constexpr int32_t K1 = ck_tile::min(MaxVectorSize, ElemPerThread);
@@ -423,7 +435,7 @@ public:
         constexpr int32_t ElemPerThread = kNPerBlock * kKPerBlock / kBlockSize;
         static_assert(ElemPerThread % N1 == 0);
         constexpr int32_t K3     = ElemPerThread / N1;
-        constexpr int32_t kKPack = 16 / sizeof(scalar_t);
+        constexpr int32_t kKPack = 16 / sizeof(InOutType);
         static_assert(kKPack % K3 == 0);
         constexpr int32_t K2 = kKPack / K3;
 
@@ -475,7 +487,7 @@ public:
         constexpr int32_t ElemPerThread = kNPerBlock * kKPerBlock / kBlockSize;
         static_assert(ElemPerThread % N1 == 0);
         constexpr int32_t K3     = ElemPerThread / N1;
-        constexpr int32_t kKPack = 16 / sizeof(scalar_t);
+        constexpr int32_t kKPack = 16 / sizeof(InOutType);
         static_assert(kKPack % K3 == 0);
         constexpr int32_t K2 = kKPack / K3;
 
@@ -926,6 +938,7 @@ CK_TILE_DEVICE static void kn_fmla_fwd_splitkv_prefill_tile(
         reinterpret_cast<scalar_t*>(p_smem), Policy::MakeKLdsBlockDescriptor());
     auto v_lds = ck_tile::make_tensor_view<ck_tile::address_space_enum::lds>(
         reinterpret_cast<scalar_t*>(p_smem), Policy::MakeVLdsBlockDescriptor());
+    uint8_t* p_smem_block_reduce_2d_xwarp = p_smem + Traits::kNumPrefetchKV * Policy::GetSmemSizeSingleKV();
 
     auto k_lds_window = ck_tile::make_tile_window(
         k_lds, ck_tile::make_tuple(ck_tile::number<Traits::kBlockN0>{}, ck_tile::number<Traits::kBlockK0>{}), {0, 0});
@@ -954,13 +967,20 @@ CK_TILE_DEVICE static void kn_fmla_fwd_splitkv_prefill_tile(
     // Reduction funtions for softmax
     const auto f_max = [](auto e0, auto e1) { return ck_tile::max(e0, e1); };
     const auto f_sum = [](auto e0, auto e1) { return e0 + e1; };
+    // Block reduce 2d for softmax
+    using BlockShape           = ck_tile::remove_cvref_t<decltype(gemm_0.GetCBlockShape())>;
+    using BlockReduce2dProblem = ck_tile::BlockReduce2dProblem<acc_t, acc_t, BlockShape>;
+    auto block_reduce_2d       = ck_tile::BlockReduce2d<BlockReduce2dProblem>();              // In-thread
+    auto block_reduce_2d_sync  = ck_tile::BlockReduce2dSync<BlockReduce2dProblem>();          // In-warp
+    auto block_reduce_2d_xwarp = ck_tile::BlockReduce2dCrossWarpSync<BlockReduce2dProblem>(); // In-thread group
+    auto reduce_sum_func = ck_tile::ReduceOp::Add{};
+    auto reduce_max_func = ck_tile::ReduceOp::Max{};
 
     // sacc, S, P, M, L, Oacc
     using SaccBlockTileType = decltype(gemm_0.MakeCBlockTile());
     auto s_acc              = SaccBlockTileType{};
     using SBlockTileType    = decltype(ck_tile::cast_tile<acc_t>(s_acc));
-    using MLBlockTileType   = decltype(ck_tile::block_tile_reduce<acc_t>(
-        SBlockTileType{}, ck_tile::sequence<1>{}, f_max, acc_t{0}));
+    using MLBlockTileType   = decltype(block_reduce_2d(s_acc, ck_tile::numeric<acc_t>::min(), reduce_max_func));
     using OaccBlockTileType = decltype(gemm_1.MakeCBlockTile());
     OaccBlockTileType o_acc[n1_loops];
     auto m = MLBlockTileType{};
@@ -1181,9 +1201,13 @@ CK_TILE_DEVICE static void kn_fmla_fwd_splitkv_prefill_tile(
         }
 
         // Get max of row
-        auto m_local = ck_tile::block_tile_reduce<acc_t>(
-            s_acc, ck_tile::sequence<1>{}, f_max, -ck_tile::numeric<acc_t>::infinity());
-        ck_tile::block_tile_reduce_sync(m_local, f_max, ck_tile::bool_constant<false>{});
+        auto m_local = block_reduce_2d(s_acc, reduce_max_func.GetIdentityValue<acc_t>(), reduce_max_func);
+        block_reduce_2d_sync(m_local, reduce_max_func);
+        if constexpr (gemm_0.GetWarpPerBlockN() > 1)
+        {
+            block_reduce_2d_xwarp(m_local, p_smem_block_reduce_2d_xwarp, reduce_max_func);
+        }
+
         const auto m_old = m;
         ck_tile::tile_elementwise_inout(
             [](auto& e0, auto e1, auto e2) { e0 = ck_tile::max(e1, e2); }, m, m_old, m_local);
@@ -1207,8 +1231,12 @@ CK_TILE_DEVICE static void kn_fmla_fwd_splitkv_prefill_tile(
             });
 
         // Compute row sum of exp(x_i - m)
-        auto rowsum_p = ck_tile::block_tile_reduce<acc_t>(p_intermedia, ck_tile::sequence<1>{}, f_sum, acc_t(0));
-        ck_tile::block_tile_reduce_sync(rowsum_p, f_sum, ck_tile::bool_constant<false>{});
+        auto rowsum_p = block_reduce_2d(p_intermedia, reduce_sum_func.GetIdentityValue<acc_t>(), reduce_sum_func);
+        block_reduce_2d_sync(rowsum_p, reduce_sum_func);
+        if constexpr (gemm_0.GetWarpPerBlockN() > 1)
+        {
+            block_reduce_2d_xwarp(rowsum_p, p_smem_block_reduce_2d_xwarp, reduce_sum_func);
+        }
 
         // Calculate new l and adjust old output acc
         constexpr auto o_spans = ck_tile::remove_cvref_t<decltype(o_acc[0])>::get_distributed_spans();
