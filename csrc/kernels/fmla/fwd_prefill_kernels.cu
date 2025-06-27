@@ -10,6 +10,7 @@
 #include <ck_tile/ops/gemm.hpp>
 #include <ck_tile/ops/reduce.hpp>
 #include "block_gemm_areg_bsmem_creg.hpp"
+#include "block_reduce_cross_wave.hpp"
 
 // =====================================================================================================================
 // Utils
@@ -64,7 +65,7 @@ struct FlashMlaPrefillKernelTrait
     static constexpr int32_t kSizeDV                    = kSizeDV_;   // hidden dimension size of value
     static constexpr int32_t kNumWarps                  = kNumWarps_;
     static constexpr int32_t kNumThreads                = kNumWarps * ck_tile::get_warp_size();
-    static constexpr int32_t kWaveOccupancy             = 2;
+    static constexpr int32_t kWaveOccupancy             = 1;
     static constexpr int32_t kNumWarpsSoftmax           = 4;
     static constexpr int32_t kNumThreadsSoftmax         = kNumWarpsSoftmax * ck_tile::get_warp_size();
     static constexpr int32_t kNumWarpsCombine           = 4;
@@ -373,7 +374,7 @@ public:
         using BlockShape           = ck_tile::remove_cvref_t<decltype(QKGemm::GetCBlockShape())>;
         using BlockReduce2dProblem = ck_tile::BlockReduce2dProblem<AccType, AccType, BlockShape>;
         using BlockReduce2d        = ck_tile::BlockReduce2d<BlockReduce2dProblem>;
-        using BlockRedcue2dXWarp   = ck_tile::BlockReduce2dCrossWarpSync<BlockReduce2dProblem>;
+        using BlockRedcue2dXWarp   = BlockReduce2dCrossWarpSync<BlockReduce2dProblem>;
         using XBlockTile           = ck_tile::remove_cvref_t<decltype(QKGemm::MakeCBlockTile())>;
         using YBlockTile           = ck_tile::remove_cvref_t<decltype(BlockReduce2d::template MakeYBlockTile<XBlockTile>())>;
 
@@ -965,14 +966,11 @@ CK_TILE_DEVICE static void kn_fmla_fwd_splitkv_prefill_tile(
     constexpr auto gemm_1 = Policy::GetKVBlockGemm();
 
     // Reduction funtions for softmax
-    const auto f_max = [](auto e0, auto e1) { return ck_tile::max(e0, e1); };
-    const auto f_sum = [](auto e0, auto e1) { return e0 + e1; };
-    // Block reduce 2d for softmax
     using BlockShape           = ck_tile::remove_cvref_t<decltype(gemm_0.GetCBlockShape())>;
     using BlockReduce2dProblem = ck_tile::BlockReduce2dProblem<acc_t, acc_t, BlockShape>;
-    auto block_reduce_2d       = ck_tile::BlockReduce2d<BlockReduce2dProblem>();              // In-thread
-    auto block_reduce_2d_sync  = ck_tile::BlockReduce2dSync<BlockReduce2dProblem>();          // In-warp
-    auto block_reduce_2d_xwarp = ck_tile::BlockReduce2dCrossWarpSync<BlockReduce2dProblem>(); // In-thread group
+    auto block_reduce_2d       = ck_tile::BlockReduce2d<BlockReduce2dProblem>();        // In-thread
+    auto block_reduce_2d_sync  = ck_tile::BlockReduce2dSync<BlockReduce2dProblem>();    // In-warp
+    auto block_reduce_2d_xwarp = BlockReduce2dCrossWarpSync<BlockReduce2dProblem>();    // In-thread group
     auto reduce_sum_func = ck_tile::ReduceOp::Add{};
     auto reduce_max_func = ck_tile::ReduceOp::Max{};
 
@@ -1203,10 +1201,7 @@ CK_TILE_DEVICE static void kn_fmla_fwd_splitkv_prefill_tile(
         // Get max of row
         auto m_local = block_reduce_2d(s_acc, reduce_max_func.GetIdentityValue<acc_t>(), reduce_max_func);
         block_reduce_2d_sync(m_local, reduce_max_func);
-        if constexpr (gemm_0.GetWarpPerBlockN() > 1)
-        {
-            block_reduce_2d_xwarp(m_local, p_smem_block_reduce_2d_xwarp, reduce_max_func);
-        }
+        block_reduce_2d_xwarp(m_local, p_smem_block_reduce_2d_xwarp, reduce_max_func);
 
         const auto m_old = m;
         ck_tile::tile_elementwise_inout(
@@ -1233,10 +1228,7 @@ CK_TILE_DEVICE static void kn_fmla_fwd_splitkv_prefill_tile(
         // Compute row sum of exp(x_i - m)
         auto rowsum_p = block_reduce_2d(p_intermedia, reduce_sum_func.GetIdentityValue<acc_t>(), reduce_sum_func);
         block_reduce_2d_sync(rowsum_p, reduce_sum_func);
-        if constexpr (gemm_0.GetWarpPerBlockN() > 1)
-        {
-            block_reduce_2d_xwarp(rowsum_p, p_smem_block_reduce_2d_xwarp, reduce_sum_func);
-        }
+        block_reduce_2d_xwarp(rowsum_p, p_smem_block_reduce_2d_xwarp, reduce_sum_func);
 
         // Calculate new l and adjust old output acc
         constexpr auto o_spans = ck_tile::remove_cvref_t<decltype(o_acc[0])>::get_distributed_spans();
@@ -1440,8 +1432,7 @@ CK_TILE_DEVICE static void kn_fmla_fwd_splitkv_prefill_tile(
         {
             ck_tile::move_tile_window(out_dram_window_, {0, Traits::kBlockN1});
         }
-    }
-    );
+    });
 }
 
 // =====================================================================================================================
@@ -1870,8 +1861,8 @@ std::vector<torch::Tensor> flash_mla_fwd_prefill_with_kvcache_impl(
     const bool           is_causal)
 {
     constexpr bool kEnablePackQkRatio = true;
-    //                                        dqk  dv   m0  n0  n1  #warp
-    using Traits = FlashMlaPrefillKernelTrait<576, 512, 64, 64, 256, 4, kEnablePackQkRatio>;
+    //                                        dqk  dv   m0  n0   n1   #warp
+    using Traits = FlashMlaPrefillKernelTrait<576, 512, 64, 64,  256, 8, kEnablePackQkRatio>;
     constexpr bool kForceOutAcc = false;
     using acc_t                 = float;
 
