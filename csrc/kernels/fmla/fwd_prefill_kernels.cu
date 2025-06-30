@@ -74,7 +74,7 @@ struct FlashMlaPrefillKernelTrait
     static constexpr int32_t kBlockN0                   = kBlockN0_;
     static constexpr int32_t kBlockN1                   = kBlockN1_;
     static constexpr int32_t kBlockK0                   = 32;
-    static constexpr int32_t kBlockK1                   = 16;
+    static constexpr int32_t kBlockK1                   = (kNumWarps == 8) ? 64 : 16;
     static constexpr int32_t kFixedOverheadNumBlocks    = 5;
     static constexpr int32_t kMaxBatchSize              = 4096;
     static constexpr int32_t kCuReuse                   = 2;
@@ -257,7 +257,7 @@ public:
         static_assert((Traits::kNumWarps >= ColWarps) && ((Traits::kNumWarps % ColWarps) == 0));
 
         using BlockTile     = ck_tile::sequence<Traits::kBlockM, Traits::kBlockN1, Traits::kBlockK1>;
-        using BlockWarps    = ck_tile::sequence<ColWarps, RowWarps, 1>;
+        using BlockWarps    = ck_tile::sequence<ColWarps, 1, RowWarps>;
         using TileGemmShape = ck_tile::TileGemmShape<BlockTile, BlockWarps, typename Traits::KVWarpTile>;
 
         using GemmProblem = ck_tile::BlockGemmProblem<InOutType, InOutType, AccType, Traits::kNumThreads, TileGemmShape>;
@@ -960,6 +960,8 @@ CK_TILE_DEVICE static void kn_fmla_fwd_splitkv_prefill_tile(
     static_assert((Traits::kSizeD   % Traits::kBlockK0) == 0);
     static_assert((Traits::kBlockN0 % Traits::kBlockK1) == 0);
     static_assert((Traits::kSizeDV  % Traits::kBlockN1) == 0);
+    static_assert(!((k1_loops > 1) && (Traits::kNumWarps == 8)),
+                  "k1_loops > 1 is not support by wave 8 for now due to the issue in tile_slice.");
 
     // Block GEMMs
     constexpr auto gemm_0 = Policy::GetQKBlockGemm();
@@ -1292,7 +1294,7 @@ CK_TILE_DEVICE static void kn_fmla_fwd_splitkv_prefill_tile(
                     auto v = ck_tile::load_tile(v_dram_windows[n1_id]); // load next v
                     ck_tile::block_sync_lds();
 
-                    gemm_1(o_acc[n1_id],
+                    gemm_1.run(o_acc[n1_id],
                            ck_tile::get_slice_tile(
                                p,
                                ck_tile::sequence<0, k1_id * Traits::kBlockK1>{},
@@ -1324,12 +1326,19 @@ CK_TILE_DEVICE static void kn_fmla_fwd_splitkv_prefill_tile(
                     });
             }
 
-            gemm_1(o_acc[n1_id],
+            if constexpr (k1_loops > 1)
+            {
+                gemm_1.run(o_acc[n1_id],
                    ck_tile::get_slice_tile(
                         p,
                         ck_tile::sequence<0, (k1_loops - 1) * Traits::kBlockK1>{},
                         ck_tile::sequence<Traits::kBlockM, Traits::kBlockN0>{}),
                    v_lds_window);
+            }
+            else
+            {
+                gemm_1.run(o_acc[n1_id], p, v_lds_window);
+            }
             ck_tile::block_sync_lds();
         });
 
@@ -1860,7 +1869,7 @@ std::vector<torch::Tensor> flash_mla_fwd_prefill_with_kvcache_impl(
     const float          softmax_scale,
     const bool           is_causal)
 {
-    constexpr bool kEnablePackQkRatio = true;
+    constexpr bool kEnablePackQkRatio = false;
     //                                        dqk  dv   m0  n0   n1   #warp
     using Traits = FlashMlaPrefillKernelTrait<576, 512, 64, 64,  256, 8, kEnablePackQkRatio>;
     constexpr bool kForceOutAcc = false;
@@ -1971,19 +1980,19 @@ std::vector<torch::Tensor> flash_mla_fwd_prefill_with_kvcache_impl(
         params.stride_sp_lseacc   = softmax_lseaccum.stride(1);
     }
 
-    DISPATCH_FMLA_TYPES(
-        query.scalar_type(),
-        is_causal,
-        "fmla_fwd",
-        [&](){
-            dispatch_fmla_fwd_splictkv_prefill<Traits, scalar_t, acc_t, out_t, Is_causal>(params);
-        }();
-    );
-    // assert(is_causal == true);
-    // assert(query.scalar_type() == at::ScalarType::BFloat16);
-    // using scalar_t = ck_tile::bf16_t;
-    // using out_t = std::conditional_t<kForceOutAcc, acc_t, scalar_t>;
-    // dispatch_fmla_fwd_splictkv_prefill<Traits, scalar_t, acc_t, out_t, true>(params);
+    // DISPATCH_FMLA_TYPES(
+    //     query.scalar_type(),
+    //     is_causal,
+    //     "fmla_fwd",
+    //     [&](){
+    //         dispatch_fmla_fwd_splictkv_prefill<Traits, scalar_t, acc_t, out_t, Is_causal>(params);
+    //     }();
+    // );
+    assert(is_causal == false);
+    assert(query.scalar_type() == at::ScalarType::BFloat16);
+    using scalar_t = ck_tile::bf16_t;
+    using out_t = std::conditional_t<kForceOutAcc, acc_t, scalar_t>;
+    dispatch_fmla_fwd_splictkv_prefill<Traits, scalar_t, acc_t, out_t, false>(params);
 
     if constexpr(Traits::kEnableXQA)
     {
