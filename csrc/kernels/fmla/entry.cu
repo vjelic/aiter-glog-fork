@@ -15,9 +15,11 @@ std::vector<torch::Tensor> get_mla_metadata(
 }
 
 std::vector<torch::Tensor> flash_mla_fwd_with_kvcache_impl(
-    torch::Tensor&       query,                     // [batch size,  seqlen of q, head count of q,  head dim of qk]
-    const torch::Tensor& key_cache,                 // [block count, block size,  head count of kv, head dim of qk]
+    torch::Tensor&       query_nope,                     // [batch size,  seqlen of q, head count of q,  head dim of qk]
+    const torch::Tensor& key_nope_cache,                 // [block count, block size,  head count of kv, head dim of qk]
     const torch::Tensor& value_cache,               // [block count, block size,  head count of kv, head dim of v ]
+    torch::Tensor&       query_rope,
+    const torch::Tensor& key_rope_cache,
     const int32_t        head_size_v,
     const torch::Tensor& seqlens_k,                 // [batch size]
     const torch::Tensor& block_table,               // [batch size, max blocks per seq]
@@ -26,12 +28,12 @@ std::vector<torch::Tensor> flash_mla_fwd_with_kvcache_impl(
     const torch::Tensor& tile_scheduler_metadata,   // [num cu parts, metadata size]
     const torch::Tensor& num_splits)                // [batch size + 1]
 {
-    const int32_t seqlen_q = query.size(1);
+    const int32_t seqlen_q = query_nope.size(1);
 
-    if (seqlen_q < 32)
+    if (seqlen_q < 32) // TODO: not support nope/rope split
     {
         return flash_mla_fwd_decode_with_kvcache_impl(
-            query, key_cache, value_cache,
+            query_nope, key_nope_cache, value_cache,
             head_size_v, 
             seqlens_k, block_table,
             softmax_scale, is_causal,
@@ -40,8 +42,8 @@ std::vector<torch::Tensor> flash_mla_fwd_with_kvcache_impl(
     else
     {
         return flash_mla_fwd_prefill_with_kvcache_impl(
-            query, key_cache, value_cache,
-            head_size_v, 
+            query_nope, key_nope_cache, value_cache,
+            query_rope, key_rope_cache, head_size_v, 
             seqlens_k, block_table,
             softmax_scale, is_causal);
     }

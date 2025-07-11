@@ -29,9 +29,11 @@ def get_mla_metadata(
 
 @compile_ops("module_fmla_fwd")
 def flash_mla_fwd_with_kvcache_impl(
-    q: Tensor,
-    k_cache: Tensor,
+    q_nope: Tensor,
+    k_nope_cache: Tensor,
     v_cache: Tensor,
+    q_rope: Tensor,
+    k_rope_cache: Tensor,
     head_dim_v: int,
     cache_seqlens: Tensor,
     block_table: Tensor,
@@ -44,9 +46,11 @@ def flash_mla_fwd_with_kvcache_impl(
 
 @compile_ops("module_fmla_fwd")
 def flash_mla_fwd_prefill_with_kvcache_impl(
-    q: Tensor,
-    k_cache: Tensor,
+    q_nope: Tensor,
+    k_nope_cache: Tensor,
     v_cache: Tensor,
+    q_rope: Tensor,
+    k_rope_cache: Tensor,
     head_dim_v: int,
     cache_seqlens: Tensor,
     block_table: Tensor,
@@ -57,8 +61,10 @@ def flash_mla_fwd_prefill_with_kvcache_impl(
 
 
 def flash_mla_fwd_with_kvcache(
-    q: Tensor,
-    k_cache: Tensor,
+    q_nope: Tensor,
+    k_nope_cache: Tensor,
+    q_rope: Tensor,
+    k_rope_cache: Tensor,
     block_table: Tensor,
     cache_seqlens: Tensor,
     head_dim_v: int,
@@ -84,11 +90,16 @@ def flash_mla_fwd_with_kvcache(
         softmax_lse: (batch_size, num_heads_q, seq_len_q), torch.float32.
     """
     if softmax_scale is None:
-        softmax_scale = q.shape[-1] ** (-0.5)
+        if q_rope is None:
+            softmax_scale = q_nope.shape[-1] ** (-0.5)
+        else:
+            softmax_scale = (q_nope.shape[-1] + q_rope.shape[-1]) ** (-0.5)
     out, softmax_lse = flash_mla_fwd_with_kvcache_impl(
-        q,
-        k_cache,
-        k_cache,
+        q_nope,
+        k_nope_cache,
+        k_nope_cache,
+        q_rope,
+        k_rope_cache,
         head_dim_v,
         cache_seqlens,
         block_table,
@@ -101,8 +112,10 @@ def flash_mla_fwd_with_kvcache(
 
 
 def flash_mla_fwd_prefill_with_kvcache(
-    q: Tensor,
-    k_cache: Tensor,
+    q_nope: Tensor,
+    k_nope_cache: Tensor,
+    q_rope: Tensor,
+    k_rope_cache: Tensor,
     block_table: Tensor,
     cache_seqlens: Tensor,
     head_dim_v: int,
@@ -110,11 +123,16 @@ def flash_mla_fwd_prefill_with_kvcache(
     causal: bool = False,
 ) -> Tuple[Tensor, Tensor]:
     if softmax_scale is None:
-        softmax_scale = q.shape[-1] ** (-0.5)
+        if q_rope is None:
+            softmax_scale = q_nope.shape[-1] ** (-0.5)
+        else:
+            softmax_scale = (q_nope.shape[-1] + q_rope.shape[-1]) ** (-0.5)
     out, softmax_lse = flash_mla_fwd_prefill_with_kvcache_impl(
-        q,
-        k_cache,
-        k_cache,
+        q_nope,
+        k_nope_cache,
+        k_nope_cache,
+        q_rope,
+        k_rope_cache,
         head_dim_v,
         cache_seqlens,
         block_table,
