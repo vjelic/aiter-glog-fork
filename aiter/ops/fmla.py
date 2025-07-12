@@ -32,15 +32,16 @@ def flash_mla_fwd_with_kvcache_impl(
     q_nope: Tensor,
     k_nope_cache: Tensor,
     v_cache: Tensor,
-    q_rope: Tensor,
-    k_rope_cache: Tensor,
     head_dim_v: int,
     cache_seqlens: Tensor,
     block_table: Tensor,
     softmax_scale: float,
     causal: bool,
     tile_scheduler_metadata: Tensor,
-    num_splits: Tensor
+    num_splits: Tensor,
+    q_rope: Optional[Tensor] = None,
+    k_rope_cache: Optional[Tensor] = None,
+    out: Optional[Tensor] = None
 ) -> Tuple[Tensor, Tensor]:
     ...
 
@@ -49,13 +50,14 @@ def flash_mla_fwd_prefill_with_kvcache_impl(
     q_nope: Tensor,
     k_nope_cache: Tensor,
     v_cache: Tensor,
-    q_rope: Tensor,
-    k_rope_cache: Tensor,
     head_dim_v: int,
     cache_seqlens: Tensor,
     block_table: Tensor,
     softmax_scale: float,
     causal: bool,
+    q_rope: Optional[Tensor] = None,
+    k_rope_cache: Optional[Tensor] = None,
+    out: Optional[Tensor] = None
 ) -> Tuple[Tensor, Tensor]:
     ...
 
@@ -63,8 +65,6 @@ def flash_mla_fwd_prefill_with_kvcache_impl(
 def flash_mla_fwd_with_kvcache(
     q_nope: Tensor,
     k_nope_cache: Tensor,
-    q_rope: Tensor,
-    k_rope_cache: Tensor,
     block_table: Tensor,
     cache_seqlens: Tensor,
     head_dim_v: int,
@@ -72,6 +72,9 @@ def flash_mla_fwd_with_kvcache(
     num_splits: Tensor,
     softmax_scale: Optional[float] = None,
     causal: bool = False,
+    q_rope: Optional[Tensor] = None,
+    k_rope_cache: Optional[Tensor] = None,
+    out: Optional[Tensor] = None
 ) -> Tuple[Tensor, Tensor]:
     """
     Arguments:
@@ -94,12 +97,10 @@ def flash_mla_fwd_with_kvcache(
             softmax_scale = q_nope.shape[-1] ** (-0.5)
         else:
             softmax_scale = (q_nope.shape[-1] + q_rope.shape[-1]) ** (-0.5)
-    out, softmax_lse = flash_mla_fwd_with_kvcache_impl(
+    out_, softmax_lse = flash_mla_fwd_with_kvcache_impl(
         q_nope,
         k_nope_cache,
         k_nope_cache,
-        q_rope,
-        k_rope_cache,
         head_dim_v,
         cache_seqlens,
         block_table,
@@ -107,35 +108,40 @@ def flash_mla_fwd_with_kvcache(
         causal,
         tile_scheduler_metadata,
         num_splits,
+        q_rope,
+        k_rope_cache,
+        out
     )
-    return out, softmax_lse
+    return out_, softmax_lse
 
 
 def flash_mla_fwd_prefill_with_kvcache(
     q_nope: Tensor,
     k_nope_cache: Tensor,
-    q_rope: Tensor,
-    k_rope_cache: Tensor,
     block_table: Tensor,
     cache_seqlens: Tensor,
     head_dim_v: int,
     softmax_scale: Optional[float] = None,
     causal: bool = False,
+    q_rope: Optional[Tensor] = None,
+    k_rope_cache: Optional[Tensor] = None,
+    out: Optional[Tensor] = None,
 ) -> Tuple[Tensor, Tensor]:
     if softmax_scale is None:
         if q_rope is None:
             softmax_scale = q_nope.shape[-1] ** (-0.5)
         else:
             softmax_scale = (q_nope.shape[-1] + q_rope.shape[-1]) ** (-0.5)
-    out, softmax_lse = flash_mla_fwd_prefill_with_kvcache_impl(
+    out_, softmax_lse = flash_mla_fwd_prefill_with_kvcache_impl(
         q_nope,
         k_nope_cache,
         k_nope_cache,
-        q_rope,
-        k_rope_cache,
         head_dim_v,
         cache_seqlens,
         block_table,
         softmax_scale,
-        causal)
-    return out, softmax_lse
+        causal,
+        q_rope,
+        k_rope_cache,
+        out)
+    return out_, softmax_lse
