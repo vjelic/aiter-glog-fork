@@ -1159,7 +1159,7 @@ CK_TILE_DEVICE static void kn_fmla_fwd_splitkv_prefill_tile(
 {
     using Policy = FlashMlaPrefillPolicy<Traits, scalar_t, acc_t>;
 
-
+    static_assert(!(kIsRopeSeparate && Traits::kXqaStrategy == XqaStrategy::External));
     // 1. Allocate LDS
     //
     auto k_lds = ck_tile::make_tensor_view<ck_tile::address_space_enum::lds>(
@@ -1183,7 +1183,7 @@ CK_TILE_DEVICE static void kn_fmla_fwd_splitkv_prefill_tile(
 
     constexpr int32_t k1_loops = Traits::kBlockN0 / Traits::kBlockK1;
     constexpr int32_t n1_loops = Traits::kSizeDV / Traits::kBlockN1;
-    // static_assert(k0_loops >= 2);
+
     static_assert(k0_nope_loops >= 2);
     static_assert(k0_rope_loops >= 2);
 
@@ -1339,7 +1339,7 @@ CK_TILE_DEVICE static void kn_fmla_fwd_splitkv_prefill_tile(
         }
         else
         {
-            return k_dram_window_nope;
+            return k_dram_window_nope; // dummy object
         }
     }();
     if constexpr(kIsRopeSeparate)
@@ -1396,39 +1396,28 @@ CK_TILE_DEVICE static void kn_fmla_fwd_splitkv_prefill_tile(
     {
         const bool is_even_loop = (loop_idx % 2 == 0);
 
-        if (Policy::HandleGemm0())
+        if(Policy::HandleGemm0())
         {
             ck_tile::clear_tile(s_acc);
 
             // I. QK GEMM
             //
-            // ck_tile::array<int32_t, 2> qk_origin =
-            //     {0, is_even_loop ? 0 : Traits::kBlockK0 * (k0_loops - 1)};
-            ck_tile::array<int32_t, 2> qk_origin_nope =
-                {0, is_even_loop ? 0 : Traits::kBlockK0 * (k0_nope_loops - 1)};
-            ck_tile::array<int32_t, 2> qk_origin_rope =
-                {0, is_even_loop ? 0 : Traits::kBlockK0 * (k0_rope_loops - 1)};
-            ck_tile::array<int32_t, 2> qk_direction =
-                {0, is_even_loop ? Traits::kBlockK0 : -Traits::kBlockK0};
-            // auto q_dram_window = ck_tile::make_tile_window(
-            //     q_dram_window_.get_bottom_tensor_view(),
-            //     q_dram_window_.get_window_lengths(),
-            //     q_dram_window_.get_window_origin() + qk_origin,
-            //     Policy::MakeQRegTileDistribution());
-            // q_regs[0] = ck_tile::load_tile(q_dram_window);
-            // ck_tile::move_tile_window(q_dram_window, qk_direction);
-            // q_regs[1] = ck_tile::load_tile(q_dram_window);
+            ck_tile::array<int32_t, 2> qk_origin_nope = {
+                0, is_even_loop ? 0 : Traits::kBlockK0 * (k0_nope_loops - 1)};
+            ck_tile::array<int32_t, 2> qk_origin_rope = {
+                0, is_even_loop ? 0 : Traits::kBlockK0 * (k0_rope_loops - 1)};
+            ck_tile::array<int32_t, 2> qk_direction = {
+                0, is_even_loop ? Traits::kBlockK0 : -Traits::kBlockK0};
 
             // prefetch q_nope and k_nope
-            auto q_dram_window_nope = ck_tile::make_tile_window(
-                q_dram_window_nope_.get_bottom_tensor_view(),
-                q_dram_window_nope_.get_window_lengths(),
-                q_dram_window_nope_.get_window_origin() + qk_origin_nope,
-                Policy::MakeQRegTileDistribution());
+            auto q_dram_window_nope =
+                ck_tile::make_tile_window(q_dram_window_nope_.get_bottom_tensor_view(),
+                                          q_dram_window_nope_.get_window_lengths(),
+                                          q_dram_window_nope_.get_window_origin() + qk_origin_nope,
+                                          Policy::MakeQRegTileDistribution());
             q_regs[0] = ck_tile::load_tile(q_dram_window_nope);
             ck_tile::move_tile_window(q_dram_window_nope, qk_direction);
             q_regs[1] = ck_tile::load_tile(q_dram_window_nope);
-
 
             // Load 1st K tile from DRAM to SMEM and start loading the 2nd
             // k_dram_window moves along K0 and only moves within page block.
@@ -1438,11 +1427,10 @@ CK_TILE_DEVICE static void kn_fmla_fwd_splitkv_prefill_tile(
             ck_tile::store_tile(k_lds_window, k_block_tile);
             k_block_tile = ck_tile::load_tile(k_dram_window_nope);
 
-            // Main part of QK nope GEMM_0: conduct GEMM and load K tiles 
-            if constexpr (k0_nope_loops > 2)
+            // Main part of QK nope GEMM_0: conduct GEMM and load K tiles
+            if constexpr(k0_nope_loops > 2)
             {
-                ck_tile::static_for<0, k0_nope_loops - 2, 1>{}([&](auto k0_id)
-                {
+                ck_tile::static_for<0, k0_nope_loops - 2, 1>{}([&](auto k0_id) {
                     ck_tile::block_sync_lds();
                     gemm_0(s_acc, q_regs[k0_id % 2], k_lds_window);
                     ck_tile::block_sync_lds();
@@ -1456,31 +1444,44 @@ CK_TILE_DEVICE static void kn_fmla_fwd_splitkv_prefill_tile(
                 });
             }
 
-            // Tailing 2 tiles of QK nope GEMM_0
-            ck_tile::block_sync_lds();
-            gemm_0(s_acc, q_regs[(k0_nope_loops - 2) % 2], k_lds_window);
-
-            ck_tile::block_sync_lds();
-            ck_tile::store_tile(k_lds_window, k_block_tile);
-
-            ck_tile::block_sync_lds();
-            gemm_0(s_acc, q_regs[(k0_nope_loops - 1) % 2], k_lds_window);
-
-            if constexpr(kIsRopeSeparate)
+            if constexpr(!kIsRopeSeparate)
             {
+                // Tailing 2 tiles of QK nope GEMM_0
+                ck_tile::block_sync_lds();
+                gemm_0(s_acc, q_regs[(k0_nope_loops - 2) % 2], k_lds_window);
+                ck_tile::block_sync_lds();
+                ck_tile::store_tile(k_lds_window, k_block_tile);
+
+                ck_tile::block_sync_lds();
+                gemm_0(s_acc, q_regs[(k0_nope_loops - 1) % 2], k_lds_window);
+            }
+            else
+            {
+                // the ​​penultimate tile of QK nope gemm
+                ck_tile::block_sync_lds();
+                gemm_0(s_acc, q_regs[(k0_nope_loops - 2) % 2], k_lds_window);
                 ck_tile::block_sync_lds();
 
-                // prefetch q_rope and k_rope
+                // prefetch the first tile of QK rope gemm
                 auto q_dram_window_rope = ck_tile::make_tile_window(
                     q_dram_window_rope_.get_bottom_tensor_view(),
                     q_dram_window_rope_.get_window_lengths(),
                     q_dram_window_rope_.get_window_origin() + qk_origin_rope,
                     Policy::MakeQRegTileDistribution());
                 q_regs[(k0_nope_loops) % 2] = ck_tile::load_tile(q_dram_window_rope);
+
+                ck_tile::store_tile(k_lds_window, k_block_tile);
+                k_block_tile = ck_tile::load_tile(k_dram_window_rope);
+
+                // the last tile of QK nope gemm
+                ck_tile::block_sync_lds();
+                gemm_0(s_acc, q_regs[(k0_nope_loops - 1) % 2], k_lds_window);
+                ck_tile::block_sync_lds();
+
+                // prefetch the second tile of QK rope gemm
                 ck_tile::move_tile_window(q_dram_window_rope, qk_direction);
                 q_regs[(k0_nope_loops + 1) % 2] = ck_tile::load_tile(q_dram_window_rope);
 
-                k_block_tile = ck_tile::load_tile(k_dram_window_rope);
                 ck_tile::move_tile_window(k_dram_window_rope, qk_direction);
                 ck_tile::store_tile(k_lds_window, k_block_tile);
                 k_block_tile = ck_tile::load_tile(k_dram_window_rope);
@@ -1883,11 +1884,10 @@ __global__ void kn_fmla_fwd_splictkv_prefill(
         }
         else
         {
-            return q_dram_window_nope;
+            return q_dram_window_nope; // dummy object
         }
     }();
 
-    // auto k_dram_window = ck_tile::make_tile_window(k_dram, k_dram_window_lengths, {0, 0});
     auto k_dram_window_nope = ck_tile::make_tile_window(k_dram_nope, k_dram_window_lengths, {0, 0});
     auto k_dram_window_rope = [&] {
         if constexpr(kIsRopeSeparate)
@@ -1900,7 +1900,7 @@ __global__ void kn_fmla_fwd_splictkv_prefill(
         }
         else
         {
-            return k_dram_window_nope;
+            return k_dram_window_nope; // dummy object
         }
     }();
 
@@ -2202,45 +2202,6 @@ void dispatch_fmla_fwd_splictkv_prefill(
          default: TORCH_CHECK(false, NAME " does't support ", toString((TYPE)), "."); \
          }
 
-// #define DISPATCH_FMLA_TYPES(TYPE, IS_CAUSAL, NAME, ...)                      \
-//     switch ((TYPE))                                                          \
-//     {                                                                        \
-//         case at::ScalarType::BFloat16:                                       \
-//         {                                                                    \
-//             using scalar_t = ck_tile::bf16_t;                                \
-//             using out_t = std::conditional_t<kForceOutAcc, acc_t, scalar_t>; \
-//             if ((IS_CAUSAL))                                                 \
-//             {                                                                \
-//                 constexpr bool Is_causal = true;                             \
-//                 __VA_ARGS__;                                                 \
-//             }                                                                \
-//             else                                                             \
-//             {                                                                \
-//                 constexpr bool Is_causal = false;                            \
-//                 __VA_ARGS__;                                                 \
-//             }                                                                \
-//             break;                                                           \
-//         }                                                                    \
-//         case at::ScalarType::Half:                                           \
-//         {                                                                    \
-//             using scalar_t = ck_tile::fp16_t;                                \
-//             using out_t = std::conditional_t<kForceOutAcc, acc_t, scalar_t>; \
-//             if ((IS_CAUSAL))                                                 \
-//             {                                                                \
-//                 constexpr bool Is_causal = true;                             \
-//                 __VA_ARGS__;                                                 \
-//             }                                                                \
-//             else                                                             \
-//             {                                                                \
-//                 constexpr bool Is_causal = false;                            \
-//                 __VA_ARGS__;                                                 \
-//             }                                                                \
-//             break;                                                           \
-//         }                                                                    \
-//         default:                                                             \
-//             TORCH_CHECK(false, NAME " does't support ",                      \
-//                         toString((TYPE)), ".");                              \
-//     }
 
 int num_splits_heuristic(int batch_nhead_mblocks, int num_SMs, int num_n_blocks, int max_splits)
 {
@@ -2331,7 +2292,7 @@ std::vector<torch::Tensor> flash_mla_fwd_prefill_with_kvcache_impl(
     std::optional<torch::Tensor>& out
 )
 {
-    (void)out;
+    (void)out; // TODO: need to support out as an input parameter
     const bool is_rope_separate = query_rope.has_value() && key_rope_cache.has_value();
 
     constexpr XqaStrategy kXqaStrategy = XqaStrategy::Internal;
@@ -2373,7 +2334,10 @@ std::vector<torch::Tensor> flash_mla_fwd_prefill_with_kvcache_impl(
         seqlen_q     = seqlen_q_ori * hq_hk_ratio_ori;
         num_heads_q  = num_heads_k;
         mask_y_ratio = hq_hk_ratio_ori;
-        if constexpr(Traits::kXqaStrategy == XqaStrategy::External) {
+        if constexpr(Traits::kXqaStrategy == XqaStrategy::External)
+        {
+            // TODO: If you want to support nope/rope separate and xqa external simultaneously, you
+            // must tansform the q rope tensor.
             hq_hk_ratio = 1;
             if(num_heads_k == 1)
             {
