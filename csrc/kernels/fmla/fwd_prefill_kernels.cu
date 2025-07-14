@@ -11,7 +11,6 @@
 #include <ck_tile/ops/reduce.hpp>
 #include "block_gemm_areg_bsmem_creg.hpp"
 
-
 // =====================================================================================================================
 // Utils
 //
@@ -1265,11 +1264,6 @@ CK_TILE_DEVICE static void kn_fmla_fwd_splitkv_prefill_tile(
 
     // 4. Load Q to lds and reg
     //
-    // auto q_dram_window =
-    //     ck_tile::make_tile_window(q_dram_window_.get_bottom_tensor_view(),
-    //                               q_dram_window_.get_window_lengths(),
-    //                               q_dram_window_.get_window_origin(),
-    //                               Policy::MakeQRegTileDistribution());
     auto q_dram_window_nope =
         ck_tile::make_tile_window(q_dram_window_nope_.get_bottom_tensor_view(),
                                   q_dram_window_nope_.get_window_lengths(),
@@ -1702,13 +1696,9 @@ CK_TILE_DEVICE static void kn_fmla_fwd_splitkv_prefill_tile(
             ck_tile::block_sync_lds();
         });
 
-        if ((loop_idx + 1) < num_total_loop)  // TODO: next K
+        if ((loop_idx + 1) < num_total_loop)
         {
             // Move K to next block of column
-
-            // ck_tile::array<int32_t, 2> next_qk_origin =
-            //     {0, is_even_loop ? Traits::kBlockK0 * (k0_loops - 1) : 0};
-
             ck_tile::array<int32_t, 2> next_qk_origin_nope = {
                 0, is_even_loop ? Traits::kBlockK0 * (k0_nope_loops - 1) : 0};
             ck_tile::array<int32_t, 2> next_qk_origin_rope = {

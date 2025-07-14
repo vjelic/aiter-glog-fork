@@ -141,9 +141,6 @@ def test_flash_mla(dtype, b, s_q, mean_sk, h_q, h_kv, d, dv, page_block_size, ca
     blocked_k_nope = blocked_k[..., :dv]
     blocked_k_rope = blocked_k[..., dv:]
     blocked_v = blocked_k_nope
-    # import pdb
-    # pdb.set_trace()
-
     # tile_scheduler_metadata, num_splits = aiter.get_mla_metadata(
     #     cache_seqlens, s_q * h_q // h_kv, h_kv
     # )
@@ -163,7 +160,6 @@ def test_flash_mla(dtype, b, s_q, mean_sk, h_q, h_kv, d, dv, page_block_size, ca
         #     num_splits,
         #     causal=causal,
         # )
-        # return aiter.flash_mla_fwd_prefill_with_kvcache(q, blocked_k, block_table, cache_seqlens, dv, causal=causal)
         if nope_rope_separate:
             return aiter.flash_mla_fwd_prefill_with_kvcache(q_nope, blocked_k_nope, block_table, cache_seqlens, dv, causal=causal, q_rope=q_rope, k_rope_cache=blocked_k_rope)
         else:
@@ -237,10 +233,10 @@ if __name__ == "__main__":
     # ):
     #     test_flash_mla(dtype, b, s, s, h_q, h_kv, d, dv, page_block_size, causal, varlen, False, True)
 
-    # rope/nope separate
+    # rope/nope separation
     # test_flash_mla(torch.bfloat16, 32, 6001, 6001, 1, 1, d, dv, 64, True, False, True, True, True)
     # test_flash_mla(torch.bfloat16, 32, 3, 6001, 16, 1, d, dv, 64, True, False, True, True, True)
-    # rope/nope no-separate
+    # rope/nope no-separation
     # test_flash_mla(torch.bfloat16, 32, 6001, 6001, 1, 1, d, dv, 64, True, False, False, True, True)
     # test_flash_mla(torch.bfloat16, 32, 3, 6001, 16, 1, d, dv, 64, True, False, False, True, True)
 

@@ -29,9 +29,9 @@ std::vector<torch::Tensor> flash_mla_fwd_with_kvcache_impl(
     const std::optional<torch::Tensor>& key_rope_cache,
     std::optional<torch::Tensor>& out)
 {
-    const int32_t seqlen_q = query_nope.size(1);
-
-    if(seqlen_q < 32) // TODO: not support nope/rope split
+    const int32_t seqlen_q      = query_nope.size(1);
+    const bool is_rope_separate = query_rope.has_value() && key_rope_cache.has_value();
+    if(seqlen_q < 32 && !is_rope_separate) // TODO: not support nope/rope split
     {
         return flash_mla_fwd_decode_with_kvcache_impl(query_nope,
                                                       key_nope_cache,
