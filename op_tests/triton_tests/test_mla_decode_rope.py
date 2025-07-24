@@ -39,7 +39,7 @@ def input_helper(
 
     cu_seqlens = torch.cat(
         [
-            torch.tensor([0], dtype=torch.int32),
+            torch.tensor([0], dtype=torch.int32, device=device),
             seqlens.cumsum(dim=0, dtype=torch.int32),
         ]
     )
