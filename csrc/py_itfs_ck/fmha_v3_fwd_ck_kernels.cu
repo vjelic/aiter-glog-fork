@@ -325,8 +325,13 @@ struct BlockFmhaPipelineQRKSVSDefaultPolicy
         constexpr auto v_block_outer_dstr_encoding =
             tile_distribution_encoding<sequence<MWarp>,
                                        tuple<sequence<NIterPerWarp, NWarp>, sequence<KIterPerWarp>>,
+#if USE_LOAD_TRANSPOSE_V
+                                       tuple<sequence<0, 1>>,
+                                       tuple<sequence<0, 1>>,
+#else
                                        tuple<sequence<1, 0>>,
                                        tuple<sequence<1, 0>>,
+#endif
                                        sequence<1, 2>,
                                        sequence<0, 0>>{};
 
@@ -915,7 +920,7 @@ struct BlockFmhaPipelineQRKSVS
                                  Policy::template MakeVRegTileDistribution<Problem>()))) v_tile;
 #else
             decltype(load_tile(
-                make_tile_window(v_lds_window_store(number<0>{}),
+                make_tile_window(v_lds_window_load(number<0>{}),
                                  Policy::template MakeVRegTileDistribution<Problem>()))) v_tile;
 #endif
         } kv_tile;
@@ -1157,13 +1162,17 @@ struct BlockFmhaPipelineQRKSVS
         };
 
         auto V_lds_load = [&](auto v_lds_read_idx) {
-            /// TODO: use
+#if USE_LOAD_TRANSPOSE_V
+            auto v_lds_window_for_load =
+                make_tile_window(v_lds_window_store(v_lds_read_idx),
+                                 Policy::template MakeVRegTileDistribution<Problem>());
+
+            kv_tile.v_tile = load_tile_transpose(v_lds_window_for_load);
+#else
             auto v_lds_window_for_load =
                 make_tile_window(v_lds_window_load(v_lds_read_idx),
                                  Policy::template MakeVRegTileDistribution<Problem>());
-#if USE_LOAD_TRANSPOSE_V
-            kv_tile.v_tile = load_tile_transpose(v_lds_window_for_load);
-#else
+
             kv_tile.v_tile = load_tile(v_lds_window_for_load);
 #endif
         };
