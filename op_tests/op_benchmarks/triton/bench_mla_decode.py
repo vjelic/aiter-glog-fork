@@ -5,7 +5,6 @@ from op_tests.op_benchmarks.triton.utils.benchmark_utils import (
     get_available_models,
     print_vgpr,
 )
-from op_tests.triton_tests.utils.rotary_embedding import DeepseekScalingRotaryEmbedding
 from aiter.ops.triton.mla_decode_rope import decode_attention_fwd_grouped_rope
 import torch
 import argparse
