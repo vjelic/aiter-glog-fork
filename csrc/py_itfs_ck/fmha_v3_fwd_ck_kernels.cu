@@ -182,6 +182,16 @@ struct BlockFmhaPipelineQRKSVSDefaultPolicy
     }
 
     template <typename Problem>
+    CK_TILE_DEVICE static constexpr auto MakeQRegTileDistribution()
+    {
+        using namespace ck_tile;
+
+        using BlockGemm = remove_cvref_t<decltype(GetQKBlockGemm<Problem>())>;
+
+        return BlockGemm::MakeABlockTileDistribution();
+    }
+
+    template <typename Problem>
     CK_TILE_DEVICE static constexpr auto MakeKRegTileDistribution()
     {
         using namespace ck_tile;
@@ -189,119 +199,6 @@ struct BlockFmhaPipelineQRKSVSDefaultPolicy
         using BlockGemm = remove_cvref_t<decltype(GetQKBlockGemm<Problem>())>;
 
         return BlockGemm::MakeBBlockTileDistribution();
-    }
-
-    template <typename Problem>
-    CK_TILE_DEVICE static constexpr auto GetQKBlockGemm()
-    {
-        using namespace ck_tile;
-
-        using GemmProblem =
-            BlockGemmProblem<typename Problem::QDataType,
-                             typename Problem::KDataType,
-                             typename Problem::SaccDataType,
-                             Problem::kNumGemm0Warps * get_warp_size(),
-                             TileGemmShape<sequence<Problem::BlockFmhaShape::kM0,
-                                                    Problem::BlockFmhaShape::kN0,
-                                                    Problem::BlockFmhaShape::kK0>,
-                                           typename Problem::BlockFmhaShape::Gemm0BlockWarps,
-                                           typename Problem::BlockFmhaShape::Gemm0WarpTile>>;
-
-        constexpr auto warp_gemm = []() {
-            constexpr index_t WarpGemmM = Problem::BlockFmhaShape::Gemm0WarpTile::at(number<0>{});
-            static_assert(WarpGemmM == 4 || WarpGemmM == 16 || WarpGemmM == 32);
-
-            if constexpr(std::is_same_v<typename Problem::QDataType, half_t> &&
-                         std::is_same_v<typename Problem::KDataType, half_t> &&
-                         std::is_same_v<typename Problem::SaccDataType, float>)
-            {
-                if constexpr(WarpGemmM == 32)
-                    return WarpGemmMfmaF16F16F32M32N32K16SwizzleBTransposedCDistribution{};
-                else if constexpr(WarpGemmM == 16)
-                    return WarpGemmMfmaF16F16F32M16N16K16TransposedCDistribution{};
-                else // WarpGemmM == 4
-                    return WarpGemmMfmaF16F16F32M4N64K16{};
-            }
-            else if constexpr(std::is_same_v<typename Problem::QDataType, bf16_t> &&
-                              std::is_same_v<typename Problem::KDataType, bf16_t> &&
-                              std::is_same_v<typename Problem::SaccDataType, float>)
-            {
-                if constexpr(WarpGemmM == 32)
-                    return WarpGemmMfmaBf16Bf16F32M32N32K16SwizzleBTransposedCDistribution{};
-                else if constexpr(WarpGemmM == 16)
-                    return WarpGemmMfmaBf16Bf16F32M16N16K16TransposedCDistribution{};
-                else // WarpGemmM == 4
-                    return WarpGemmMfmaBf16Bf16F32M4N64K16{};
-            }
-        }();
-
-        using BlockGemmPolicy = aiter::BlockGemmARegBRegCRegV2CustomPolicy<
-            typename Problem::QDataType,
-            typename Problem::KDataType,
-            typename Problem::SaccDataType,
-            typename Problem::BlockFmhaShape::Gemm0BlockWarps,
-            decltype(warp_gemm)>;
-
-        return aiter::BlockGemmARegBRegCRegV2<GemmProblem, BlockGemmPolicy>{};
-    }
-
-    template <typename Problem>
-    CK_TILE_DEVICE static constexpr auto GetPVBlockGemm()
-    {
-        using namespace ck_tile;
-
-        using GemmProblem =
-            BlockGemmProblem<typename Problem::PDataType,
-                             typename Problem::VDataType,
-                             typename Problem::OaccDataType,
-                             Problem::kNumGemm1Warps * get_warp_size(),
-                             TileGemmShape<sequence<Problem::BlockFmhaShape::kM0,
-                                                    Problem::BlockFmhaShape::kN1,
-                                                    Problem::BlockFmhaShape::kK1>,
-                                           typename Problem::BlockFmhaShape::Gemm1BlockWarps,
-                                           typename Problem::BlockFmhaShape::Gemm1WarpTile>>;
-
-        auto warp_gemm = [&]() {
-            if constexpr(std::is_same_v<typename Problem::KDataType, fp8_t> &&
-                         std::is_same_v<typename Problem::VDataType, fp8_t> &&
-                         std::is_same_v<typename Problem::OaccDataType, float>)
-            {
-                return WarpGemmMfmaFp8Fp8F32M32N32K16SwizzleBTransposedCDistribution<>{};
-                // return
-                // WarpGemmImpl<WarpGemmAtrributeMfmaTransposedCDistribution_SwizzleB<
-                //         WarpGemmAttributeMfmaImpl_f32_32x32x16_f8_base<typename
-                //         Problem::PDataType, typename Problem::VDataType>>>{};
-            }
-            else
-            {
-                return WarpGemmMfmaDispatcher<
-                    typename Problem::PDataType,
-                    typename Problem::VDataType,
-                    typename Problem::OaccDataType,
-                    Problem::BlockFmhaShape::Gemm1WarpTile::at(number<0>{}),
-                    Problem::BlockFmhaShape::Gemm1WarpTile::at(number<1>{}),
-                    Problem::BlockFmhaShape::Gemm1WarpTile::at(number<2>{}),
-                    true,
-                    false,
-                    false,
-#if USE_LOAD_TRANSPOSE_V
-                    WGAttrNumAccessEnum::Double
-#else
-                    WGAttrNumAccessEnum::Single
-#endif
-                    >{};
-            }
-        }();
-
-        using WarpGemm = remove_cvref_t<decltype(warp_gemm)>;
-
-        using BlockGemmPolicy = aiter::BlockGemmARegBRegCRegV2CustomPolicy<
-            typename Problem::PDataType,
-            typename Problem::VDataType,
-            typename Problem::OaccDataType,
-            typename Problem::BlockFmhaShape::Gemm1BlockWarps,
-            WarpGemm>;
-        return aiter::BlockGemmARegBRegCRegV2<GemmProblem, BlockGemmPolicy>{};
     }
 
     template <typename Problem>
@@ -347,6 +244,89 @@ struct BlockFmhaPipelineQRKSVSDefaultPolicy
         constexpr auto v_block_dstr = make_static_tile_distribution(v_block_dstr_encode);
 #endif
         return v_block_dstr;
+    }
+
+    template <typename Problem>
+    CK_TILE_DEVICE static constexpr auto GetQKBlockGemm()
+    {
+        using namespace ck_tile;
+
+        using GemmProblem =
+            BlockGemmProblem<typename Problem::QDataType,
+                             typename Problem::KDataType,
+                             typename Problem::SaccDataType,
+                             Problem::kNumGemm0Warps * get_warp_size(),
+                             TileGemmShape<sequence<Problem::BlockFmhaShape::kM0,
+                                                    Problem::BlockFmhaShape::kN0,
+                                                    Problem::BlockFmhaShape::kK0>,
+                                           typename Problem::BlockFmhaShape::Gemm0BlockWarps,
+                                           typename Problem::BlockFmhaShape::Gemm0WarpTile>>;
+
+        constexpr auto warp_gemm = []() {
+            if constexpr(std::is_same_v<typename Problem::QDataType, half_t> &&
+                         std::is_same_v<typename Problem::KDataType, half_t> &&
+                         std::is_same_v<typename Problem::SaccDataType, float>)
+            {
+                return WarpGemmMfmaF16F16F32M32N32K16SwizzleBTransposedCDistribution{};
+            }
+            else if constexpr(std::is_same_v<typename Problem::QDataType, bf16_t> &&
+                              std::is_same_v<typename Problem::KDataType, bf16_t> &&
+                              std::is_same_v<typename Problem::SaccDataType, float>)
+            {
+                return WarpGemmMfmaBf16Bf16F32M32N32K16SwizzleBTransposedCDistribution{};
+            }
+        }();
+
+        using BlockGemmPolicy = aiter::BlockGemmARegBRegCRegV2CustomPolicy<
+            typename Problem::QDataType,
+            typename Problem::KDataType,
+            typename Problem::SaccDataType,
+            typename Problem::BlockFmhaShape::Gemm0BlockWarps,
+            decltype(warp_gemm)>;
+
+        return aiter::BlockGemmARegBRegCRegV2<GemmProblem, BlockGemmPolicy>{};
+    }
+
+    template <typename Problem>
+    CK_TILE_DEVICE static constexpr auto GetPVBlockGemm()
+    {
+        using namespace ck_tile;
+
+        using GemmProblem =
+            BlockGemmProblem<typename Problem::PDataType,
+                             typename Problem::VDataType,
+                             typename Problem::OaccDataType,
+                             Problem::kNumGemm1Warps * get_warp_size(),
+                             TileGemmShape<sequence<Problem::BlockFmhaShape::kM0,
+                                                    Problem::BlockFmhaShape::kN1,
+                                                    Problem::BlockFmhaShape::kK1>,
+                                           typename Problem::BlockFmhaShape::Gemm1BlockWarps,
+                                           typename Problem::BlockFmhaShape::Gemm1WarpTile>>;
+
+        using WarpGemm =
+            WarpGemmMfmaDispatcher<typename Problem::PDataType,
+                                   typename Problem::VDataType,
+                                   typename Problem::OaccDataType,
+                                   Problem::BlockFmhaShape::Gemm1WarpTile::at(number<0>{}),
+                                   Problem::BlockFmhaShape::Gemm1WarpTile::at(number<1>{}),
+                                   Problem::BlockFmhaShape::Gemm1WarpTile::at(number<2>{}),
+                                   true,
+                                   false,
+                                   false,
+#if USE_LOAD_TRANSPOSE_V
+                                   WGAttrNumAccessEnum::Double
+#else
+                                   WGAttrNumAccessEnum::Single
+#endif
+                                   >;
+
+        using BlockGemmPolicy = aiter::BlockGemmARegBRegCRegV2CustomPolicy<
+            typename Problem::PDataType,
+            typename Problem::VDataType,
+            typename Problem::OaccDataType,
+            typename Problem::BlockFmhaShape::Gemm1BlockWarps,
+            WarpGemm>;
+        return aiter::BlockGemmARegBRegCRegV2<GemmProblem, BlockGemmPolicy>{};
     }
 
 #if USE_INLINE_ASM_ASYNC_LOAD_K
@@ -540,7 +520,7 @@ struct BlockFmhaPipelineQRKSVSDefaultPolicy
 
         return v_lds_block_desc1;
     }
-
+#if !USE_LOAD_TRANSPOSE_V
     template <typename Problem>
     CK_TILE_DEVICE static constexpr auto MakeVLdsLoadBlockDescriptor()
     {
@@ -557,13 +537,14 @@ struct BlockFmhaPipelineQRKSVSDefaultPolicy
 
         return v_lds_block_desc_1;
     }
-
+#endif
     template <typename Problem>
     CK_TILE_HOST_DEVICE static constexpr ck_tile::index_t GetSmemSize()
     {
+#if !USE_LOAD_TRANSPOSE_V
         static_assert(MakeVLdsLoadBlockDescriptor<Problem>().get_element_space_size() * 2 <=
                       GetSmemSizeKV<Problem>());
-
+#endif
         return 4 * GetSmemSizeKV<Problem>();
     }
 };
@@ -893,12 +874,13 @@ struct BlockFmhaPipelineQRKSVS
                                      Policy::template MakeVLdsStoreBlockDescriptor<Problem>())),
                                  2>
             v_lds_window_store;
+#if !USE_LOAD_TRANSPOSE_V
         statically_indexed_array<decltype(make_lds_tile_window<VDataType>(
                                      nullptr,
                                      Policy::template MakeVLdsLoadBlockDescriptor<Problem>())),
                                  2>
             v_lds_window_load;
-
+#endif
         decltype(make_static_distributed_tensor<QDataType>(
             Policy::template MakeQRegTileDistribution<Problem>())) q_tile;
 
@@ -961,11 +943,12 @@ struct BlockFmhaPipelineQRKSVS
                 static_cast<char*>(smem_ptr) +
                     (idx + 2) * Policy::template GetSmemSizeKV<Problem>(),
                 Policy::template MakeVLdsStoreBlockDescriptor<Problem>());
-
+#if !USE_LOAD_TRANSPOSE_V
             v_lds_window_load(idx) = make_lds_tile_window<VDataType>(
                 static_cast<char*>(smem_ptr) +
                     (idx + 2) * Policy::template GetSmemSizeKV<Problem>(),
                 Policy::template MakeVLdsLoadBlockDescriptor<Problem>());
+#endif
         });
 
         {
