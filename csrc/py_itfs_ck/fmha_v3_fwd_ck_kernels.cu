@@ -31,6 +31,7 @@
     __builtin_amdgcn_sched_barrier(0);
 
 #define USE_INLINE_ASM_ASYNC_LOAD_K 1
+#define USE_LOAD_TRANSPOSE_V 0
 
 namespace aiter {
 
@@ -191,16 +192,6 @@ struct BlockFmhaPipelineQRKSVSDefaultPolicy
     }
 
     template <typename Problem>
-    CK_TILE_DEVICE static constexpr auto MakeVRegTileDistribution()
-    {
-        using namespace ck_tile;
-
-        using BlockGemm = remove_cvref_t<decltype(GetPVBlockGemm<Problem>())>;
-
-        return BlockGemm::MakeBBlockTileDistribution();
-    }
-
-    template <typename Problem>
     CK_TILE_DEVICE static constexpr auto GetQKBlockGemm()
     {
         using namespace ck_tile;
@@ -290,7 +281,15 @@ struct BlockFmhaPipelineQRKSVSDefaultPolicy
                     Problem::BlockFmhaShape::Gemm1WarpTile::at(number<0>{}),
                     Problem::BlockFmhaShape::Gemm1WarpTile::at(number<1>{}),
                     Problem::BlockFmhaShape::Gemm1WarpTile::at(number<2>{}),
-                    true>{};
+                    true,
+                    false,
+                    false,
+#if USE_LOAD_TRANSPOSE_V
+                    WGAttrNumAccessEnum::Double
+#else
+                    WGAttrNumAccessEnum::Single
+#endif
+                    >{};
             }
         }();
 
@@ -304,6 +303,47 @@ struct BlockFmhaPipelineQRKSVSDefaultPolicy
             WarpGemm>;
         return aiter::BlockGemmARegBRegCRegV2<GemmProblem, BlockGemmPolicy>{};
     }
+
+    template <typename Problem>
+    CK_TILE_DEVICE static constexpr auto MakeVRegTileDistribution()
+    {
+        using namespace ck_tile;
+
+        using BlockGemm       = remove_cvref_t<decltype(GetPVBlockGemm<Problem>())>;
+        constexpr auto config = BlockGemm::Policy::template GetWarpGemmMWarpNWarp<Problem>();
+        using WarpGemm        = remove_cvref_t<decltype(config.template at<0>())>;
+
+        constexpr index_t MWarp = Problem::BlockFmhaShape::Gemm1BlockWarps::at(number<0>{});
+        constexpr index_t NWarp = Problem::BlockFmhaShape::Gemm1BlockWarps::at(number<1>{});
+
+        constexpr index_t kNPerBlock = Problem::BlockFmhaShape::kN1;
+        constexpr index_t kKPerBlock = Problem::BlockFmhaShape::kK1;
+
+        constexpr index_t NIterPerWarp = kNPerBlock / (NWarp * WarpGemm::kN);
+        constexpr index_t KIterPerWarp = kKPerBlock / WarpGemm::kK;
+
+        constexpr auto v_block_outer_dstr_encoding =
+            tile_distribution_encoding<sequence<MWarp>,
+                                       tuple<sequence<NIterPerWarp, NWarp>, sequence<KIterPerWarp>>,
+                                       tuple<sequence<1, 0>>,
+                                       tuple<sequence<1, 0>>,
+                                       sequence<1, 2>,
+                                       sequence<0, 0>>{};
+
+        constexpr auto v_block_dstr_encode = ck_tile::detail::make_embed_tile_distribution_encoding(
+            v_block_outer_dstr_encoding, typename WarpGemm::BWarpDstrEncoding{});
+
+#if USE_LOAD_TRANSPOSE_V
+        constexpr auto v_block_dstr =
+            make_static_tile_distribution(typename InputTileDistributionTraits<
+                                          decltype(v_block_dstr_encode),
+                                          typename Problem::VDataType>::TransposedDstrEncode{});
+#else
+        constexpr auto v_block_dstr = make_static_tile_distribution(v_block_dstr_encode);
+#endif
+        return v_block_dstr;
+    }
+
 #if USE_INLINE_ASM_ASYNC_LOAD_K
     template <typename Problem, ck_tile::index_t IBuf = 0>
     CK_TILE_DEVICE static constexpr auto
@@ -869,9 +909,15 @@ struct BlockFmhaPipelineQRKSVS
                 make_tile_window(k_lds_window(number<0>{}),
                                  Policy::template MakeKRegTileDistribution<Problem>()))) k_tile;
 #endif
-            decltype(load_tile(
-                make_tile_window(v_lds_window_load(number<0>{}),
+#if USE_LOAD_TRANSPOSE_V
+            decltype(load_tile_transpose(
+                make_tile_window(v_lds_window_store(number<0>{}),
                                  Policy::template MakeVRegTileDistribution<Problem>()))) v_tile;
+#else
+            decltype(load_tile(
+                make_tile_window(v_lds_window_store(number<0>{}),
+                                 Policy::template MakeVRegTileDistribution<Problem>()))) v_tile;
+#endif
         } kv_tile;
 
         union sp_compute_type
@@ -1115,8 +1161,11 @@ struct BlockFmhaPipelineQRKSVS
             auto v_lds_window_for_load =
                 make_tile_window(v_lds_window_load(v_lds_read_idx),
                                  Policy::template MakeVRegTileDistribution<Problem>());
-
+#if USE_LOAD_TRANSPOSE_V
+            kv_tile.v_tile = load_tile_transpose(v_lds_window_for_load);
+#else
             kv_tile.v_tile = load_tile(v_lds_window_for_load);
+#endif
         };
 
         static const auto get_validated_m = [](SMPLComputeDataType raw_m) {
