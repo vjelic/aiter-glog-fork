@@ -157,8 +157,8 @@ struct BlockFmhaPipelineQRKSVSDefaultPolicy
         static_assert(std::is_same_v<VLayout, ck_tile::tensor_layout::gemm::RowMajor>);
 
         constexpr index_t kBlockSize = Problem::kBlockSize;
-        constexpr index_t kNPerBlock = Problem::BlockFmhaShape::kN1;
         constexpr index_t kKPerBlock = Problem::BlockFmhaShape::kK1;
+        constexpr index_t kNPerBlock = Problem::BlockFmhaShape::kN1;
 
         constexpr index_t MaxVectorSize = GetAlignmentV<Problem>();
         constexpr index_t ElemPerThread = (kNPerBlock * kKPerBlock) / kBlockSize;
@@ -172,9 +172,9 @@ struct BlockFmhaPipelineQRKSVSDefaultPolicy
 
         return make_static_tile_distribution(
             tile_distribution_encoding<sequence<1>,
-                                       tuple<sequence<NThreads, NPerThread>,
-                                             sequence<NumWarps, KPerThread, KThreadPerWarp>>,
-                                       tuple<sequence<2>, sequence<1, 2>>,
+                                       tuple<sequence<NumWarps, KPerThread, KThreadPerWarp>,
+                                             sequence<NThreads, NPerThread>>,
+                                       tuple<sequence<1>, sequence<2, 1>>,
                                        tuple<sequence<0>, sequence<0, 2>>,
                                        sequence<1, 2>,
                                        sequence<1, 1>>{});
@@ -467,8 +467,58 @@ struct BlockFmhaPipelineQRKSVSDefaultPolicy
 #endif
 
     template <typename Problem>
+    CK_TILE_DEVICE static constexpr auto MakeVLdsStoreBlockDescriptor()
+    {
+        using namespace ck_tile;
+
+        // TODO: this is for 3d layout
+        using VDataType = remove_cvref_t<typename Problem::VDataType>;
+
+        constexpr index_t kKPerBlock = Problem::BlockFmhaShape::kK1;
+        constexpr index_t kNPerBlock = Problem::BlockFmhaShape::kN1;
+        constexpr index_t kNPack     = 16 / sizeof(VDataType);
+        constexpr index_t VectorSize = 16 / sizeof(VDataType);
+
+        constexpr auto v_lds_block_desc_0 = make_naive_tensor_descriptor(
+            make_tuple(number<kNPerBlock / kNPack>{}, number<kKPerBlock>{}, number<kNPack>{}),
+            make_tuple(number<(kKPerBlock + 1) * kNPack>{}, number<kNPack>{}, number<1>{}),
+            number<VectorSize>{},
+            number<1>{});
+
+        constexpr auto v_lds_block_desc1 = transform_tensor_descriptor(
+            v_lds_block_desc_0,
+            make_tuple(
+                make_pass_through_transform(number<kKPerBlock>{}),
+                make_merge_transform(make_tuple(number<kNPerBlock / kNPack>{}, number<kNPack>{}))),
+            make_tuple(sequence<1>{}, sequence<0, 2>{}),
+            make_tuple(sequence<0>{}, sequence<1>{}));
+
+        return v_lds_block_desc1;
+    }
+
+    template <typename Problem>
+    CK_TILE_DEVICE static constexpr auto MakeVLdsLoadBlockDescriptor()
+    {
+        using namespace ck_tile;
+
+        constexpr auto v_lds_block_desc_0 = MakeVLdsStoreBlockDescriptor<Problem>();
+
+        constexpr auto v_lds_block_desc_1 = transform_tensor_descriptor(
+            v_lds_block_desc_0,
+            make_tuple(make_pass_through_transform(v_lds_block_desc_0.get_length(number<0>{})),
+                       make_pass_through_transform(v_lds_block_desc_0.get_length(number<1>{}))),
+            make_tuple(sequence<1>{}, sequence<0>{}),
+            make_tuple(sequence<0>{}, sequence<1>{}));
+
+        return v_lds_block_desc_1;
+    }
+
+    template <typename Problem>
     CK_TILE_HOST_DEVICE static constexpr ck_tile::index_t GetSmemSize()
     {
+        static_assert(MakeVLdsLoadBlockDescriptor<Problem>().get_element_space_size() * 2 <=
+                      GetSmemSizeKV<Problem>());
+
         return 4 * GetSmemSizeKV<Problem>();
     }
 };
@@ -728,8 +778,8 @@ struct BlockFmhaPipelineQRKSVS
         static_assert(kM0 == QDramBlockWindowTmp{}.get_window_lengths()[number<0>{}] &&
                           kN0 == KDramBlockWindowTmp{}.get_window_lengths()[number<0>{}] &&
                           kK0 == KDramBlockWindowTmp{}.get_window_lengths()[number<1>{}] &&
-                          kN1 == VDramBlockWindowTmp{}.get_window_lengths()[number<0>{}] &&
-                          kK1 == VDramBlockWindowTmp{}.get_window_lengths()[number<1>{}] &&
+                          kK1 == VDramBlockWindowTmp{}.get_window_lengths()[number<0>{}] &&
+                          kN1 == VDramBlockWindowTmp{}.get_window_lengths()[number<1>{}] &&
                           kM0 == BiasDramBlockWindowTmp{}.get_window_lengths()[number<0>{}] &&
                           kN0 == BiasDramBlockWindowTmp{}.get_window_lengths()[number<1>{}],
                       "wrong!");
@@ -794,9 +844,15 @@ struct BlockFmhaPipelineQRKSVS
             k_lds_window;
 #endif
         statically_indexed_array<decltype(make_lds_tile_window<VDataType>(
-                                     nullptr, Policy::template MakeVLdsBlockDescriptor<Problem>())),
+                                     nullptr,
+                                     Policy::template MakeVLdsStoreBlockDescriptor<Problem>())),
                                  2>
-            v_lds_window;
+            v_lds_window_store;
+        statically_indexed_array<decltype(make_lds_tile_window<VDataType>(
+                                     nullptr,
+                                     Policy::template MakeVLdsLoadBlockDescriptor<Problem>())),
+                                 2>
+            v_lds_window_load;
 
         decltype(make_static_distributed_tensor<QDataType>(
             Policy::template MakeQRegTileDistribution<Problem>())) q_tile;
@@ -814,7 +870,7 @@ struct BlockFmhaPipelineQRKSVS
                                  Policy::template MakeKRegTileDistribution<Problem>()))) k_tile;
 #endif
             decltype(load_tile(
-                make_tile_window(v_lds_window(number<0>{}),
+                make_tile_window(v_lds_window_load(number<0>{}),
                                  Policy::template MakeVRegTileDistribution<Problem>()))) v_tile;
         } kv_tile;
 
@@ -850,10 +906,15 @@ struct BlockFmhaPipelineQRKSVS
         });
 #endif
         static_for<0, 2, 1>{}([&](auto idx) {
-            v_lds_window(idx) = make_lds_tile_window<VDataType>(
+            v_lds_window_store(idx) = make_lds_tile_window<VDataType>(
                 static_cast<char*>(smem_ptr) +
                     (idx + 2) * Policy::template GetSmemSizeKV<Problem>(),
-                Policy::template MakeVLdsBlockDescriptor<Problem>());
+                Policy::template MakeVLdsStoreBlockDescriptor<Problem>());
+
+            v_lds_window_load(idx) = make_lds_tile_window<VDataType>(
+                static_cast<char*>(smem_ptr) +
+                    (idx + 2) * Policy::template GetSmemSizeKV<Problem>(),
+                Policy::template MakeVLdsLoadBlockDescriptor<Problem>());
         });
 
         {
@@ -913,7 +974,7 @@ struct BlockFmhaPipelineQRKSVS
         auto v_dram_window =
             make_tile_window(v_dram_block_window_tmp.get_bottom_tensor_view(),
                              v_dram_block_window_tmp.get_window_lengths(),
-                             {0, seqlen_k_start}, // TODO: hdim split?
+                             {seqlen_k_start, 0}, // TODO: hdim split?
                              Policy::template MakeVDramTileDistribution<Problem>());
 
         // prefetch K tile
@@ -1040,17 +1101,20 @@ struct BlockFmhaPipelineQRKSVS
             const auto v_tile = load_tile(v_dram_window);
             __builtin_amdgcn_sched_barrier(0);
 
-            store_tile(v_lds_window(v_lds_write_idx), tile_elementwise_in(v_element_func, v_tile));
+            store_tile(v_lds_window_store(v_lds_write_idx),
+                       tile_elementwise_in(v_element_func, v_tile));
 
             /// FIXME: use the future-predicting method to move the window
-            move_tile_window(v_dram_window, {0, kK1});
+            move_tile_window(v_dram_window, {kK1, 0});
 
             s_waitcnt_lgkmcnt<0>();
         };
 
         auto V_lds_load = [&](auto v_lds_read_idx) {
-            auto v_lds_window_for_load = make_tile_window(
-                v_lds_window(v_lds_read_idx), Policy::template MakeVRegTileDistribution<Problem>());
+            /// TODO: use
+            auto v_lds_window_for_load =
+                make_tile_window(v_lds_window_load(v_lds_read_idx),
+                                 Policy::template MakeVRegTileDistribution<Problem>());
 
             kv_tile.v_tile = load_tile(v_lds_window_for_load);
         };
@@ -2681,18 +2745,11 @@ struct FmhaFwdKernel
                 number<FmhaPipeline::kAlignmentV>{},
                 number<1>{});
 
-            const auto v_dram_transposed =
-                transform_tensor_view(v_dram_naive,
-                                      make_tuple(make_pass_through_transform(kargs.hdim_v),
-                                                 make_pass_through_transform(kargs.seqlen_k)),
-                                      make_tuple(sequence<1>{}, sequence<0>{}),
-                                      make_tuple(sequence<0>{}, sequence<1>{}));
-
             constexpr bool kPadSeqLenK_ = kUseAsyncCopy ? kPadSeqLenK : false;
             return pad_tensor_view(
-                v_dram_transposed,
-                make_tuple(number<FmhaPipeline::kN1>{}, number<FmhaPipeline::kK1>{}),
-                sequence<kPadHeadDimV, kPadSeqLenK_>{});
+                v_dram_naive,
+                make_tuple(number<FmhaPipeline::kK1>{}, number<FmhaPipeline::kN1>{}),
+                sequence<kPadSeqLenK_, kPadHeadDimV>{});
         }();
 
         auto q_dram_window = make_tile_window(
@@ -2711,8 +2768,8 @@ struct FmhaFwdKernel
 
         auto v_dram_window =
             make_tile_window(v_dram,
-                             make_tuple(number<FmhaPipeline::kN1>{}, number<FmhaPipeline::kK1>{}),
-                             {i_n1, 0});
+                             make_tuple(number<FmhaPipeline::kK1>{}, number<FmhaPipeline::kN1>{}),
+                             {0, i_n1});
         /// FIXME: Before C++20, capturing structured binding variables are not supported. Remove
         /// following copy capture of the 'i_nhead' if in C++20
         const auto bias_dram_window = [&, i_nhead_ = i_nhead]() {
