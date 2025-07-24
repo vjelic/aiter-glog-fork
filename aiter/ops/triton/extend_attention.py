@@ -310,6 +310,7 @@ def _get_config(HEAD_SIZE, dtype):
             config = json.load(file)
         _get_config._config_dict = config
 
+    # HEAD_SIZE 192 = 128 head and 64 pe head dim
     if (HEAD_SIZE > 192) or dtype == torch.float32:
         return _get_config._config_dict["large_head_or_fp32"]
 
