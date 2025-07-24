@@ -9,76 +9,8 @@ from op_tests.triton_tests.utils.rotary_embedding import DeepseekScalingRotaryEm
 from aiter.ops.triton.mla_decode_rope import decode_attention_fwd_grouped_rope
 import torch
 import argparse
-
-
-def is_hip():
-    return triton.runtime.driver.active.get_current_target().backend == "hip"
-
-
-is_hip_ = is_hip()
-
-
-def input_helper(
-    B,
-    H,
-    S,
-    kv_lora_rank,
-    rotary_dim,
-    qk_rope_head_dim,
-    num_kv_splits,
-    dtype,
-    device,
-    rope_base=10,
-    rope_max_seq_len=16324,
-    rope_scaling=1.0,
-    equal_seqlens=False,
-    is_neox_style=True,
-):
-    if not equal_seqlens:
-        seqlens = torch.randint(1, S + 1, (B,), dtype=torch.int32, device=device)
-    else:
-        seqlens = torch.full((B,), S, dtype=torch.int32, device=device)
-
-    cu_seqlens = torch.cat(
-        [
-            torch.tensor([0], dtype=torch.int32),
-            seqlens.cumsum(dim=0, dtype=torch.int32),
-        ]
-    )
-
-    total_seqlen = cu_seqlens[-1]
-
-    q = torch.randn(B, H, kv_lora_rank + qk_rope_head_dim, dtype=dtype, device=device)
-    kv_cache = torch.randn(
-        total_seqlen, kv_lora_rank + qk_rope_head_dim, dtype=dtype, device=device
-    )
-
-    # interlancing [batch_start_off, batch_seq_len, batch_start_off, batch_seq_len, ...,]
-    kv_indptr = cu_seqlens
-    kv_indices = torch.arange(total_seqlen, device=device)
-
-    attn_logits = torch.empty(
-        B, H, num_kv_splits, kv_lora_rank + 1, dtype=dtype, device=device
-    )
-
-    rotary_emb = DeepseekScalingRotaryEmbedding(
-        qk_rope_head_dim,
-        rotary_dim,
-        rope_max_seq_len,
-        rope_base,
-        is_neox_style,
-        rope_scaling,
-        q.dtype,
-        device=device,
-    )
-
-    positions = (
-        torch.tensor([S], device=device).unsqueeze(0).repeat(B, 1)
-    )  # k positions and q position as last
-
-    o = torch.empty(B, H, kv_lora_rank, dtype=dtype, device=device)
-
-    return kv_indptr, kv_indices, q, kv_cache, attn_logits, rotary_emb, positions, o
+from aiter.ops.triton.utils.types import str_to_torch_dtype
+from op_tests.triton_tests.test_mla_decode_rope import input_helper
 
 
 def ref_preprocess(kv_cache, kv_lora_rank):
@@ -126,7 +58,7 @@ def model_benchmark_configs(args):
 
 
 def benchmark(args):
-    dtype = arg_to_torch_dtype[args.dtype]
+    dtype = str_to_torch_dtype[args.dtype]
     torch.set_default_dtype(dtype)
 
     configs = []
@@ -219,13 +151,6 @@ def benchmark(args):
     return x_vals_list, x_names, line_vals
 
 
-arg_to_torch_dtype = {
-    "fp16": torch.float16,
-    "bf16": torch.bfloat16,
-    "fp32": torch.float32,
-}
-
-
 def parse_args():
     parser = argparse.ArgumentParser(
         prog="Benchmark MLA Prefill",
@@ -277,13 +202,6 @@ def parse_args():
         help="Write performance results to CSV file",
     )
     return parser.parse_args()
-
-
-arg_to_torch_dtype = {
-    "fp16": torch.float16,
-    "bf16": torch.bfloat16,
-    "fp32": torch.float32,
-}
 
 
 def run_bench(args):
