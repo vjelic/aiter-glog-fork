@@ -14,8 +14,6 @@
 
 #include "block_gemm_areg_breg_creg_v2.hpp"
 #include "block_gemm_areg_breg_creg_v2_custom_policy.hpp"
-#include "block_gemm_areg_bsmem_creg_v2.hpp"
-#include "block_gemm_areg_bsmem_creg_v2_custom_policy.hpp"
 
 #include <string>
 #include <type_traits>
@@ -186,9 +184,33 @@ struct BlockFmhaPipelineQRKSVSDefaultPolicy
     {
         using namespace ck_tile;
 
-        using BlockGemm = remove_cvref_t<decltype(GetQKBlockGemm<Problem>())>;
+        using BlockGemm       = remove_cvref_t<decltype(GetQKBlockGemm<Problem>())>;
+        constexpr auto config = BlockGemm::Policy::template GetWarpGemmMWarpNWarp<Problem>();
+        using WarpGemm        = remove_cvref_t<decltype(config.template at<0>())>;
 
-        return BlockGemm::MakeABlockTileDistribution();
+        constexpr index_t MWarp = Problem::BlockFmhaShape::Gemm0BlockWarps::at(number<0>{});
+        constexpr index_t NWarp = Problem::BlockFmhaShape::Gemm0BlockWarps::at(number<1>{});
+
+        constexpr index_t kMPerBlock = Problem::BlockFmhaShape::kM0;
+        constexpr index_t kKPerBlock = Problem::BlockFmhaShape::kK0;
+
+        constexpr index_t MIterPerWarp = kMPerBlock / (MWarp * WarpGemm::kM);
+        constexpr index_t KIterPerWarp = kKPerBlock / WarpGemm::kK;
+
+        constexpr auto q_block_outer_dstr_encoding =
+            tile_distribution_encoding<sequence<NWarp>,
+                                       tuple<sequence<MIterPerWarp, MWarp>, sequence<KIterPerWarp>>,
+                                       tuple<sequence<1, 0>>,
+                                       tuple<sequence<1, 0>>,
+                                       sequence<1, 2>,
+                                       sequence<0, 0>>{};
+
+        constexpr auto q_block_dstr_encode = ck_tile::detail::make_embed_tile_distribution_encoding(
+            q_block_outer_dstr_encoding, typename WarpGemm::AWarpDstrEncoding{});
+
+        constexpr auto q_block_dstr = make_static_tile_distribution(q_block_dstr_encode);
+
+        return q_block_dstr;
     }
 
     template <typename Problem>
@@ -196,9 +218,33 @@ struct BlockFmhaPipelineQRKSVSDefaultPolicy
     {
         using namespace ck_tile;
 
-        using BlockGemm = remove_cvref_t<decltype(GetQKBlockGemm<Problem>())>;
+        using BlockGemm       = remove_cvref_t<decltype(GetQKBlockGemm<Problem>())>;
+        constexpr auto config = BlockGemm::Policy::template GetWarpGemmMWarpNWarp<Problem>();
+        using WarpGemm        = remove_cvref_t<decltype(config.template at<0>())>;
 
-        return BlockGemm::MakeBBlockTileDistribution();
+        constexpr index_t MWarp = Problem::BlockFmhaShape::Gemm0BlockWarps::at(number<0>{});
+        constexpr index_t NWarp = Problem::BlockFmhaShape::Gemm0BlockWarps::at(number<1>{});
+
+        constexpr index_t kNPerBlock = Problem::BlockFmhaShape::kN0;
+        constexpr index_t kKPerBlock = Problem::BlockFmhaShape::kK0;
+
+        constexpr index_t NIterPerWarp = kNPerBlock / (NWarp * WarpGemm::kN);
+        constexpr index_t KIterPerWarp = kKPerBlock / WarpGemm::kK;
+
+        constexpr auto k_block_outer_dstr_encoding =
+            tile_distribution_encoding<sequence<MWarp>,
+                                       tuple<sequence<NIterPerWarp, NWarp>, sequence<KIterPerWarp>>,
+                                       tuple<sequence<1, 0>>,
+                                       tuple<sequence<1, 0>>,
+                                       sequence<1, 2>,
+                                       sequence<0, 0>>{};
+
+        constexpr auto k_block_dstr_encode = ck_tile::detail::make_embed_tile_distribution_encoding(
+            k_block_outer_dstr_encoding, typename WarpGemm::BWarpDstrEncoding{});
+
+        constexpr auto k_block_dstr = make_static_tile_distribution(k_block_dstr_encode);
+
+        return k_block_dstr;
     }
 
     template <typename Problem>
