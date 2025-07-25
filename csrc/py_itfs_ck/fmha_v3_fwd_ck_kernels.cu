@@ -406,11 +406,6 @@ struct BlockFmhaPipelineQRKSVSDefaultPolicy
         constexpr index_t LaneGroups = WarpSize / LanesPerK; // within a wave
         constexpr index_t NumIssues  = kNPerBlock / (LaneGroups * NumWarps);
         static_assert(NumIssues == kNPerBlock * kKPerBlock / (kBlockSize * KVector));
-        // constexpr index_t SingleKSize = NumIssues * NumWarps * (WarpSize * KVector + kPad);
-        // constexpr index_t SingleVSize =
-        // MakeVLdsBlockDescriptor<Problem>().get_element_space_size();
-        constexpr index_t BufferSize =
-            GetSingleSmemElementSpaceSize<Problem>(); //  max(SingleKSize, SingleVSize);
 
         constexpr auto k_lds_block_desc_0 =
             make_naive_tensor_descriptor(make_tuple(number<NumIssues>{},          // n0
@@ -438,38 +433,137 @@ struct BlockFmhaPipelineQRKSVSDefaultPolicy
         return k_lds_block_desc;
     }
 
-    template <typename Problem>
-    CK_TILE_DEVICE static constexpr auto MakeVLdsStoreBlockDescriptor()
+    template <typename Problem, ck_tile::index_t IBuf = 0>
+    CK_TILE_DEVICE static constexpr auto
+    MakeVLdsStoreBlockDescriptor(ck_tile::number<IBuf> = ck_tile::number<0>{})
     {
         using namespace ck_tile;
 
-        // TODO: this is for 3d layout
-        using VDataType = remove_cvref_t<typename Problem::VDataType>;
+        /// FIXME: rename the kNPerBlock & kKPerBlock since the kN1 is congtigous dimension
+        constexpr index_t kNPerBlock = Problem::BlockFmhaShape::kK1;
+        constexpr index_t kKPerBlock = Problem::BlockFmhaShape::kN1;
+        constexpr index_t kBlockSize = Problem::kBlockSize;
+        constexpr index_t NumWarps   = Problem::BlockFmhaShape::NumWarps;
+        constexpr index_t WarpSize   = ck_tile::get_warp_size();
 
-        constexpr index_t kKPerBlock = Problem::BlockFmhaShape::kK1;
-        constexpr index_t kNPerBlock = Problem::BlockFmhaShape::kN1;
-        constexpr index_t kNPack     = 16 / sizeof(VDataType);
-        constexpr index_t VectorSize = 16 / sizeof(VDataType);
+        constexpr index_t KPack   = GetSmemKPackK<Problem>(); // this is for lds
+        constexpr index_t KVector = GetAlignmentK<Problem>(); // this is for global load
+        constexpr index_t kPad =
+            KPack; // for async-copy, this pad is between warps. Optimize this for lds_read speed
 
-        constexpr auto v_lds_block_desc_0 = make_naive_tensor_descriptor(
-            make_tuple(number<kNPerBlock / kNPack>{}, number<kKPerBlock>{}, number<kNPack>{}),
-            make_tuple(number<(kKPerBlock + 1) * kNPack>{}, number<kNPack>{}, number<1>{}),
-            number<VectorSize>{},
+        static_assert(WarpSize * KVector >= kKPerBlock && WarpSize * KVector % kKPerBlock == 0);
+        constexpr index_t LanesPerK =
+            kKPerBlock / KVector; // how many lane (within a wave) to load K
+        constexpr index_t LaneGroups =
+            WarpSize /
+            LanesPerK; // how many groups (within a wave), they may load different N, but same K
+        constexpr index_t NumIssues = kNPerBlock / (LaneGroups * NumWarps);
+        static_assert(NumIssues == kNPerBlock * kKPerBlock / (kBlockSize * KVector));
+
+        constexpr auto v_lds_block_desc_0 = make_naive_tensor_descriptor_with_offset(
+            make_tuple(number<NumIssues>{},  // n0
+                       number<LaneGroups>{}, // n1
+                       number<NumWarps>{},   // n2
+                       number<LanesPerK>{},  // k0
+                       number<KVector>{}),   // k1
+            make_tuple(number<NumWarps*(WarpSize * KVector + kPad)>{},
+                       number<kKPerBlock>{},
+                       number<WarpSize * KVector + kPad>{},
+                       number<KVector>{},
+                       number<1>{}),
+            number<(IBuf + 2) * GetSingleSmemElementSpaceSize<Problem>()>{},
+            number<KVector>{},
             number<1>{});
 
-        constexpr auto v_lds_block_desc1 = transform_tensor_descriptor(
+        // TODO this layout is hard coded, and will be used in async copy buffer view load
+        // in LDS the real layout is (bufs, N0, N2, N1*K0*K1)
+        constexpr auto v_lds_block_desc_issues_warps_lanes = transform_tensor_descriptor(
             v_lds_block_desc_0,
-            make_tuple(
-                make_pass_through_transform(number<kKPerBlock>{}),
-                make_merge_transform(make_tuple(number<kNPerBlock / kNPack>{}, number<kNPack>{}))),
-            make_tuple(sequence<1>{}, sequence<0, 2>{}),
-            make_tuple(sequence<0>{}, sequence<1>{}));
+            make_tuple(make_pass_through_transform(number<NumIssues>{}),
+                       make_pass_through_transform(number<NumWarps>{}),
+                       make_merge_transform(make_tuple(
+                           number<LaneGroups>{}, number<LanesPerK>{}, number<KVector>{}))),
+            make_tuple(sequence<0>{}, sequence<2>{}, sequence<1, 3, 4>{}),
+            make_tuple(sequence<0>{}, sequence<1>{}, sequence<2>{}));
 
-        return v_lds_block_desc1;
+        return v_lds_block_desc_issues_warps_lanes;
     }
 
     template <typename Problem>
-    CK_TILE_HOST_DEVICE static constexpr ck_tile::index_t GetSmemSize()
+    CK_TILE_DEVICE static constexpr auto MakeVLdsLoadBlockDescriptor()
+    {
+        using namespace ck_tile;
+
+        /// FIXME: rename the kNPerBlock & kKPerBlock since the kN1 is congtigous dimension
+        constexpr index_t kNPerBlock = Problem::BlockFmhaShape::kK1;
+        constexpr index_t kKPerBlock = Problem::BlockFmhaShape::kN1;
+        constexpr index_t kBlockSize = Problem::kBlockSize;
+        constexpr index_t NumWarps   = Problem::BlockFmhaShape::NumWarps;
+        constexpr index_t WarpSize   = ck_tile::get_warp_size();
+
+        constexpr index_t KPack   = GetSmemKPackK<Problem>(); // this is for lds
+        constexpr index_t KVector = GetAlignmentK<Problem>(); // this is for global load
+        constexpr index_t kPad    = KPack; // for async-copy, this pad is between warps
+
+        static_assert(WarpSize * KVector >= kKPerBlock && WarpSize * KVector % kKPerBlock == 0);
+        constexpr index_t LanesPerK  = kKPerBlock / KVector; // within a wave
+        constexpr index_t LaneGroups = WarpSize / LanesPerK; // within a wave
+        constexpr index_t NumIssues  = kNPerBlock / (LaneGroups * NumWarps);
+        static_assert(NumIssues == kNPerBlock * kKPerBlock / (kBlockSize * KVector));
+
+        constexpr auto v_lds_block_desc_0 =
+            make_naive_tensor_descriptor(make_tuple(number<NumIssues>{},          // n0
+                                                    number<NumWarps>{},           // n2
+                                                    number<LaneGroups>{},         // n1
+                                                    number<kKPerBlock / KPack>{}, // k0
+                                                    number<KPack>{}),             // k1
+                                         make_tuple(number<NumWarps*(WarpSize * KVector + kPad)>{},
+                                                    number<WarpSize * KVector + kPad>{},
+                                                    number<kKPerBlock>{},
+                                                    number<KPack>{},
+                                                    number<1>{}),
+                                         number<KPack>{},
+                                         number<1>{});
+
+        constexpr auto v_lds_block_desc = transform_tensor_descriptor(
+            v_lds_block_desc_0,
+            make_tuple(
+                make_merge_transform(
+                    make_tuple(number<NumIssues>{}, number<LaneGroups>{}, number<NumWarps>{})),
+                make_merge_transform(make_tuple(number<kKPerBlock / KPack>{}, number<KPack>{}))),
+            make_tuple(sequence<0, 2, 1>{}, sequence<3, 4>{}),
+            make_tuple(sequence<0>{}, sequence<1>{}));
+
+        return v_lds_block_desc;
+    }
+
+    template <typename Problem>
+    CK_TILE_DEVICE static constexpr ck_tile::index_t GetSmemSizeKV()
+    {
+        using namespace ck_tile;
+
+        static_assert(MakeKLdsLoadBlockDescriptor<Problem>().get_element_space_size() ==
+                      MakeKLdsStoreBlockDescriptor<Problem>().get_element_space_size());
+        constexpr index_t k_element_space_size =
+            MakeKLdsLoadBlockDescriptor<Problem>().get_element_space_size();
+
+        static_assert(MakeVLdsLoadBlockDescriptor<Problem>().get_element_space_size() ==
+                      MakeVLdsStoreBlockDescriptor<Problem>().get_element_space_size());
+        constexpr index_t v_element_space_size =
+            MakeVLdsLoadBlockDescriptor<Problem>().get_element_space_size();
+
+        static_assert(ck_tile::max(k_element_space_size, v_element_space_size) <=
+                      GetSingleSmemElementSpaceSize<Problem>());
+
+        static_assert(std::is_same_v<typename Problem::KDataType, typename Problem::VDataType>);
+        constexpr index_t kv_element_space_size_in_bytes =
+            GetSingleSmemElementSpaceSize<Problem>() * sizeof(typename Problem::KDataType);
+
+        return kv_element_space_size_in_bytes;
+    }
+
+    template <typename Problem>
+    CK_TILE_DEVICE static constexpr ck_tile::index_t GetSmemSize()
     {
         return 4 * GetSmemSizeKV<Problem>();
     }
@@ -783,6 +877,13 @@ struct BlockFmhaPipelineQRKSVS
             },
             number<2>{});
 
+        auto v_lds_window_store = generate_tuple(
+            [&](auto i_buf) {
+                return make_lds_tile_window<KDataType>(
+                    smem_ptr, Policy::template MakeVLdsStoreBlockDescriptor<Problem>(i_buf));
+            },
+            number<2>{});
+
         statically_indexed_array<decltype(make_lds_tile_window<KDataType>(
                                      nullptr,
                                      Policy::template MakeKLdsLoadBlockDescriptor<Problem>())),
@@ -791,9 +892,9 @@ struct BlockFmhaPipelineQRKSVS
 
         statically_indexed_array<decltype(make_lds_tile_window<VDataType>(
                                      nullptr,
-                                     Policy::template MakeVLdsStoreBlockDescriptor<Problem>())),
+                                     Policy::template MakeVLdsLoadBlockDescriptor<Problem>())),
                                  2>
-            v_lds_window_store;
+            v_lds_window_load;
 
         decltype(make_static_distributed_tensor<QDataType>(
             Policy::template MakeQRegTileDistribution<Problem>())) q_tile;
@@ -807,7 +908,7 @@ struct BlockFmhaPipelineQRKSVS
                                  Policy::template MakeKRegTileDistribution<Problem>()))) k_tile;
 
             decltype(load_tile_transpose(
-                make_tile_window(v_lds_window_store(number<0>{}),
+                make_tile_window(v_lds_window_load(number<0>{}),
                                  Policy::template MakeVRegTileDistribution<Problem>()))) v_tile;
         } kv_tile;
 
@@ -836,10 +937,10 @@ struct BlockFmhaPipelineQRKSVS
         });
 
         static_for<0, 2, 1>{}([&](auto idx) {
-            v_lds_window_store(idx) = make_lds_tile_window<VDataType>(
+            v_lds_window_load(idx) = make_lds_tile_window<VDataType>(
                 static_cast<char*>(smem_ptr) +
                     (idx + 2) * Policy::template GetSmemSizeKV<Problem>(),
-                Policy::template MakeVLdsStoreBlockDescriptor<Problem>());
+                Policy::template MakeVLdsLoadBlockDescriptor<Problem>());
         });
 
         {
@@ -901,6 +1002,7 @@ struct BlockFmhaPipelineQRKSVS
                              v_dram_block_window_tmp.get_window_lengths(),
                              {seqlen_k_start, 0}, // TODO: hdim split?
                              Policy::template MakeVDramTileDistribution<Problem>());
+        v_dram_window.init_raw();
 
         // prefetch K tile
         index_t i_total_loops      = 0;
@@ -1010,21 +1112,18 @@ struct BlockFmhaPipelineQRKSVS
         };
 
         auto V_mem_load = [&](auto v_lds_write_idx) {
-            const auto v_tile = load_tile(v_dram_window);
+            async_load_tile_raw(v_lds_window_store(v_lds_write_idx), v_dram_window);
             __builtin_amdgcn_sched_barrier(0);
-
-            store_tile(v_lds_window_store(v_lds_write_idx),
-                       tile_elementwise_in(v_element_func, v_tile));
 
             /// FIXME: use the future-predicting method to move the window
             move_tile_window(v_dram_window, {kK1, 0});
-
+            buffer_load_fence(0);
             s_waitcnt_lgkmcnt<0>();
         };
 
         auto V_lds_load = [&](auto v_lds_read_idx) {
             auto v_lds_window_for_load =
-                make_tile_window(v_lds_window_store(v_lds_read_idx),
+                make_tile_window(v_lds_window_load(v_lds_read_idx),
                                  Policy::template MakeVRegTileDistribution<Problem>());
 
             kv_tile.v_tile = load_tile_transpose(v_lds_window_for_load);
