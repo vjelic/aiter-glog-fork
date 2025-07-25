@@ -267,13 +267,21 @@ struct BlockFmhaPipelineQRKSVSDefaultPolicy
                          std::is_same_v<typename Problem::KDataType, half_t> &&
                          std::is_same_v<typename Problem::SaccDataType, float>)
             {
+#if USE_LOAD_TRANSPOSE_V
+                return WarpGemmMfmaF16F16F32M32N32K16TransposedCDistribution{};
+#else
                 return WarpGemmMfmaF16F16F32M32N32K16SwizzleBTransposedCDistribution{};
+#endif
             }
             else if constexpr(std::is_same_v<typename Problem::QDataType, bf16_t> &&
                               std::is_same_v<typename Problem::KDataType, bf16_t> &&
                               std::is_same_v<typename Problem::SaccDataType, float>)
             {
+#if USE_LOAD_TRANSPOSE_V
+                return WarpGemmMfmaBf16Bf16F32M32N32K16TransposedCDistribution{};
+#else
                 return WarpGemmMfmaBf16Bf16F32M32N32K16SwizzleBTransposedCDistribution{};
+#endif
             }
         }();
 
