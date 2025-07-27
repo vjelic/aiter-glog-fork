@@ -1091,13 +1091,11 @@ struct BlockFmhaPipelineQRKSVS
             if constexpr(load_type == 0)
             {
                 V_mem_load(mem_wr_idx);
-                __builtin_amdgcn_sched_barrier(0);
                 K_lds_load(lds_rd_idx);
             }
             else
             {
                 K_mem_load(mem_wr_idx);
-                __builtin_amdgcn_sched_barrier(0);
                 V_lds_load(lds_rd_idx);
             }
         };
@@ -1276,7 +1274,6 @@ struct BlockFmhaPipelineQRKSVS
             V_mem_load(number<0>{}); // mem_V0
 
             // (3) mfma (Q*K0) + softmax
-            __builtin_amdgcn_s_barrier();
             gemm(number<0>{}, /*gemm_idx=*/number<0>{});
 
             fmha_mask(number<0>{});
