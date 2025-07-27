@@ -886,6 +886,11 @@ struct BlockFmhaPipelineQRKSVS
             printf("\n");
         };
 
+        // K_mem_su_ld_insts = 1 for 32 x 128
+        // V_mem_su_ld_insts = 1 for 128 x 32
+        static constexpr int K_mem_su_ld_insts = 1;
+        static constexpr int V_mem_su_ld_insts = 1;
+
         auto K_mem_load = [&](auto k_lds_write_idx) {
             auto k_dram_window = make_tile_window(
                 k_dram_block_window, Policy::template MakeKDramTileDistribution<Problem>());
@@ -896,8 +901,6 @@ struct BlockFmhaPipelineQRKSVS
             /// FIXME: use the future-predicting method to move the window
             // move K tile windows
             move_tile_window(k_dram_block_window, {kN0, 0});
-            s_waitcnt_vmcnt<0>();
-            s_waitcnt_lgkmcnt<0>();
         };
 
         auto K_lds_load = [&](auto k_lds_read_idx) {
@@ -913,8 +916,6 @@ struct BlockFmhaPipelineQRKSVS
 
             /// FIXME: use the future-predicting method to move the window
             move_tile_window(v_dram_window, {kK1, 0});
-            s_waitcnt_vmcnt<0>();
-            s_waitcnt_lgkmcnt<0>();
         };
 
         auto V_lds_load = [&](auto v_lds_read_idx) {
@@ -1092,11 +1093,13 @@ struct BlockFmhaPipelineQRKSVS
             if constexpr(load_type == 0)
             {
                 V_mem_load(mem_wr_idx);
+                __builtin_amdgcn_sched_barrier(0);
                 K_lds_load(lds_rd_idx);
             }
             else
             {
                 K_mem_load(mem_wr_idx);
+                __builtin_amdgcn_sched_barrier(0);
                 V_lds_load(lds_rd_idx);
             }
         };
@@ -1124,15 +1127,18 @@ struct BlockFmhaPipelineQRKSVS
 
                 bool result = true;
 
-                // K_mem_su_ld_insts = 1 for 32 x 128
-                // V_mem_su_ld_insts = 1 for 128 x 32
-                constexpr int K_mem_su_ld_insts = 1;
-                constexpr int V_mem_su_ld_insts = 1;
                 if constexpr(cl_p == 0)
                 {
                     __builtin_amdgcn_sched_barrier(0);
                     // phase0
-                    ASM_MARKER("phase0 Wave0-3");
+                    if constexpr(pi == 0)
+                    {
+                        ASM_MARKER("phase0 Wave0-3 (pi=0)");
+                    }
+                    else
+                    {
+                        ASM_MARKER("phase0 Wave0-3 (pi=1)");
+                    }
                     s_waitcnt_lgkmcnt<0>();
                     __builtin_amdgcn_sched_barrier(0);
                     cl_calc(xdl_SP_p01_reg_idx, gemm0);
@@ -1177,7 +1183,14 @@ struct BlockFmhaPipelineQRKSVS
                 {
                     __builtin_amdgcn_sched_barrier(0);
                     // phase0
-                    ASM_MARKER("phase0 Wave4-7");
+                    if constexpr(pi == 0)
+                    {
+                        ASM_MARKER("phase0 Wave4-7 (pi=0)");
+                    }
+                    else
+                    {
+                        ASM_MARKER("phase0 Wave4-7 (pi=1)");
+                    }
                     cl_load(memV, V_w4_lds_wr_idx, K_w4_lds_rd_idx);
 
                     __builtin_amdgcn_sched_barrier(0);
@@ -1223,8 +1236,13 @@ struct BlockFmhaPipelineQRKSVS
             auto ps_pi        = number<1>{} - d;
             auto V_lds_rd_idx = ps_pi;
 
+            s_waitcnt_vmcnt<K_mem_su_ld_insts>();
+            __builtin_amdgcn_s_barrier();
+
             V_lds_load(V_lds_rd_idx);
             fmha_alu1(ps_pi);
+
+            s_waitcnt_lgkmcnt<0>();
 
             auto xdl_SP_p23_reg_idx = ps_pi;
             gemm(xdl_SP_p23_reg_idx, /*gemm_idx=*/number<1>{});
@@ -1237,9 +1255,14 @@ struct BlockFmhaPipelineQRKSVS
 
             // (1) load K0 to LDS & VGPR
             K_mem_load(number<0>{}); // mem_K0
+
+            s_waitcnt_vmcnt<0>();
             __builtin_amdgcn_s_barrier();
 
             K_lds_load(number<0>{}); // lds_K0
+
+            s_waitcnt_lgkmcnt<0>();
+            __builtin_amdgcn_s_barrier();
 
             // (2) prefetch K1 and V0 to LDS in parallel with GEMM0
             if(1 < num_total_loop)
@@ -1267,6 +1290,9 @@ struct BlockFmhaPipelineQRKSVS
             if(2 < num_total_loop)
             {
                 K_mem_load(number<0>{}); // mem_K2
+
+                s_waitcnt_vmcnt<K_mem_su_ld_insts + V_mem_su_ld_insts>();
+                __builtin_amdgcn_s_barrier();
             }
 
             ASM_MARKER("end pre-stage");
@@ -1277,6 +1303,7 @@ struct BlockFmhaPipelineQRKSVS
             if(warp_group_id == 0)
             {
                 V_mem_load(number<1>{}); // V1
+                __builtin_amdgcn_s_barrier();
                 K_lds_load(number<1>{}); // K1
 
                 asm volatile("s_setprio 0");
