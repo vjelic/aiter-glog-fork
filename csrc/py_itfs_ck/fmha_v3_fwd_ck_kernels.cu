@@ -29,6 +29,7 @@
     __builtin_amdgcn_sched_barrier(0);
 
 #define DEBUG_SINGLE_CASE 0
+#define ADD_SBARRIER_FOR_PHASE0 0
 
 namespace aiter {
 
@@ -566,10 +567,6 @@ struct BlockFmhaPipelineQRKSVS
 
 #define ENABLE_TRACE 0
 #define ENABLE_TENSOR_DUMP 0
-
-    CK_TILE_DEVICE static constexpr void schedule_main_loop_gemm0() {}
-
-    CK_TILE_DEVICE static constexpr void schedule_main_loop_gemm1() {}
 
     // vmcnt=0~63, lgkmcnt=0~15, expcnt=0~7
     template <uint16_t Vmcnt, uint8_t Lgkmcnt, uint8_t Expcnt = 7>
@@ -1127,6 +1124,10 @@ struct BlockFmhaPipelineQRKSVS
 
                 if constexpr(cl_p == 0)
                 {
+#if ADD_SBARRIER_FOR_PHASE0
+                    __builtin_amdgcn_sched_barrier(0);
+                    __builtin_amdgcn_s_barrier();
+#endif
                     __builtin_amdgcn_sched_barrier(0);
                     // phase0
                     if constexpr(pi == 0)
@@ -1142,7 +1143,6 @@ struct BlockFmhaPipelineQRKSVS
                     cl_calc(xdl_SP_p01_reg_idx, gemm0);
                     fmha_alu1(xdl_SP_p23_reg_idx);
 
-                    schedule_main_loop_gemm0();
                     __builtin_amdgcn_sched_barrier(0);
                     // phase1
                     ASM_MARKER("phase1 Wave0-3");
@@ -1161,9 +1161,17 @@ struct BlockFmhaPipelineQRKSVS
                     __builtin_amdgcn_s_barrier();
                     __builtin_amdgcn_sched_barrier(0);
                     cl_calc(xdl_SP_p23_reg_idx, gemm1);
-                    fmha_alu_D_upd();
+#if 0
+                    static_for<0, 8, 1>{} ([&](auto) {
+                        __builtin_amdgcn_sched_group_barrier(0x002, 4, 0); // VALU
+                        __builtin_amdgcn_sched_group_barrier(0x008, 1, 0); // MFMA
+                    });
+                    __builtin_amdgcn_sched_group_barrier(0x002, 64, 0); // VALU
 
-                    schedule_main_loop_gemm1();
+                    // avoid v_pk_mul in fmha_alu_D_upd() to be scheduled before here
+                    __builtin_amdgcn_sched_barrier(0);
+#endif
+                    fmha_alu_D_upd();
 
                     __builtin_amdgcn_sched_barrier(0);
                     // phase3
@@ -1182,6 +1190,10 @@ struct BlockFmhaPipelineQRKSVS
                 }
                 else
                 {
+#if ADD_SBARRIER_FOR_PHASE0
+                    __builtin_amdgcn_sched_barrier(0);
+                    __builtin_amdgcn_s_barrier();
+#endif
                     __builtin_amdgcn_sched_barrier(0);
                     // phase0
                     if constexpr(pi == 0)
@@ -1204,7 +1216,6 @@ struct BlockFmhaPipelineQRKSVS
                     cl_calc(xdl_SP_p01_reg_idx, gemm0);
                     fmha_alu1(xdl_SP_p23_reg_idx);
 
-                    schedule_main_loop_gemm0();
                     __builtin_amdgcn_sched_barrier(0);
                     // phase2
                     ASM_MARKER("phase2 Wave4-7");
@@ -1227,9 +1238,17 @@ struct BlockFmhaPipelineQRKSVS
                     __builtin_amdgcn_s_barrier();
                     __builtin_amdgcn_sched_barrier(0);
                     cl_calc(xdl_SP_p23_reg_idx, gemm1);
-                    fmha_alu_D_upd();
+#if 0
+                    static_for<0, 8, 1>{} ([&](auto) {
+                        __builtin_amdgcn_sched_group_barrier(0x002, 4, 0); // VALU
+                        __builtin_amdgcn_sched_group_barrier(0x008, 1, 0); // MFMA
+                    });
+                    __builtin_amdgcn_sched_group_barrier(0x002, 64, 0); // VALU
 
-                    schedule_main_loop_gemm1();
+                    // avoid v_pk_mul in fmha_alu_D_upd() to be scheduled before here
+                    __builtin_amdgcn_sched_barrier(0);
+#endif
+                    fmha_alu_D_upd();
                 }
                 return result;
             };
