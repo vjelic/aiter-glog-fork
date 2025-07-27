@@ -1306,7 +1306,6 @@ struct BlockFmhaPipelineQRKSVS
             if(warp_group_id == 0)
             {
                 V_mem_load(number<1>{}); // V1
-                __builtin_amdgcn_s_barrier();
                 K_lds_load(number<1>{}); // K1
 
                 asm volatile("s_setprio 0");
