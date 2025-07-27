@@ -896,8 +896,6 @@ struct BlockFmhaPipelineQRKSVS
                 k_dram_block_window, Policy::template MakeKDramTileDistribution<Problem>());
             async_load_tile(k_lds_window(k_lds_write_idx), k_dram_window);
 
-            __builtin_amdgcn_sched_barrier(0);
-
             /// FIXME: use the future-predicting method to move the window
             // move K tile windows
             move_tile_window(k_dram_block_window, {kN0, 0});
