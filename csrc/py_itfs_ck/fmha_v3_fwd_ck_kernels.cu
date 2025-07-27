@@ -28,6 +28,8 @@
     asm volatile("; [POYENC] " #marker); \
     __builtin_amdgcn_sched_barrier(0);
 
+#define DEBUG_SINGLE_CASE 0
+
 namespace aiter {
 
 struct BlockFmhaPipelineQRKSVSDefaultPolicy
@@ -3124,18 +3126,24 @@ std::vector<at::Tensor> fmha_v3_fwd_ck(const at::Tensor& q, // [b, sq, hq, d]
     {
         if(mask.type == mask_enum::no_mask)
         {
+#if !DEBUG_SINGLE_CASE
             launch<get_kernel_t<FmhaFwdFp16, false>>(args);
+#endif
         }
         else
         {
+#if !DEBUG_SINGLE_CASE
             launch<get_kernel_t<FmhaFwdFp16, true>>(args);
+#endif
         }
     }
     else if(q_dtype == at::ScalarType::BFloat16)
     {
         if(mask.type == mask_enum::no_mask)
         {
+#if !DEBUG_SINGLE_CASE
             launch<get_kernel_t<FmhaFwdBf16, false>>(args);
+#endif
         }
         else
         {
