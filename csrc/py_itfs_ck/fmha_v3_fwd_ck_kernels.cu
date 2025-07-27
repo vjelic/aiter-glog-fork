@@ -677,8 +677,8 @@ struct BlockFmhaPipelineQRKSVS
         constexpr auto gemm_0 = Policy::template GetQKBlockGemm<Problem>();
         constexpr auto gemm_1 = Policy::template GetPVBlockGemm<Problem>();
 
-        auto q_dram_window = make_tile_window(q_dram_block_window_tmp,
-                                              Policy::template MakeQRegTileDistribution<Problem>());
+        auto q_dram_window = make_tile_window_linear(
+            q_dram_block_window_tmp, Policy::template MakeQRegTileDistribution<Problem>());
 
         // reduction function for softmax
         const auto f_max = [](auto e0, auto e1) { return max(e0, e1); };
@@ -701,9 +701,9 @@ struct BlockFmhaPipelineQRKSVS
         {
             CK_TILE_DEVICE kv_tile_type() {}
 
-            decltype(load_tile(
-                make_tile_window(k_lds_window(number<0>{}),
-                                 Policy::template MakeKRegTileDistribution<Problem>()))) k_tile;
+            decltype(load_tile(make_tile_window_linear(
+                k_lds_window(number<0>{}),
+                Policy::template MakeKRegTileDistribution<Problem>()))) k_tile;
 
             decltype(load_tile_transpose(
                 make_tile_window(v_lds_window(number<0>{}),
@@ -901,7 +901,7 @@ struct BlockFmhaPipelineQRKSVS
         };
 
         auto K_lds_load = [&](auto k_lds_read_idx) {
-            auto k_lds_window_for_load = make_tile_window(
+            auto k_lds_window_for_load = make_tile_window_linear(
                 k_lds_window(k_lds_read_idx), Policy::template MakeKRegTileDistribution<Problem>());
 
             kv_tile.k_tile = load_tile(k_lds_window_for_load);
