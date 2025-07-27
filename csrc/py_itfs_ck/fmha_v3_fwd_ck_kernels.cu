@@ -1124,6 +1124,10 @@ struct BlockFmhaPipelineQRKSVS
 
                 bool result = true;
 
+                // K_mem_su_ld_insts = 1 for 32 x 128
+                // V_mem_su_ld_insts = 1 for 128 x 32
+                constexpr int K_mem_su_ld_insts = 1;
+                constexpr int V_mem_su_ld_insts = 1;
                 if constexpr(cl_p == 0)
                 {
                     __builtin_amdgcn_sched_barrier(0);
@@ -1138,7 +1142,7 @@ struct BlockFmhaPipelineQRKSVS
                     __builtin_amdgcn_sched_barrier(0);
                     // phase1
                     ASM_MARKER("phase1 Wave0-3");
-                    s_waitcnt_vmcnt<0>();
+                    s_waitcnt_vmcnt<K_mem_su_ld_insts + V_mem_su_ld_insts>();
                     __builtin_amdgcn_sched_barrier(0);
                     __builtin_amdgcn_s_barrier();
                     cl_load(memK, K_w0_lds_wr_idx, V_w0_lds_rd_idx);
@@ -1158,7 +1162,7 @@ struct BlockFmhaPipelineQRKSVS
                     __builtin_amdgcn_sched_barrier(0);
                     // phase3
                     ASM_MARKER("phase3 Wave0-3");
-                    s_waitcnt_vmcnt<0>();
+                    s_waitcnt_vmcnt<K_mem_su_ld_insts + V_mem_su_ld_insts>();
                     __builtin_amdgcn_sched_barrier(0);
                     __builtin_amdgcn_s_barrier();
                     cl_load(memV, V_w0_lds_wr_idx, K_w0_lds_rd_idx);
@@ -1179,7 +1183,7 @@ struct BlockFmhaPipelineQRKSVS
                     __builtin_amdgcn_sched_barrier(0);
                     // phase1
                     ASM_MARKER("phase1 Wave4-7");
-                    s_waitcnt<0, 0>();
+                    s_waitcnt<K_mem_su_ld_insts + V_mem_su_ld_insts, 0>();
                     __builtin_amdgcn_sched_barrier(0);
                     __builtin_amdgcn_s_barrier();
                     cl_calc(xdl_SP_p01_reg_idx, gemm0);
@@ -1202,7 +1206,7 @@ struct BlockFmhaPipelineQRKSVS
                     __builtin_amdgcn_sched_barrier(0);
                     // phase3
                     ASM_MARKER("phase3 Wave4-7");
-                    s_waitcnt<0, 0>();
+                    s_waitcnt<K_mem_su_ld_insts + V_mem_su_ld_insts, 0>();
                     __builtin_amdgcn_sched_barrier(0);
                     __builtin_amdgcn_s_barrier();
                     cl_calc(xdl_SP_p23_reg_idx, gemm1);
