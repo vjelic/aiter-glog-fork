@@ -1066,9 +1066,6 @@ struct BlockFmhaPipelineQRKSVS
                                    m_local); // m{j}
         };
 
-        decltype(block_tile_reduce<SMPLComputeDataType>(
-            sp(number<0>{}).sp_compute, sequence<1>{}, f_sum, SMPLComputeDataType{0})) rowsum_p;
-
         auto fmha_alu1 = [&](auto sp_reg_idx) {
             constexpr auto p_spans =
                 std::decay_t<decltype(sp(sp_reg_idx).sp_compute)>::get_distributed_spans();
@@ -1083,7 +1080,7 @@ struct BlockFmhaPipelineQRKSVS
                 });
             });
 
-            rowsum_p = block_tile_reduce<SMPLComputeDataType>(
+            auto rowsum_p = block_tile_reduce<SMPLComputeDataType>(
                 sp(sp_reg_idx).sp_compute,
                 sequence<1>{},
                 f_sum,
