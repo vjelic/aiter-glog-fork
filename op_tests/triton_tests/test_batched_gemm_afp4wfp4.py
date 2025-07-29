@@ -124,7 +124,7 @@ def run_torch(x, w, x_scales, w_scales, dtype):
     return torch.bmm(x_f32, w_f32.transpose(1, 2)).to(dtype)
 
 
-class TestBatchedGemmAFP4WFP4Prequant:
+class TestBatchedGemmAFP4WFP4:
     basic_shape_set = [(4, 1024 * v, 1024 * v, 1024 * v) for v in range(1, 6)]
     basic_shape_set += [
         (4, 4864, 4096, 8192),
@@ -196,13 +196,9 @@ class TestBatchedGemmAFP4WFP4Prequant:
 
     test_params = basic_set + extended_set
 
-<<<<<<< HEAD
     @pytest.mark.parametrize("B, M, N, K, dtype_str", test_params)
     def test_batched_gemm_afp4_wfp4(self, B: int, M: int, N: int, K: int, dtype_str):
-=======
-    @pytest.mark.parametrize("B, M, N, K dtype_str", get_test_params())
-    def test_batched_gemm_afp4_wfp4(B: int, M: int, N: int, K: int, dtype):
->>>>>>> origin/triton_basic_extended_tests
+
         if not (arch_info.is_fp4_avail()):
             pytest.skip("MXFP4 not supported on this architecture")
 
