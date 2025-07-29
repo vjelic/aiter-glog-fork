@@ -144,10 +144,17 @@ def run_torch(x, w, x_scales, w_scales, dtype):
 
 
 class TestGemmAfp4Wfp4:
+<<<<<<< HEAD
     basic_shape_set = [(1024 * v, 1024 * v, 1024 * v) for v in range(1, 6)]
     basic_shape_set += [(4864, 4096, 8192), (9728, 8192, 65536), (4864, 8192, 4160)]
     basic_set = [
         pytest.param(*shape, dtype, output)
+=======
+    basic_shape_set = [(1024 * v, 1024 * v, 1024 * v) for v in range(0, 6)]
+    basic_shape_set += [(4864, 4096, 8192), (9728, 8192, 65536), (4864, 8192, 4160)]
+    basic_set = [
+        pytest.param(*shape, in_dtype, out_dtype, output)
+>>>>>>> origin/triton_basic_extended_tests
         for shape in basic_shape_set
         for dtype in [torch.float16, torch.bfloat16, torch.float32]
         for output in [True, False]
@@ -189,8 +196,13 @@ class TestGemmAfp4Wfp4:
     extended_shape_set += [(256, 3584, 2112)]
     extended_shape_set += [(7, 4608, 7168), (7, 7168, 2304)]
     extended_shape_set += [(1, 1, 32)]  # minimal case
+<<<<<<< HEAD
     extended_set = [
         pytest.param(*shape, dtype, output, marks=pytest.mark.extended)
+=======
+    basic_set = [
+        pytest.param(*shape, in_dtype, out_dtype, output)
+>>>>>>> origin/triton_basic_extended_tests
         for shape in extended_shape_set
         for dtype in [torch.float16, torch.bfloat16, torch.float32]
         for output in [True, False]
@@ -199,7 +211,11 @@ class TestGemmAfp4Wfp4:
     test_params = extended_set + basic_set
 
     @pytest.mark.parametrize("M, N, K, dtype, output", test_params)
+<<<<<<< HEAD
     def test_gemm_afp4_wfp4(self, M: int, N: int, K: int, dtype, output):
+=======
+    def test_gemm_afp4_wfp4(M: int, N: int, K: int, dtype, output):
+>>>>>>> origin/triton_basic_extended_tests
         if not (arch_info.is_fp4_avail()):
             pytest.skip("MXFP4 not supported on this architecture")
 

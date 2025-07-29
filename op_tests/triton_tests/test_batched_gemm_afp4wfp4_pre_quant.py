@@ -119,7 +119,7 @@ def run_torch(x, w, w_scales, dtype):
     return torch.bmm(x_f32, w_f32.transpose(1, 2)).to(dtype)
 
 
-class TestBatchedGEMMAFP4WFP4Prequant:
+class TestBatchedGemmAFP4WFP4Prequant:
 
     basic_shape_set = [(4, 1024 * v, 1024 * v, 1024 * v) for v in range(1, 6)]
     basic_shape_set += [

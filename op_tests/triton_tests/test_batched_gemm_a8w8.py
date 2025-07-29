@@ -71,7 +71,7 @@ def run_triton(x, weight, x_scale, w_scale, bias=None, dtype=torch.bfloat16, y=N
     return batched_gemm_a8w8(x, weight, x_scale, w_scale, bias, dtype, YQ=y)
 
 
-class TestBatchedGEMMA8W8:
+class TestBatchedGemmA8W8:
     basic_shape_set = [(4, 1024 * v, 1024 * v, 1024 * v) for v in range(1, 6)]
     basic_shape_set += [
         (4, 4864, 4096, 8192),

@@ -72,7 +72,7 @@ def generate_gemm_a8w8_inputs(
     return x, weight, x_scale, w_scale, bias, y
 
 
-class TestGEMMA8W8:
+class TestGemmA8W8:
     basic_shape_set = [(1024 * v, 1024 * v, 1024 * v) for v in range(1, 9)]
     basic_shape_set += [(4864, 4096, 8192), (9728, 8192, 65536), (4864, 8192, 4160)]
     basic_set = [
