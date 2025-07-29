@@ -1064,6 +1064,12 @@ struct BlockFmhaPipelineQRKSVS
                                    m,
                                    m_old,
                                    m_local); // m{j}
+        };
+
+        decltype(block_tile_reduce<SMPLComputeDataType>(
+            sp(number<0>{}).sp_compute, sequence<1>{}, f_sum, SMPLComputeDataType{0})) rowsum_p;
+
+        auto fmha_alu1 = [&](auto sp_reg_idx) {
             constexpr auto p_spans =
                 std::decay_t<decltype(sp(sp_reg_idx).sp_compute)>::get_distributed_spans();
             sweep_tile_span(p_spans[number<0>{}], [&](auto idx0) {
@@ -1076,12 +1082,7 @@ struct BlockFmhaPipelineQRKSVS
                         ck_tile::exp2(sp(sp_reg_idx).sp_compute[i_j_idx] - row_max);
                 });
             });
-        };
 
-        decltype(block_tile_reduce<SMPLComputeDataType>(
-            sp(number<0>{}).sp_compute, sequence<1>{}, f_sum, SMPLComputeDataType{0})) rowsum_p;
-
-        auto fmha_alu1 = [&](auto sp_reg_idx) {
             rowsum_p = block_tile_reduce<SMPLComputeDataType>(
                 sp(sp_reg_idx).sp_compute,
                 sequence<1>{},
