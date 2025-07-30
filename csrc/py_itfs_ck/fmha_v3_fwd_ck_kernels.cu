@@ -885,10 +885,18 @@ struct BlockFmhaPipelineQRKSVS
             }
         }
 
-        auto k_dram_block_window =
+        auto k_dram_window =
             make_tile_window(k_dram_block_window_tmp.get_bottom_tensor_view(),
                              k_dram_block_window_tmp.get_window_lengths(),
-                             {seqlen_k_start, 0});
+                             {seqlen_k_start, 0},
+                             Policy::template MakeKDramTileDistribution<Problem>());
+        k_dram_window.init_raw();
+
+        auto v_dram_window =
+            make_tile_window(v_dram_block_window_tmp.get_bottom_tensor_view(),
+                             v_dram_block_window_tmp.get_window_lengths(),
+                             {seqlen_k_start, 0}, // TODO: hdim split?
+                             Policy::template MakeVDramTileDistribution<Problem>());
 
         const auto bias_origin = bias_dram_block_window_tmp.get_window_origin();
         auto bias_dram_window =
@@ -899,12 +907,6 @@ struct BlockFmhaPipelineQRKSVS
 
         auto randval_dram_window = dropout.template MakeRandvalDramWindow<decltype(gemm_0)>(
             randval_dram_block_window_tmp, seqlen_k_start);
-
-        auto v_dram_window =
-            make_tile_window(v_dram_block_window_tmp.get_bottom_tensor_view(),
-                             v_dram_block_window_tmp.get_window_lengths(),
-                             {seqlen_k_start, 0}, // TODO: hdim split?
-                             Policy::template MakeVDramTileDistribution<Problem>());
 
         // prefetch K tile
         index_t i_total_loops      = 0;
@@ -996,14 +998,11 @@ struct BlockFmhaPipelineQRKSVS
         static constexpr int V_mem_su_ld_insts = 1;
 
         auto K_mem_load = [&](auto k_lds_write_idx) {
-            auto k_dram_window = make_tile_window(
-                k_dram_block_window, Policy::template MakeKDramTileDistribution<Problem>());
-            k_dram_window.init_raw();
             async_load_tile_raw(k_lds_window_store(k_lds_write_idx), k_dram_window);
 
             /// FIXME: use the future-predicting method to move the window
             // move K tile windows
-            move_tile_window(k_dram_block_window, {kN0, 0});
+            move_tile_window(k_dram_window, {kN0, 0});
         };
 
         auto K_lds_load = [&](auto k_lds_read_idx) {
@@ -1379,7 +1378,7 @@ struct BlockFmhaPipelineQRKSVS
         // pre-stage
         {
             ASM_MARKER("before pre-stage");
-            const auto k_origin = k_dram_block_window.get_window_origin();
+            const auto k_origin = k_dram_window.get_window_origin();
 
             // (1) load K0 to LDS & VGPR
             K_mem_load(number<0>{}); // mem_K0
