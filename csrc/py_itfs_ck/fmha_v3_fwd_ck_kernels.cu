@@ -405,11 +405,6 @@ struct BlockFmhaPipelineQRKSVSDefaultPolicy
         constexpr index_t LaneGroups = WarpSize / LanesPerK; // within a wave
         constexpr index_t NumIssues  = kNPerBlock / (LaneGroups * NumWarps);
         static_assert(NumIssues == kNPerBlock * kKPerBlock / (kBlockSize * KVector));
-        // constexpr index_t SingleKSize = NumIssues * NumWarps * (WarpSize * KVector + kPad);
-        // constexpr index_t SingleVSize =
-        // MakeVLdsBlockDescriptor<Problem>().get_element_space_size();
-        constexpr index_t BufferSize =
-            GetSingleSmemElementSpaceSize<Problem>(); //  max(SingleKSize, SingleVSize);
 
         constexpr auto k_lds_block_desc_0 =
             make_naive_tensor_descriptor(make_tuple(number<NumIssues>{},          // n0
@@ -460,7 +455,7 @@ struct BlockFmhaPipelineQRKSVSDefaultPolicy
         using namespace ck_tile;
 
         constexpr index_t k_element_space_size =
-            MakeKLdsBlockDescriptor<Problem>().get_element_space_size();
+            MakeKLdsStoreBlockDescriptor<Problem>().get_element_space_size();
 
         constexpr index_t v_element_space_size =
             MakeVLdsBlockDescriptor<Problem>().get_element_space_size();
