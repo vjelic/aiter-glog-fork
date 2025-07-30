@@ -40,7 +40,7 @@
 
 namespace aiter {
 namespace detail {
-CK_TILE_DEVICE float add_impl(float lhs, float rhs)
+CK_TILE_DEVICE float add_impl_vv(float lhs, float rhs)
 {
 #if ENALBE_INLINE_ASM_ELEMWISE_OPS
     float result;
@@ -53,7 +53,7 @@ CK_TILE_DEVICE float add_impl(float lhs, float rhs)
 #endif
 }
 
-CK_TILE_DEVICE float sub_impl(float lhs, float rhs)
+CK_TILE_DEVICE float sub_impl_vv(float lhs, float rhs)
 {
 #if ENALBE_INLINE_ASM_ELEMWISE_OPS
     float result;
@@ -63,6 +63,19 @@ CK_TILE_DEVICE float sub_impl(float lhs, float rhs)
     return result;
 #else
     return lhs - rhs;
+#endif
+}
+
+CK_TILE_DEVICE float mul_impl_sv(float lhs, float rhs)
+{
+#if ENALBE_INLINE_ASM_ELEMWISE_OPS
+    float result;
+    asm volatile("v_mul_f32_e32 %[result], %[lhs], %[rhs]"
+                 : [result] "=v"(result)
+                 : [lhs] "s"(lhs), [rhs] "v"(rhs));
+    return result;
+#else
+    return lhs * rhs;
 #endif
 }
 } // namespace detail
@@ -1077,8 +1090,9 @@ struct BlockFmhaPipelineQRKSVS
 
         auto fmha_alu0 = [&](auto sp_reg_idx) {
             // sp_compute{j} = sp_compute{j} * scale_s
-            tile_elementwise_inout([&](auto& logits) { logits = logits * scale_s; },
-                                   sp(sp_reg_idx).sp_compute);
+            tile_elementwise_inout(
+                [&](auto& logits) { logits = detail::mul_impl_sv(scale_s, logits); },
+                sp(sp_reg_idx).sp_compute);
 
             m_local = block_tile_reduce<SMPLComputeDataType>(
                 sp(sp_reg_idx).sp_compute,
@@ -1104,7 +1118,7 @@ struct BlockFmhaPipelineQRKSVS
                 sweep_tile_span(p_spans[number<1>{}], [&](auto idx1) {
                     constexpr auto i_j_idx             = make_tuple(idx0, idx1);
                     sp(sp_reg_idx).sp_compute(i_j_idx) = ck_tile::exp2(
-                        detail::sub_impl(sp(sp_reg_idx).sp_compute[i_j_idx], row_max));
+                        detail::sub_impl_vv(sp(sp_reg_idx).sp_compute[i_j_idx], row_max));
                 });
             });
 
@@ -1124,10 +1138,10 @@ struct BlockFmhaPipelineQRKSVS
                 constexpr auto i_idx = make_tuple(idx0);
                 const auto tmp       = [&]() {
                     auto row_max = get_validated_m(m[i_idx]);
-                    return ck_tile::exp2(detail::sub_impl(m_old[i_idx], row_max));
+                    return ck_tile::exp2(detail::sub_impl_vv(m_old[i_idx], row_max));
                 }();
 
-                l(i_idx) = detail::add_impl(tmp * l[i_idx], rowsum_p[i_idx]);
+                l(i_idx) = detail::add_impl_vv(tmp * l[i_idx], rowsum_p[i_idx]);
             });
         };
 
