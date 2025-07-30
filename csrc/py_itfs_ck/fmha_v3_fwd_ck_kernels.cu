@@ -52,6 +52,19 @@ CK_TILE_DEVICE float add_impl(float lhs, float rhs)
     return lhs + rhs;
 #endif
 }
+
+CK_TILE_DEVICE float sub_impl(float lhs, float rhs)
+{
+#if ENALBE_INLINE_ASM_ELEMWISE_OPS
+    float result;
+    asm volatile("v_sub_f32_e32 %[result], %[lhs], %[rhs]"
+                 : [result] "=v"(result)
+                 : [lhs] "v"(lhs), [rhs] "v"(rhs));
+    return result;
+#else
+    return lhs - rhs;
+#endif
+}
 } // namespace detail
 
 struct BlockFmhaPipelineQRKSVSDefaultPolicy
@@ -1089,9 +1102,9 @@ struct BlockFmhaPipelineQRKSVS
                 auto row_max         = get_validated_m(m[i_idx]);
 
                 sweep_tile_span(p_spans[number<1>{}], [&](auto idx1) {
-                    constexpr auto i_j_idx = make_tuple(idx0, idx1);
-                    sp(sp_reg_idx).sp_compute(i_j_idx) =
-                        ck_tile::exp2(sp(sp_reg_idx).sp_compute[i_j_idx] - row_max);
+                    constexpr auto i_j_idx             = make_tuple(idx0, idx1);
+                    sp(sp_reg_idx).sp_compute(i_j_idx) = ck_tile::exp2(
+                        detail::sub_impl(sp(sp_reg_idx).sp_compute[i_j_idx], row_max));
                 });
             });
 
@@ -1111,7 +1124,7 @@ struct BlockFmhaPipelineQRKSVS
                 constexpr auto i_idx = make_tuple(idx0);
                 const auto tmp       = [&]() {
                     auto row_max = get_validated_m(m[i_idx]);
-                    return ck_tile::exp2(m_old[i_idx] - row_max);
+                    return ck_tile::exp2(detail::sub_impl(m_old[i_idx], row_max));
                 }();
 
                 l(i_idx) = detail::add_impl(tmp * l[i_idx], rowsum_p[i_idx]);
