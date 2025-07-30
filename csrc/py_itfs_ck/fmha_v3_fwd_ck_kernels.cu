@@ -23,15 +23,36 @@
 #include "fmha_fwd.hpp"
 #include "mask.hpp"
 
+#define ENABLE_ASM_MARKER 1
+#if ENABLE_ASM_MARKER
 #define ASM_MARKER(marker)               \
     __builtin_amdgcn_sched_barrier(0);   \
     asm volatile("; [POYENC] " #marker); \
     __builtin_amdgcn_sched_barrier(0);
+#else
+#define ASM_MARKER(marker)
+#endif
+
+#define ENALBE_INLINE_ASM_ELEMWISE_OPS 1
 
 #define DEBUG_SINGLE_CASE 0
 #define ADD_SBARRIER_FOR_PHASE0 0
 
 namespace aiter {
+namespace detail {
+CK_TILE_DEVICE float add_impl(float lhs, float rhs)
+{
+#if ENALBE_INLINE_ASM_ELEMWISE_OPS
+    float result;
+    asm volatile("v_add_f32_e32 %[result], %[lhs], %[rhs]"
+                 : [result] "=v"(result)
+                 : [lhs] "v"(lhs), [rhs] "v"(rhs));
+    return result;
+#else
+    return lhs + rhs;
+#endif
+}
+} // namespace detail
 
 struct BlockFmhaPipelineQRKSVSDefaultPolicy
     : ck_tile::BlockFmhaPipelineQXKSVSCustomPolicy</* QLoadOnce = */ true,
@@ -1093,7 +1114,7 @@ struct BlockFmhaPipelineQRKSVS
                     return ck_tile::exp2(m_old[i_idx] - row_max);
                 }();
 
-                l(i_idx) = tmp * l[i_idx] + rowsum_p[i_idx];
+                l(i_idx) = detail::add_impl(tmp * l[i_idx], rowsum_p[i_idx]);
             });
         };
 
