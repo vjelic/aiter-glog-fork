@@ -33,9 +33,17 @@
 #define ASM_MARKER(marker)
 #endif
 
-#define ENALBE_INLINE_ASM_ELEMWISE_OPS 1
+#define DEBUG_DTYPE_FP16 0
+#define DEBUG_DTYPE_BF16 1
+#define DEBUG_MASK_NONE 0
+#define DEBUG_MASK_CAUSAL 1
 
-#define DEBUG_SINGLE_CASE 0
+#define DEBUG_SINGLE_INST 0
+#define DEBUG_SINGLE_INST_DTYPE DEBUG_DTYPE_FP16
+#define DEBUG_SINGLE_INST_MASK DEBUG_MASK_NONE
+
+#define ENALBE_INLINE_ASM_ELEMWISE_OPS 0
+
 #define ADD_SBARRIER_FOR_PHASE0 0
 
 namespace aiter {
@@ -3307,13 +3315,15 @@ std::vector<at::Tensor> fmha_v3_fwd_ck(const at::Tensor& q, // [b, sq, hq, d]
     {
         if(mask.type == mask_enum::no_mask)
         {
-#if !DEBUG_SINGLE_CASE
+#if !DEBUG_SINGLE_INST || \
+    (DEBUG_SINGLE_INST_DTYPE == DEBUG_DTYPE_FP16 && DEBUG_SINGLE_INST_MASK == DEBUG_MASK_NONE)
             launch<get_kernel_t<FmhaFwdFp16, false>>(args);
 #endif
         }
         else
         {
-#if !DEBUG_SINGLE_CASE
+#if !DEBUG_SINGLE_INST || \
+    (DEBUG_SINGLE_INST_DTYPE == DEBUG_DTYPE_FP16 && DEBUG_SINGLE_INST_MASK == DEBUG_MASK_CAUSAL)
             launch<get_kernel_t<FmhaFwdFp16, true>>(args);
 #endif
         }
@@ -3322,13 +3332,17 @@ std::vector<at::Tensor> fmha_v3_fwd_ck(const at::Tensor& q, // [b, sq, hq, d]
     {
         if(mask.type == mask_enum::no_mask)
         {
-#if !DEBUG_SINGLE_CASE
+#if !DEBUG_SINGLE_INST || \
+    (DEBUG_SINGLE_INST_DTYPE == DEBUG_DTYPE_BF16 && DEBUG_SINGLE_INST_MASK == DEBUG_MASK_NONE)
             launch<get_kernel_t<FmhaFwdBf16, false>>(args);
 #endif
         }
         else
         {
+#if !DEBUG_SINGLE_INST || \
+    (DEBUG_SINGLE_INST_DTYPE == DEBUG_DTYPE_BF16 && DEBUG_SINGLE_INST_MASK == DEBUG_MASK_CAUSAL)
             launch<get_kernel_t<FmhaFwdBf16, true>>(args);
+#endif
         }
     }
 
