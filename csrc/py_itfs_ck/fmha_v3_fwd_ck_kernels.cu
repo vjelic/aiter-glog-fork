@@ -78,6 +78,19 @@ CK_TILE_DEVICE float mul_impl_sv(float lhs, float rhs)
     return lhs * rhs;
 #endif
 }
+
+CK_TILE_DEVICE float mul_impl_vv(float lhs, float rhs)
+{
+#if ENALBE_INLINE_ASM_ELEMWISE_OPS
+    float result;
+    asm volatile("v_mul_f32_e32 %[result], %[lhs], %[rhs]"
+                 : [result] "=v"(result)
+                 : [lhs] "v"(lhs), [rhs] "v"(rhs));
+    return result;
+#else
+    return lhs * rhs;
+#endif
+}
 } // namespace detail
 
 struct BlockFmhaPipelineQRKSVSDefaultPolicy
@@ -1395,6 +1408,9 @@ struct BlockFmhaPipelineQRKSVS
                     // avoid v_pk_mul in fmha_alu_D_upd() to be scheduled before here
                     __builtin_amdgcn_sched_barrier(0);
 #endif
+                    /// FIXME: I added the following sched_barrier to reduce VGPR spills in the FP16
+                    /// kernels. Remove it to improve instruction scheduling.
+                    __builtin_amdgcn_sched_barrier(0);
                     fmha_alu_D_upd();
                 }
                 return result;
