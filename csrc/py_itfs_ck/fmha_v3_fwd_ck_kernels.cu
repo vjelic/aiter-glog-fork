@@ -916,7 +916,7 @@ struct BlockFmhaPipelineQRKSVS
         }
 
         clear_tile(o_acc);
-        set_tile(m, -numeric<SMPLComputeDataType>::infinity());
+        set_tile(m, -numeric<SMPLComputeDataType>::min());
         clear_tile(l);
 
         const auto q_origin = q_dram_window.get_window_origin();
@@ -1090,22 +1090,6 @@ struct BlockFmhaPipelineQRKSVS
             kv_tile.v_tile = load_tile_transpose(v_lds_window_for_load);
         };
 
-        static const auto get_validated_m = [](SMPLComputeDataType raw_m) {
-            /// NOTICE: bias might be materialized mask including -inf values, need
-            /// consideration
-            if constexpr(BiasEnum == BlockAttentionBiasEnum::ELEMENTWISE_BIAS ||
-                         FmhaMask::IsMasking)
-            {
-                return raw_m == -numeric<SMPLComputeDataType>::infinity()
-                           ? type_convert<SMPLComputeDataType>(0.f)
-                           : raw_m;
-            }
-            else
-            {
-                return raw_m;
-            }
-        };
-
         decltype(m) m_old;
 
         auto fmha_alu0 = [&](auto sp_reg_idx) {
@@ -1133,7 +1117,7 @@ struct BlockFmhaPipelineQRKSVS
                 std::decay_t<decltype(sp(sp_reg_idx).sp_compute)>::get_distributed_spans();
             sweep_tile_span(p_spans[number<0>{}], [&](auto idx0) {
                 constexpr auto i_idx = make_tuple(idx0);
-                auto row_max         = get_validated_m(scaled_m[i_idx]);
+                auto row_max         = scaled_m[i_idx];
 
                 sweep_tile_span(p_spans[number<1>{}], [&](auto idx1) {
                     constexpr auto i_j_idx = make_tuple(idx0, idx1);
@@ -1157,7 +1141,7 @@ struct BlockFmhaPipelineQRKSVS
             sweep_tile_span(o_spans[number<0>{}], [&](auto idx0) {
                 constexpr auto i_idx = make_tuple(idx0);
                 const auto tmp       = [&]() {
-                    auto row_max = get_validated_m(m[i_idx]);
+                    auto row_max = m[i_idx];
                     return ck_tile::exp2(scale_s * (m_old[i_idx] - row_max));
                 }();
 
@@ -1220,7 +1204,7 @@ struct BlockFmhaPipelineQRKSVS
             sweep_tile_span(o_spans[number<0>{}], [&](auto idx0) {
                 constexpr auto i_idx = make_tuple(idx0);
                 const auto tmp       = [&]() {
-                    auto row_max = get_validated_m(m[i_idx]);
+                    auto row_max = m[i_idx];
                     return ck_tile::exp2(scale_s * (m_old[i_idx] - row_max));
                 }();
 
