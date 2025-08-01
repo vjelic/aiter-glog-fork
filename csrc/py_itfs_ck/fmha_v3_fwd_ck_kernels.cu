@@ -1310,9 +1310,7 @@ struct BlockFmhaPipelineQRKSVS
                     s_waitcnt_lgkmcnt<0>();
                     __builtin_amdgcn_sched_barrier(0);
                     cl_calc(xdl_SP_p01_reg_idx, gemm0);
-                    ASM_MARKER("before fmha_alu1");
                     fmha_alu1(xdl_SP_p23_reg_idx);
-                    ASM_MARKER("after fmha_alu1");
 
                     sched_core_loop(cl_p, number<0>{});
                     __builtin_amdgcn_sched_barrier(0);
