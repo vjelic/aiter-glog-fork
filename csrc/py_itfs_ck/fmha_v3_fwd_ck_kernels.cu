@@ -1093,7 +1093,6 @@ struct BlockFmhaPipelineQRKSVS
         decltype(m) m_old;
 
         auto fmha_alu0 = [&](auto sp_reg_idx) {
-            // # v_max3_f32 = 8
             auto m_local = block_tile_reduce<SMPLComputeDataType>(
                 sp(sp_reg_idx).sp_compute,
                 sequence<1>{},
@@ -1101,7 +1100,6 @@ struct BlockFmhaPipelineQRKSVS
                 -numeric<SMPLComputeDataType>::infinity()); // m_local = rowmax(S{j})
             block_tile_reduce_sync(m_local, f_max, bool_constant<false>{});
 
-            // # v_max3_f32 = 1
             m_old = m; // m{j-1}
             tile_elementwise_inout([](auto& e0, auto e1, auto e2) { e0 = max(e1, e2); },
                                    m,
@@ -1110,7 +1108,6 @@ struct BlockFmhaPipelineQRKSVS
         };
 
         auto fmha_alu1 = [&](auto sp_reg_idx) {
-            // # v_mul_f32 = 1
             auto scaled_m = tile_elementwise_in([&](auto logits) { return logits * scale_s; }, m);
 
             constexpr auto p_spans =
@@ -1120,7 +1117,7 @@ struct BlockFmhaPipelineQRKSVS
                 sweep_tile_span(p_spans[number<1>{}], [&](auto idx1) {
                     constexpr auto i_j_idx             = make_tuple(idx0, idx1);
                     sp(sp_reg_idx).sp_compute(i_j_idx) = ck_tile::exp2(
-                        scale_s * sp(sp_reg_idx).sp_compute[i_j_idx] - scaled_m[i_idx]);
+                        scale_s * sp(sp_reg_idx).sp_compute[i_j_idx] - scale_s * m[i_idx]);
                 });
             });
 
@@ -1131,16 +1128,18 @@ struct BlockFmhaPipelineQRKSVS
                 SMPLComputeDataType{0}); // rowsum(Pcompute{j})
             block_tile_reduce_sync(rowsum_p, f_sum, bool_constant<false>{});
 
-            // l{j}, Oacc{j}
+            /// TODO: move some fmha_alu_D_upd() code here (0 ~ 1)
+
+            // l{j}
             constexpr auto o_spans = decltype(o_acc)::get_distributed_spans();
             sweep_tile_span(o_spans[number<0>{}], [&](auto idx0) {
                 constexpr auto i_idx = make_tuple(idx0);
-                const auto tmp       = [&]() {
-                    return ck_tile::exp2(scale_s * (m_old[i_idx] - m[i_idx]));
-                }();
+                const auto tmp       = ck_tile::exp2(scale_s * (m_old[i_idx] - m[i_idx]));
 
                 l(i_idx) = tmp * l[i_idx] + rowsum_p[i_idx];
             });
+
+            /// TODO: move some fmha_alu_D_upd() code here (2 ~ fmha_alu_D_reg_cnt)
 
             sp(sp_reg_idx).p = cast_tile<PDataType>(
                 tile_elementwise_in(p_compute_element_func, sp(sp_reg_idx).sp_compute));
