@@ -1397,9 +1397,6 @@ struct BlockFmhaPipelineQRKSVS
                     // avoid v_pk_mul in fmha_alu_D_upd() to be scheduled before here
                     __builtin_amdgcn_sched_barrier(0);
 #endif
-                    /// FIXME: I added the following sched_barrier to reduce VGPR spills in the FP16
-                    /// kernels. Remove it to improve instruction scheduling.
-                    __builtin_amdgcn_sched_barrier(0);
                     fmha_alu_D_upd();
                 }
                 return result;
