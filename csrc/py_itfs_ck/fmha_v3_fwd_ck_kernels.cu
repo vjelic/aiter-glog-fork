@@ -1109,11 +1109,7 @@ struct BlockFmhaPipelineQRKSVS
         decltype(m) m_old;
 
         auto fmha_alu0 = [&](auto sp_reg_idx) {
-            // sp_compute{j} = sp_compute{j} * scale_s
-            tile_elementwise_inout(
-                [&](auto& logits) { logits = detail::mul_impl_sv(scale_s, logits); },
-                sp(sp_reg_idx).sp_compute);
-
+            // # v_max3_f32 = 8
             auto m_local = block_tile_reduce<SMPLComputeDataType>(
                 sp(sp_reg_idx).sp_compute,
                 sequence<1>{},
@@ -1121,6 +1117,7 @@ struct BlockFmhaPipelineQRKSVS
                 -numeric<SMPLComputeDataType>::infinity()); // m_local = rowmax(S{j})
             block_tile_reduce_sync(m_local, f_max, bool_constant<false>{});
 
+            // # v_max3_f32 = 1
             m_old = m; // m{j-1}
             tile_elementwise_inout([](auto& e0, auto e1, auto e2) { e0 = max(e1, e2); },
                                    m,
@@ -1129,16 +1126,19 @@ struct BlockFmhaPipelineQRKSVS
         };
 
         auto fmha_alu1 = [&](auto sp_reg_idx) {
+            // # v_mul_f32 = 1
+            auto scaled_m = tile_elementwise_in([&](auto logits) { return logits * scale_s; }, m);
+
             constexpr auto p_spans =
                 std::decay_t<decltype(sp(sp_reg_idx).sp_compute)>::get_distributed_spans();
             sweep_tile_span(p_spans[number<0>{}], [&](auto idx0) {
                 constexpr auto i_idx = make_tuple(idx0);
-                auto row_max         = get_validated_m(m[i_idx]);
+                auto row_max         = get_validated_m(scaled_m[i_idx]);
 
                 sweep_tile_span(p_spans[number<1>{}], [&](auto idx1) {
-                    constexpr auto i_j_idx             = make_tuple(idx0, idx1);
-                    sp(sp_reg_idx).sp_compute(i_j_idx) = ck_tile::exp2(
-                        detail::sub_impl_vv(sp(sp_reg_idx).sp_compute[i_j_idx], row_max));
+                    constexpr auto i_j_idx = make_tuple(idx0, idx1);
+                    sp(sp_reg_idx).sp_compute(i_j_idx) =
+                        ck_tile::exp2(scale_s * sp(sp_reg_idx).sp_compute[i_j_idx] - row_max);
                 });
             });
 
@@ -1158,7 +1158,7 @@ struct BlockFmhaPipelineQRKSVS
                 constexpr auto i_idx = make_tuple(idx0);
                 const auto tmp       = [&]() {
                     auto row_max = get_validated_m(m[i_idx]);
-                    return ck_tile::exp2(detail::sub_impl_vv(m_old[i_idx], row_max));
+                    return ck_tile::exp2(scale_s * (m_old[i_idx] - row_max));
                 }();
 
                 l(i_idx) = detail::add_impl_vv(tmp * l[i_idx], rowsum_p[i_idx]);
@@ -1221,7 +1221,7 @@ struct BlockFmhaPipelineQRKSVS
                 constexpr auto i_idx = make_tuple(idx0);
                 const auto tmp       = [&]() {
                     auto row_max = get_validated_m(m[i_idx]);
-                    return ck_tile::exp2(m_old[i_idx] - row_max);
+                    return ck_tile::exp2(scale_s * (m_old[i_idx] - row_max));
                 }();
 
                 sweep_tile_span(o_spans[number<1>{}], [&](auto idx1) {
@@ -1308,7 +1308,9 @@ struct BlockFmhaPipelineQRKSVS
                     s_waitcnt_lgkmcnt<0>();
                     __builtin_amdgcn_sched_barrier(0);
                     cl_calc(xdl_SP_p01_reg_idx, gemm0);
+                    ASM_MARKER("before fmha_alu1");
                     fmha_alu1(xdl_SP_p23_reg_idx);
+                    ASM_MARKER("after fmha_alu1");
 
                     __builtin_amdgcn_sched_barrier(0);
                     // phase1
