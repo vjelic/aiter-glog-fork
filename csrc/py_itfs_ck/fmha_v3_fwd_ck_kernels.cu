@@ -39,8 +39,8 @@
 #define DEBUG_MASK_CAUSAL 1
 
 #define DEBUG_SINGLE_INST 0
-#define DEBUG_SINGLE_INST_DTYPE DEBUG_DTYPE_FP16
-#define DEBUG_SINGLE_INST_MASK DEBUG_MASK_NONE
+#define DEBUG_SINGLE_INST_DTYPE DEBUG_DTYPE_BF16
+#define DEBUG_SINGLE_INST_MASK DEBUG_MASK_CAUSAL
 
 #define ENALBE_INLINE_ASM_ELEMWISE_OPS 0
 
@@ -892,7 +892,6 @@ struct BlockFmhaPipelineQRKSVS
 
         decltype(block_tile_reduce<SMPLComputeDataType>(
             sp(number<0>{}).sp_compute, sequence<1>{}, f_max, SMPLComputeDataType{0})) m;
-        decltype(m) m_local;
         decltype(m) l;
 
         // initialize k_lds_window and v_lds_window
@@ -1115,7 +1114,7 @@ struct BlockFmhaPipelineQRKSVS
                 [&](auto& logits) { logits = detail::mul_impl_sv(scale_s, logits); },
                 sp(sp_reg_idx).sp_compute);
 
-            m_local = block_tile_reduce<SMPLComputeDataType>(
+            auto m_local = block_tile_reduce<SMPLComputeDataType>(
                 sp(sp_reg_idx).sp_compute,
                 sequence<1>{},
                 f_max,
