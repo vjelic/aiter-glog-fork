@@ -755,19 +755,73 @@ struct BlockFmhaPipelineQRKSVS
     CK_TILE_DEVICE static constexpr void sched_core_loop(ck_tile::number<WaveGroup> cl_p,
                                                          ck_tile::number<Phase> phase)
     {
+        using namespace ck_tile;
+
         if constexpr(cl_p == 0)
         {
-            if constexpr(phase == 0) {}
-            else if constexpr(phase == 1) {}
-            else if constexpr(phase == 2) {}
-            else if constexpr(phase == 3) {}
+            if constexpr(phase == 0)
+            {
+                static_for<0, 8, 1>{}([&](auto) {
+                    __builtin_amdgcn_sched_group_barrier(0x008, 1, 0); // MFMA
+                    __builtin_amdgcn_sched_group_barrier(0x002, 4, 0); // VALU
+                });
+                __builtin_amdgcn_sched_group_barrier(0x002, 16, 0); // VALU
+            }
+            else if constexpr(phase == 1)
+            {
+                /// NOTICE: unable to schedule fmha_mask() SALUs
+            }
+            else if constexpr(phase == 2)
+            {
+                static_for<0, 8, 1>{}([&](auto) {
+                    __builtin_amdgcn_sched_group_barrier(0x008, 1, 0); // MFMA
+                    __builtin_amdgcn_sched_group_barrier(0x002, 4, 0); // VALU
+                });
+                __builtin_amdgcn_sched_group_barrier(0x002, 16, 0); // VALU
+            }
+            else if constexpr(phase == 3)
+            {
+#if 0
+                static_for<0, 8, 1>{}([&](auto) {
+                    __builtin_amdgcn_sched_group_barrier(0x100, 1, 0); // DS read
+                    __builtin_amdgcn_sched_group_barrier(0x001, 1, 0); // ALU
+                });
+                __builtin_amdgcn_sched_group_barrier(0x001, 16, 0); // ALU
+#endif
+            }
         }
         else
         {
-            if constexpr(phase == 0) {}
-            else if constexpr(phase == 1) {}
-            else if constexpr(phase == 2) {}
-            else if constexpr(phase == 3) {}
+            if constexpr(phase == 0)
+            {
+#if 0
+                static_for<0, 8, 1>{}([&](auto) {
+                    __builtin_amdgcn_sched_group_barrier(0x100, 1, 0); // DS read
+                    __builtin_amdgcn_sched_group_barrier(0x001, 1, 0); // ALU
+                });
+                __builtin_amdgcn_sched_group_barrier(0x001, 16, 0); // ALU
+#endif
+            }
+            else if constexpr(phase == 1)
+            {
+                static_for<0, 8, 1>{}([&](auto) {
+                    __builtin_amdgcn_sched_group_barrier(0x008, 1, 0); // MFMA
+                    __builtin_amdgcn_sched_group_barrier(0x002, 4, 0); // VALU
+                });
+                __builtin_amdgcn_sched_group_barrier(0x002, 16, 0); // VALU
+            }
+            else if constexpr(phase == 2)
+            {
+                /// NOTICE: unable to schedule fmha_mask() SALUs
+            }
+            else if constexpr(phase == 3)
+            {
+                static_for<0, 8, 1>{}([&](auto) {
+                    __builtin_amdgcn_sched_group_barrier(0x008, 1, 0); // MFMA
+                    __builtin_amdgcn_sched_group_barrier(0x002, 4, 0); // VALU
+                });
+                __builtin_amdgcn_sched_group_barrier(0x002, 16, 0); // VALU
+            }
         }
     }
 
