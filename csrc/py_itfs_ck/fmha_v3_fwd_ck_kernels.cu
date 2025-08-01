@@ -1117,12 +1117,10 @@ struct BlockFmhaPipelineQRKSVS
                 std::decay_t<decltype(sp(sp_reg_idx).sp_compute)>::get_distributed_spans();
             sweep_tile_span(p_spans[number<0>{}], [&](auto idx0) {
                 constexpr auto i_idx = make_tuple(idx0);
-                auto row_max         = scaled_m[i_idx];
-
                 sweep_tile_span(p_spans[number<1>{}], [&](auto idx1) {
-                    constexpr auto i_j_idx = make_tuple(idx0, idx1);
-                    sp(sp_reg_idx).sp_compute(i_j_idx) =
-                        ck_tile::exp2(scale_s * sp(sp_reg_idx).sp_compute[i_j_idx] - row_max);
+                    constexpr auto i_j_idx             = make_tuple(idx0, idx1);
+                    sp(sp_reg_idx).sp_compute(i_j_idx) = ck_tile::exp2(
+                        scale_s * sp(sp_reg_idx).sp_compute[i_j_idx] - scaled_m[i_idx]);
                 });
             });
 
@@ -1133,20 +1131,19 @@ struct BlockFmhaPipelineQRKSVS
                 SMPLComputeDataType{0}); // rowsum(Pcompute{j})
             block_tile_reduce_sync(rowsum_p, f_sum, bool_constant<false>{});
 
-            sp(sp_reg_idx).p = cast_tile<PDataType>(
-                tile_elementwise_in(p_compute_element_func, sp(sp_reg_idx).sp_compute));
-
             // l{j}, Oacc{j}
             constexpr auto o_spans = decltype(o_acc)::get_distributed_spans();
             sweep_tile_span(o_spans[number<0>{}], [&](auto idx0) {
                 constexpr auto i_idx = make_tuple(idx0);
                 const auto tmp       = [&]() {
-                    auto row_max = m[i_idx];
-                    return ck_tile::exp2(scale_s * (m_old[i_idx] - row_max));
+                    return ck_tile::exp2(scale_s * (m_old[i_idx] - m[i_idx]));
                 }();
 
-                l(i_idx) = detail::add_impl_vv(tmp * l[i_idx], rowsum_p[i_idx]);
+                l(i_idx) = tmp * l[i_idx] + rowsum_p[i_idx];
             });
+
+            sp(sp_reg_idx).p = cast_tile<PDataType>(
+                tile_elementwise_in(p_compute_element_func, sp(sp_reg_idx).sp_compute));
         };
 
         auto gemm = [&](auto sp_reg_idx, auto gemm_idx) {
@@ -1199,7 +1196,7 @@ struct BlockFmhaPipelineQRKSVS
         };
 
         auto fmha_alu_D_upd = [&] {
-            // l{j}, Oacc{j}
+            // Oacc{j}
             constexpr auto o_spans = decltype(o_acc)::get_distributed_spans();
             sweep_tile_span(o_spans[number<0>{}], [&](auto idx0) {
                 constexpr auto i_idx = make_tuple(idx0);
