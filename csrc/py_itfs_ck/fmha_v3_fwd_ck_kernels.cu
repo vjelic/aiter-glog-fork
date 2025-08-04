@@ -942,38 +942,28 @@ struct BlockFmhaPipelineQRKSVS
     template <typename QDramBlockWindowTmp,
               typename KDramBlockWindowTmp,
               typename VDramBlockWindowTmp,
-              typename BiasDramBlockWindowTmp,
-              typename RandValDramBlockWindowTmp,
               typename LSEDramBlockWindowTmp,
               typename QElementFunction,
               typename KElementFunction,
               typename VElementFunction,
-              typename BiasElementFunction,
               typename LSEElementFunction,
               typename SAccElementFunction,
               typename PComputeElementFunction,
-              typename OAccElementFunction,
-              typename PositionEncoding>
-    CK_TILE_DEVICE auto
-    operator()(const QDramBlockWindowTmp& q_dram_block_window_tmp, // M0*K0 tile
-               const QElementFunction& q_element_func,
-               const KDramBlockWindowTmp& k_dram_block_window_tmp, // N0*K0 tile
-               const KElementFunction& k_element_func,
-               const VDramBlockWindowTmp& v_dram_block_window_tmp, // N1*K1 tile
-               const VElementFunction& v_element_func,
-               const BiasDramBlockWindowTmp& bias_dram_block_window_tmp, // M0*N0 tile
-               const BiasElementFunction& bias_element_func,
-               RandValDramBlockWindowTmp& randval_dram_block_window_tmp,
-               LSEDramBlockWindowTmp& lse_dram_window_tmp, // M0*1 tile
-               const LSEElementFunction& lse_element_func,
-               const SAccElementFunction& s_acc_element_func,
-               const PComputeElementFunction& p_compute_element_func,
-               const OAccElementFunction& o_acc_element_func,
-               FmhaMask mask,
-               PositionEncoding position_encoding,
-               float scale_s,
-               void* smem_ptr,
-               DropoutType& dropout) const
+              typename OAccElementFunction>
+    CK_TILE_DEVICE auto operator()(const QDramBlockWindowTmp& q_dram_block_window_tmp, // M0*K0 tile
+                                   const QElementFunction& q_element_func,
+                                   const KDramBlockWindowTmp& k_dram_block_window_tmp, // N0*K0 tile
+                                   const KElementFunction& k_element_func,
+                                   const VDramBlockWindowTmp& v_dram_block_window_tmp, // N1*K1 tile
+                                   const VElementFunction& v_element_func,
+                                   LSEDramBlockWindowTmp& lse_dram_window_tmp, // M0*1 tile
+                                   const LSEElementFunction& lse_element_func,
+                                   const SAccElementFunction& s_acc_element_func,
+                                   const PComputeElementFunction& p_compute_element_func,
+                                   const OAccElementFunction& o_acc_element_func,
+                                   FmhaMask mask,
+                                   float scale_s,
+                                   void* smem_ptr) const
     {
         using namespace ck_tile;
 
@@ -987,9 +977,7 @@ struct BlockFmhaPipelineQRKSVS
                           kN0 == KDramBlockWindowTmp{}.get_window_lengths()[number<0>{}] &&
                           kK0 == KDramBlockWindowTmp{}.get_window_lengths()[number<1>{}] &&
                           kK1 == VDramBlockWindowTmp{}.get_window_lengths()[number<0>{}] &&
-                          kN1 == VDramBlockWindowTmp{}.get_window_lengths()[number<1>{}] &&
-                          kM0 == BiasDramBlockWindowTmp{}.get_window_lengths()[number<0>{}] &&
-                          kN0 == BiasDramBlockWindowTmp{}.get_window_lengths()[number<1>{}],
+                          kN1 == VDramBlockWindowTmp{}.get_window_lengths()[number<1>{}],
                       "wrong!");
 
         static_assert(sizeof(SaccDataType) * kM0 * kN0 <= GetSmemSize());
@@ -1156,16 +1144,6 @@ struct BlockFmhaPipelineQRKSVS
                              {seqlen_k_start, 0}, // TODO: hdim split?
                              Policy::template MakeVDramTileDistribution<Problem>());
         v_dram_window.init_raw();
-
-        const auto bias_origin = bias_dram_block_window_tmp.get_window_origin();
-        auto bias_dram_window =
-            make_tile_window(bias_dram_block_window_tmp.get_bottom_tensor_view(),
-                             bias_dram_block_window_tmp.get_window_lengths(),
-                             {bias_origin.at(number<0>{}), seqlen_k_start}, // M/N
-                             Policy::template MakeBiasDramTileDistribution<decltype(gemm_0)>());
-
-        auto randval_dram_window = dropout.template MakeRandvalDramWindow<decltype(gemm_0)>(
-            randval_dram_block_window_tmp, seqlen_k_start);
 
         // prefetch K tile
         index_t i_total_loops      = 0;
@@ -1609,8 +1587,6 @@ struct BlockFmhaPipelineQRKSVS
         // pre-stage
         {
             ASM_MARKER("before pre-stage");
-            const auto k_origin = k_dram_window.get_window_origin();
-
             // (1) load K0 to LDS & VGPR
             K_mem_load(number<0>{}); // mem_K0
 
@@ -1729,22 +1705,15 @@ struct BlockFmhaPipelineQRKSVS
     template <typename QDramBlockWindowTmp,
               typename KDramBlockWindowTmp,
               typename VDramBlockWindowTmp,
-              typename BiasDramBlockWindowTmp,
-              typename RandValDramBlockWindowTmp,
-              typename LSEDramBlockWindowTmp,
-              typename PositionEncoding>
+              typename LSEDramBlockWindowTmp>
     CK_TILE_HOST_DEVICE auto
-    operator()(const QDramBlockWindowTmp& q_dram_block_window_tmp,       // M0*K0 tile
-               const KDramBlockWindowTmp& k_dram_block_window_tmp,       // N0*K0 tile
-               const VDramBlockWindowTmp& v_dram_block_window_tmp,       // N1*K1 tile
-               const BiasDramBlockWindowTmp& bias_dram_block_window_tmp, // M0*N0 tile
-               RandValDramBlockWindowTmp& randval_dram_block_window_tmp, // M0*N0 tile
-               LSEDramBlockWindowTmp& lse_dram_block_window_tmp,         // M0*1 tile
+    operator()(const QDramBlockWindowTmp& q_dram_block_window_tmp, // M0*K0 tile
+               const KDramBlockWindowTmp& k_dram_block_window_tmp, // N0*K0 tile
+               const VDramBlockWindowTmp& v_dram_block_window_tmp, // N1*K1 tile
+               LSEDramBlockWindowTmp& lse_dram_block_window_tmp,   // M0*1 tile
                FmhaMask mask,
-               PositionEncoding position_encoding,
                float scale_s,
-               void* smem_ptr,
-               DropoutType& dropout) const
+               void* smem_ptr) const
     {
         using namespace ck_tile;
 
@@ -1754,19 +1723,14 @@ struct BlockFmhaPipelineQRKSVS
                           identity{},
                           v_dram_block_window_tmp,
                           identity{},
-                          bias_dram_block_window_tmp,
-                          identity{},
-                          randval_dram_block_window_tmp,
                           lse_dram_block_window_tmp,
                           identity{},
                           identity{},
                           identity{},
                           identity{},
                           mask,
-                          position_encoding,
                           scale_s,
-                          smem_ptr,
-                          dropout);
+                          smem_ptr);
     }
 };
 
@@ -2788,13 +2752,11 @@ struct FmhaFwdKernel
         const index_t i_m0 = __builtin_amdgcn_readfirstlane(i_tile_m * FmhaPipeline::kM0);
         const index_t i_n1 = __builtin_amdgcn_readfirstlane(i_tile_n * FmhaPipeline::kN1);
 
-        long_index_t batch_offset_q       = 0;
-        long_index_t batch_offset_k       = 0;
-        long_index_t batch_offset_v       = 0;
-        long_index_t batch_offset_bias    = 0;
-        long_index_t batch_offset_randval = 0;
-        long_index_t batch_offset_lse     = 0;
-        long_index_t batch_offset_o       = 0;
+        long_index_t batch_offset_q   = 0;
+        long_index_t batch_offset_k   = 0;
+        long_index_t batch_offset_v   = 0;
+        long_index_t batch_offset_lse = 0;
+        long_index_t batch_offset_o   = 0;
 
         if constexpr(kIsGroupMode)
         {
@@ -2812,17 +2774,9 @@ struct FmhaFwdKernel
             {
                 batch_offset_v = key_start;
             }
-            if constexpr(BiasEnum == BlockAttentionBiasEnum::ELEMENTWISE_BIAS)
-            {
-                batch_offset_bias = query_start * kargs.stride_bias;
-            }
             if constexpr(kStoreLSE)
             {
                 batch_offset_lse = query_start;
-            }
-            if constexpr(kHasDropout)
-            {
-                batch_offset_randval = query_start * kargs.stride_randval;
             }
             batch_offset_o = query_start * kargs.stride_o;
 
@@ -2860,18 +2814,9 @@ struct FmhaFwdKernel
             batch_offset_q = static_cast<long_index_t>(i_batch) * kargs.batch_stride_q;
             batch_offset_k = static_cast<long_index_t>(i_batch) * kargs.batch_stride_k;
             batch_offset_v = static_cast<long_index_t>(i_batch) * kargs.batch_stride_v;
-            if constexpr(BiasEnum == BlockAttentionBiasEnum::ELEMENTWISE_BIAS)
-            {
-                batch_offset_bias = static_cast<long_index_t>(i_batch) * kargs.batch_stride_bias;
-            }
             if constexpr(kStoreLSE)
             {
                 batch_offset_lse = static_cast<long_index_t>(i_batch) * kargs.batch_stride_lse;
-            }
-            if constexpr(kHasDropout)
-            {
-                batch_offset_randval =
-                    static_cast<long_index_t>(i_batch) * kargs.batch_stride_randval;
             }
             batch_offset_o = static_cast<long_index_t>(i_batch) * kargs.batch_stride_o;
         }
@@ -2962,38 +2907,6 @@ struct FmhaFwdKernel
             make_tile_window(v_dram,
                              make_tuple(number<FmhaPipeline::kK1>{}, number<FmhaPipeline::kN1>{}),
                              {0, i_n1});
-        /// FIXME: Before C++20, capturing structured binding variables are not supported. Remove
-        /// following copy capture of the 'i_nhead' if in C++20
-        const auto bias_dram_window = [&, i_nhead_ = i_nhead]() {
-            constexpr auto bias_dram_window_lengths =
-                make_tuple(number<FmhaPipeline::kM0>{}, number<FmhaPipeline::kN0>{});
-            if constexpr(BiasEnum == BlockAttentionBiasEnum::ELEMENTWISE_BIAS)
-            {
-                const BiasDataType* bias_ptr =
-                    reinterpret_cast<const BiasDataType*>(kargs.bias_ptr) +
-                    static_cast<long_index_t>(i_nhead_) * kargs.nhead_stride_bias +
-                    batch_offset_bias;
-
-                const auto bias_dram = [&]() {
-                    const auto bias_dram_naive = make_naive_tensor_view<address_space_enum::global>(
-                        bias_ptr,
-                        make_tuple(kargs.seqlen_q, kargs.seqlen_k),
-                        make_tuple(kargs.stride_bias, 1),
-                        number<FmhaPipeline::kAlignmentBias>{},
-                        number<1>{});
-
-                    return pad_tensor_view(bias_dram_naive,
-                                           bias_dram_window_lengths,
-                                           sequence<kPadSeqLenQ, kPadSeqLenK>{});
-                }();
-
-                return make_tile_window(bias_dram, bias_dram_window_lengths, {i_m0, 0});
-            }
-            else
-            {
-                return make_null_tile_window(bias_dram_window_lengths);
-            }
-        }();
 
         // lse
         auto lse_dram_window = [&, i_nhead_ = i_nhead]() {
@@ -3024,58 +2937,6 @@ struct FmhaFwdKernel
             }
         }();
 
-        auto dropout = [&, i_nhead_ = i_nhead, i_batch_ = i_batch]() {
-            if constexpr(kHasDropout)
-            {
-                return BlockDropout{i_batch_,
-                                    i_nhead_,
-                                    kargs.num_head_q,
-                                    kargs.is_drop_seed_offset_from_host ? kargs.drop_seed.val
-                                                                        : *kargs.drop_seed.ptr,
-                                    kargs.is_drop_seed_offset_from_host ? kargs.drop_offset.val
-                                                                        : *kargs.drop_offset.ptr,
-                                    kargs.rp_undrop,
-                                    kargs.p_undrop_in_uint8_t,
-                                    kargs.is_store_randval};
-            }
-            else
-            {
-                return NullBlockDropout{};
-            };
-        }();
-
-        auto randval_dram_window = [&, i_nhead_ = i_nhead]() {
-            constexpr auto randval_dram_window_lengths =
-                make_tuple(number<FmhaPipeline::kM0>{}, number<FmhaPipeline::kN0>{});
-            if constexpr(kHasDropout)
-            {
-                RandValOutputDataType* rand_val_ptr =
-                    reinterpret_cast<RandValOutputDataType*>(kargs.rand_val_ptr) +
-                    static_cast<long_index_t>(i_nhead_) * kargs.nhead_stride_randval +
-                    batch_offset_randval;
-
-                const auto randval_dram = [&]() {
-                    const auto randval_dram_naive =
-                        make_naive_tensor_view<address_space_enum::global>(
-                            rand_val_ptr,
-                            make_tuple(kargs.seqlen_q, kargs.seqlen_k),
-                            make_tuple(kargs.stride_randval, 1),
-                            number<1>{},
-                            number<1>{});
-
-                    return pad_tensor_view(randval_dram_naive,
-                                           randval_dram_window_lengths,
-                                           sequence<kPadSeqLenQ, kPadSeqLenK>{});
-                }();
-
-                return make_tile_window(randval_dram, randval_dram_window_lengths, {i_m0, 0});
-            }
-            else
-            {
-                return make_null_tile_window(randval_dram_window_lengths);
-            }
-        }();
-
         FmhaMask mask = [&]() {
             if constexpr(kHasMask)
                 return ck_tile::make_generic_attention_mask_from_lr_window<FmhaMask>(
@@ -3088,75 +2949,14 @@ struct FmhaFwdKernel
                 return FmhaMask{kargs.seqlen_q, kargs.seqlen_k};
         }();
 
-        // WA i_batch capture structure binding before c++20
-        auto position_encoding = [&, i_batch_ = i_batch, i_nhead_ = i_nhead]() {
-            if constexpr(BiasEnum == BlockAttentionBiasEnum::ALIBI)
-            {
-                // data loading, shared by entire wg
-                // TODO: how to use s_read?
-                SaccDataType slope =
-                    *(reinterpret_cast<const SaccDataType*>(kargs.alibi_slope_ptr) +
-                      i_batch_ * kargs.alibi_slope_stride + i_nhead_);
-                slope *= ck_tile::log2e_v<>;
-                if constexpr(kHasMask)
-                {
-                    return make_alibi_from_lr_mask<SaccDataType, true>(slope,
-                                                                       kargs.window_size_left,
-                                                                       kargs.window_size_right,
-                                                                       kargs.seqlen_q,
-                                                                       kargs.seqlen_k,
-                                                                       kargs.mask_type);
-                }
-                else
-                {
-                    return Alibi<SaccDataType, true>{
-                        slope, kargs.seqlen_q, kargs.seqlen_k, AlibiMode::FROM_BOTTOM_RIGHT};
-                }
-            }
-            else
-            {
-                return EmptyPositionEncoding<SaccDataType>{};
-            }
-        }();
-
         auto o_acc_tile = [&]() {
-            if constexpr(kDoFp8StaticQuant)
-            {
-                return FmhaPipeline{}(
-                    q_dram_window,
-                    identity{}, // q_element_func
-                    k_dram_window,
-                    identity{}, // k_element_func
-                    v_dram_window,
-                    identity{}, // v_element_func
-                    bias_dram_window,
-                    identity{}, // bias_element_func
-                    randval_dram_window,
-                    lse_dram_window,
-                    identity{},                                          // lse_element_func
-                    identity{},                                          // s_acc_element_func
-                    scales{kargs.scale_p},                               // p_compute_element_func
-                    composes(saturates<fp8_t>{}, scales{kargs.scale_o}), // o_acc_element_func
-                    mask,
-                    position_encoding,
-                    kargs.scale_s,
-                    smem_ptr,
-                    dropout);
-            }
-            else
-            {
-                return FmhaPipeline{}(q_dram_window,
-                                      k_dram_window,
-                                      v_dram_window,
-                                      bias_dram_window,
-                                      randval_dram_window,
-                                      lse_dram_window,
-                                      mask,
-                                      position_encoding,
-                                      kargs.scale_s,
-                                      smem_ptr,
-                                      dropout);
-            }
+            return FmhaPipeline{}(q_dram_window,
+                                  k_dram_window,
+                                  v_dram_window,
+                                  lse_dram_window,
+                                  mask,
+                                  kargs.scale_s,
+                                  smem_ptr);
         }();
 
         // O DRAM and O DRAM window
