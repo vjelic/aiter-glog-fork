@@ -421,6 +421,9 @@ struct BlockFmhaPipelineQRKSVSDefaultPolicy
         return aiter::BlockGemmARegBRegCRegV2<GemmProblem, BlockGemmPolicy>{};
     }
 
+    static constexpr ck_tile::index_t kKLdsPadInBytes = 4 * 4;  // 4 dwords
+    static constexpr ck_tile::index_t kVLdsPadInBytes = 4 * 16; // 16 dwords
+
     template <typename Problem, ck_tile::index_t IBuf = 0>
     CK_TILE_DEVICE static constexpr auto
     MakeKLdsStoreBlockDescriptor(ck_tile::number<IBuf> = ck_tile::number<0>{})
@@ -437,7 +440,9 @@ struct BlockFmhaPipelineQRKSVSDefaultPolicy
         constexpr index_t KPack   = GetSmemKPackK<Problem>(); // this is for lds
         constexpr index_t KVector = GetAlignmentK<Problem>(); // this is for global load
         constexpr index_t kPad =
-            KPack; // for async-copy, this pad is between warps. Optimize this for lds_read speed
+            kKLdsPadInBytes /
+            sizeof(typename Problem::KDataType); // for async-copy, this pad is between warps.
+                                                 // Optimize this for lds_read speed
 
         static_assert(WarpSize * KVector >= kKPerBlock && WarpSize * KVector % kKPerBlock == 0);
         constexpr index_t LanesPerK =
@@ -491,7 +496,9 @@ struct BlockFmhaPipelineQRKSVSDefaultPolicy
 
         constexpr index_t KPack   = GetSmemKPackK<Problem>(); // this is for lds
         constexpr index_t KVector = GetAlignmentK<Problem>(); // this is for global load
-        constexpr index_t kPad    = KPack; // for async-copy, this pad is between warps
+        constexpr index_t kPad =
+            kKLdsPadInBytes /
+            sizeof(typename Problem::KDataType); // for async-copy, this pad is between warps
 
         static_assert(WarpSize * KVector >= kKPerBlock && WarpSize * KVector % kKPerBlock == 0);
         constexpr index_t LanesPerK  = kKPerBlock / KVector; // within a wave
@@ -541,7 +548,9 @@ struct BlockFmhaPipelineQRKSVSDefaultPolicy
         constexpr index_t KPack   = GetSmemVPackK<Problem>(); // this is for lds
         constexpr index_t KVector = GetAlignmentV<Problem>(); // this is for global load
         constexpr index_t kPad =
-            KPack; // for async-copy, this pad is between warps. Optimize this for lds_read speed
+            kVLdsPadInBytes /
+            sizeof(typename Problem::VDataType); // for async-copy, this pad is between warps.
+                                                 // Optimize this for lds_read speed
 
         static_assert(WarpSize * KVector >= kKPerBlock && WarpSize * KVector % kKPerBlock == 0);
         constexpr index_t LanesPerK =
@@ -595,7 +604,9 @@ struct BlockFmhaPipelineQRKSVSDefaultPolicy
 
         constexpr index_t KPack   = GetSmemVPackK<Problem>(); // this is for lds
         constexpr index_t KVector = GetAlignmentK<Problem>(); // this is for global load
-        constexpr index_t kPad    = KPack; // for async-copy, this pad is between warps
+        constexpr index_t kPad =
+            kVLdsPadInBytes /
+            sizeof(typename Problem::VDataType); // for async-copy, this pad is between warps
 
         static_assert(WarpSize * KVector >= kKPerBlock && WarpSize * KVector % kKPerBlock == 0);
         constexpr index_t LanesPerK  = kKPerBlock / KVector; // within a wave
