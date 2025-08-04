@@ -879,7 +879,7 @@ struct BlockFmhaPipelineQRKSVS
             {
                 static_for<0, 8, 1>{}([&](auto) {
                     __builtin_amdgcn_sched_group_barrier(0x008, 1, 0); // MFMA
-                    __builtin_amdgcn_sched_group_barrier(0x002, 4, 0); // VALU
+                    __builtin_amdgcn_sched_group_barrier(0x002, 6, 0); // VALU
                 });
                 __builtin_amdgcn_sched_group_barrier(0x002, 16, 0); // VALU
             }
@@ -891,7 +891,7 @@ struct BlockFmhaPipelineQRKSVS
             {
                 static_for<0, 8, 1>{}([&](auto) {
                     __builtin_amdgcn_sched_group_barrier(0x008, 1, 0); // MFMA
-                    __builtin_amdgcn_sched_group_barrier(0x002, 4, 0); // VALU
+                    __builtin_amdgcn_sched_group_barrier(0x002, 6, 0); // VALU
                 });
                 __builtin_amdgcn_sched_group_barrier(0x002, 16, 0); // VALU
             }
@@ -922,7 +922,7 @@ struct BlockFmhaPipelineQRKSVS
             {
                 static_for<0, 8, 1>{}([&](auto) {
                     __builtin_amdgcn_sched_group_barrier(0x008, 1, 0); // MFMA
-                    __builtin_amdgcn_sched_group_barrier(0x002, 4, 0); // VALU
+                    __builtin_amdgcn_sched_group_barrier(0x002, 6, 0); // VALU
                 });
                 __builtin_amdgcn_sched_group_barrier(0x002, 16, 0); // VALU
             }
@@ -934,7 +934,7 @@ struct BlockFmhaPipelineQRKSVS
             {
                 static_for<0, 8, 1>{}([&](auto) {
                     __builtin_amdgcn_sched_group_barrier(0x008, 1, 0); // MFMA
-                    __builtin_amdgcn_sched_group_barrier(0x002, 4, 0); // VALU
+                    __builtin_amdgcn_sched_group_barrier(0x002, 6, 0); // VALU
                 });
                 __builtin_amdgcn_sched_group_barrier(0x002, 16, 0); // VALU
             }
@@ -1102,7 +1102,7 @@ struct BlockFmhaPipelineQRKSVS
         }
 
         clear_tile(o_acc);
-        set_tile(m, -numeric<SMPLComputeDataType>::min());
+        set_tile(m, bit_cast<float>(0xff7fffff)); // a bit larger than -infinity
         clear_tile(l);
 
         const auto q_origin = q_dram_window.get_window_origin();
@@ -1271,13 +1271,23 @@ struct BlockFmhaPipelineQRKSVS
         decltype(m) m_old;
 
         auto fmha_alu0 = [&](auto sp_reg_idx) {
+            m_old = m; // m{j-1}
             static_assert(m.thread_buf_.size() == 1,
                           "assuming that each thread holds 1 rowmax value");
             auto m_latest = block_tile_reduce<SMPLComputeDataType>(
                 sp(sp_reg_idx).sp_compute, sequence<1>{}, f_max, m.thread_buf_[0]);
+#if 1
             block_tile_reduce_sync(m_latest, f_max, bool_constant<false>{});
-            m_old = m; // m{j-1}
-            m     = m_latest;
+#else
+            // assuming thaat we are using 32x32 mfma
+            int32x2_t swapped_regs =
+                __builtin_amdgcn_permlane32_swap(bit_cast<int32_t>(m_latest.thread_buf_[0]),
+                                                 bit_cast<int32_t>(m_latest.thread_buf_[0]),
+                                                 true,
+                                                 false);
+            m_latest.thread_buf_[0] = bit_cast<SMPLComputeDataType>(swapped_regs.x);
+#endif
+            m = m_latest;
             /// TODO: move some fmha_alu1() code here if necessary
         };
 
