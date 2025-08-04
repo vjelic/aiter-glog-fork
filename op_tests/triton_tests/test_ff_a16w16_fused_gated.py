@@ -8,7 +8,7 @@ from op_tests.triton_tests.utils.types import str_to_torch_dtype
 
 
 def generate_ff_a16w16_inputs(
-    batch, hidden_dim, intermediate_dim, dtype, layout="TN", gating=False, output=True
+    batch, hidden_dim, intermediate_dim, dtype, layout="TN", gating=True, output=True
 ):
     if isinstance(dtype, str):
         dtype = str_to_torch_dtype[dtype]

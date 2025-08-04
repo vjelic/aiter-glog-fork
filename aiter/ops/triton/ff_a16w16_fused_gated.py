@@ -6,6 +6,7 @@ import functools
 import json
 import os
 import torch
+import warnings
 import triton
 import triton.language as tl
 from aiter.ops.triton.utils.pid_preprocessing import pid_grid, remap_xcd
@@ -194,7 +195,7 @@ def _get_config(
     if not hasattr(_get_config, "_config_dict"):
         dev = arch_info.get_device()
         _get_config._config_dict = {}
-        fpath = f"{AITER_TRITON_CONFIGS_PATH}/gemm/{dev}-GEMM-A16W16-gated.json"
+        fpath = f"{AITER_TRITON_CONFIGS_PATH}/gemm/{dev}-FF-A16W16-gated.json"
         with open(fpath, "r") as file:
             config = json.load(file)
         _get_config._config_dict["default"] = config
@@ -203,7 +204,7 @@ def _get_config(
     if key not in _get_config._config_dict.keys():
         dev = arch_info.get_device()
         fpath = (
-            f"{AITER_TRITON_CONFIGS_PATH}/gemm/{dev}-GEMM-A16W16-gated-N={N}-K={K}.json"
+            f"{AITER_TRITON_CONFIGS_PATH}/gemm/{dev}-FF-A16W16-gated-N={N}-K={K}.json"
         )
         if os.path.exists(fpath):
             with open(fpath, "r") as file:
@@ -212,7 +213,7 @@ def _get_config(
         else:
             key = "default"  # fall back to default config
 
-    bounds = [64, 128, 256, 512, 2048]
+    bounds = [4, 8, 16, 32, 64]
     for bound in bounds:
         if M <= bound and f"M_LEQ_{bound}" in _get_config._config_dict[key]:
             return _get_config._config_dict[key][f"M_LEQ_{bound}"]
@@ -253,6 +254,10 @@ def ff_a16w16_fused_gated(
     N, K = w_up.shape
     assert w_down.shape == (N // 2, K), "Incompatible matrix shapes."
     M = x.shape[0]
+    if M > 32:
+        warnings.warn(
+            "The fused FF kernel is slower than the unfused equivalent for large batch sizes (>32)."
+        )
 
     assert N % 2 == 0, "Weight shape incompatible with gating (N not divisible by 2)"
 

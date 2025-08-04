@@ -90,7 +90,6 @@ def ff_a16w16_gated(
         "reglu": "relu",
         None: None,
     }
-
     if intermediate is None:
         intermediate = torch.empty(
             (batch, intermediate_dim), dtype=dtype, device=x.device
