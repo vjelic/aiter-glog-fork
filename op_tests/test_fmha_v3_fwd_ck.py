@@ -183,8 +183,7 @@ def test_fmha_v3_fwd_ck(
     if not profile:
         print(f"Output max diff: {(out - out_ref).abs().max().item()}")
         print(f"Output Pytorch max diff: {(out_pt - out_ref).abs().max().item()}")
-    out_tol = max(2 * (out_pt - out_ref).abs().max().item(), 0.01)
-    assert (out - out_ref).abs().max().item() <= out_tol
+    assert (out - out_ref).abs().max().item() <= 2 * (out_pt - out_ref).abs().max().item()
 
 
 if __name__ == "__main__":
@@ -194,7 +193,7 @@ if __name__ == "__main__":
     d = 128
     d_v = 128
     mha_type = "mha"
-    dtype = dtypes.fp16
+    dtype = dtypes.bf16
     seed = 0
 
     test_fmha_v3_fwd_ck(
@@ -204,7 +203,7 @@ if __name__ == "__main__":
         seqlen_k,
         d,
         d_v,
-        True,
+        False,
         False,
         mha_type,
         dtype,
