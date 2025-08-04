@@ -1271,19 +1271,13 @@ struct BlockFmhaPipelineQRKSVS
         decltype(m) m_old;
 
         auto fmha_alu0 = [&](auto sp_reg_idx) {
-            auto m_local = block_tile_reduce<SMPLComputeDataType>(
-                sp(sp_reg_idx).sp_compute,
-                sequence<1>{},
-                f_max,
-                -numeric<SMPLComputeDataType>::infinity()); // m_local = rowmax(S{j})
-            block_tile_reduce_sync(m_local, f_max, bool_constant<false>{});
-
+            static_assert(m.thread_buf_.size() == 1,
+                          "assuming that each thread holds 1 rowmax value");
+            auto m_latest = block_tile_reduce<SMPLComputeDataType>(
+                sp(sp_reg_idx).sp_compute, sequence<1>{}, f_max, m.thread_buf_[0]);
+            block_tile_reduce_sync(m_latest, f_max, bool_constant<false>{});
             m_old = m; // m{j-1}
-            tile_elementwise_inout([](auto& e0, auto e1, auto e2) { e0 = max(e1, e2); },
-                                   m,
-                                   m_old,
-                                   m_local); // m{j}
-
+            m     = m_latest;
             /// TODO: move some fmha_alu1() code here if necessary
         };
 
