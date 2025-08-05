@@ -44,7 +44,7 @@
 
 #define ENALBE_INLINE_ASM_ELEMWISE_OPS 0
 
-#define ADD_SBARRIER_FOR_PHASE0 1
+#define ADD_SBARRIER_FOR_PHASE0 0
 
 namespace aiter {
 namespace detail {
@@ -1303,8 +1303,6 @@ struct BlockFmhaPipelineQRKSVS
         };
 
         auto fmha_alu1 = [&](auto sp_reg_idx) {
-            auto scaled_m = tile_elementwise_in([&](auto logits) { return logits * scale_s; }, m);
-
             constexpr auto p_spans =
                 std::decay_t<decltype(sp(sp_reg_idx).sp_compute)>::get_distributed_spans();
             sweep_tile_span(p_spans[number<0>{}], [&](auto idx0) {
