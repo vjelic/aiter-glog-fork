@@ -3012,7 +3012,7 @@ struct host_args
 };
 
 //////////////////////////////////////////////////////////////////////////////////////
-template <typename DataType, bool IsMasking>
+template <typename DataType, bool PadSeqlen, bool IsMasking>
 struct get_kernel
 {
     using fmha_dtype = DataType;
@@ -3031,11 +3031,11 @@ struct get_kernel
                                               true // IsVLayoutRowMajor
                                               >;
 
-    using fmha_traits = ck_tile::TileFmhaTraits<true,  // kPadSeqLenQ
-                                                true,  // kPadSeqLenK
-                                                false, // kPadHeadDimQ
-                                                false, // kPadHeadDimV
-                                                false, // kHasLogitsSoftCap
+    using fmha_traits = ck_tile::TileFmhaTraits<PadSeqlen, // kPadSeqLenQ
+                                                PadSeqlen, // kPadSeqLenK
+                                                false,     // kPadHeadDimQ
+                                                false,     // kPadHeadDimV
+                                                false,     // kHasLogitsSoftCap
                                                 ck_tile::BlockAttentionBiasEnum::NO_BIAS,
                                                 false, // kHasBiasGrad
                                                 false, // kStoreLSE
@@ -3082,8 +3082,8 @@ struct get_kernel
     using type = aiter::FmhaFwdKernel<fmha_pipeline, fmha_epilogue>;
 };
 
-template <typename DataType, bool IsMasking>
-using get_kernel_t = typename get_kernel<DataType, IsMasking>::type;
+template <typename DataType, bool PadSeqlen, bool IsMasking>
+using get_kernel_t = typename get_kernel<DataType, PadSeqlen, IsMasking>::type;
 
 template <typename Kernel>
 void launch(const host_args& args)
@@ -3270,14 +3270,28 @@ std::vector<at::Tensor> fmha_v3_fwd_ck(const at::Tensor& q, // [b, sq, hq, d]
         {
 #if !DEBUG_SINGLE_INST || \
     (DEBUG_SINGLE_INST_DTYPE == DEBUG_DTYPE_FP16 && DEBUG_SINGLE_INST_MASK == DEBUG_MASK_NONE)
-            launch<get_kernel_t<FmhaFwdFp16, false>>(args);
+            if(seqlen_q % 256 == 0 && seqlen_k % 32 == 0)
+            {
+                launch<get_kernel_t<FmhaFwdFp16, false, false>>(args);
+            }
+            else
+            {
+                launch<get_kernel_t<FmhaFwdFp16, true, false>>(args);
+            }
 #endif
         }
         else
         {
 #if !DEBUG_SINGLE_INST || \
     (DEBUG_SINGLE_INST_DTYPE == DEBUG_DTYPE_FP16 && DEBUG_SINGLE_INST_MASK == DEBUG_MASK_CAUSAL)
-            launch<get_kernel_t<FmhaFwdFp16, true>>(args);
+            if(seqlen_q % 256 == 0 && seqlen_k % 32 == 0)
+            {
+                launch<get_kernel_t<FmhaFwdFp16, false, true>>(args);
+            }
+            else
+            {
+                launch<get_kernel_t<FmhaFwdFp16, true, true>>(args);
+            }
 #endif
         }
     }
@@ -3287,14 +3301,28 @@ std::vector<at::Tensor> fmha_v3_fwd_ck(const at::Tensor& q, // [b, sq, hq, d]
         {
 #if !DEBUG_SINGLE_INST || \
     (DEBUG_SINGLE_INST_DTYPE == DEBUG_DTYPE_BF16 && DEBUG_SINGLE_INST_MASK == DEBUG_MASK_NONE)
-            launch<get_kernel_t<FmhaFwdBf16, false>>(args);
+            if(seqlen_q % 256 == 0 && seqlen_k % 32 == 0)
+            {
+                launch<get_kernel_t<FmhaFwdBf16, false, false>>(args);
+            }
+            else
+            {
+                launch<get_kernel_t<FmhaFwdBf16, true, false>>(args);
+            }
 #endif
         }
         else
         {
 #if !DEBUG_SINGLE_INST || \
     (DEBUG_SINGLE_INST_DTYPE == DEBUG_DTYPE_BF16 && DEBUG_SINGLE_INST_MASK == DEBUG_MASK_CAUSAL)
-            launch<get_kernel_t<FmhaFwdBf16, true>>(args);
+            if(seqlen_q % 256 == 0 && seqlen_k % 32 == 0)
+            {
+                launch<get_kernel_t<FmhaFwdBf16, false, true>>(args);
+            }
+            else
+            {
+                launch<get_kernel_t<FmhaFwdBf16, true, true>>(args);
+            }
 #endif
         }
     }
