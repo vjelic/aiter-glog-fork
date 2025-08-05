@@ -1086,6 +1086,8 @@ struct BlockFmhaPipelineQRKSVS
         statically_indexed_array<sp_compute_type, 2> sp;
 
         decltype(gemm_1.MakeCBlockTile()) o_acc;
+        constexpr index_t fmha_alu_D_reg_cnt = 0;
+        static_assert(fmha_alu_D_reg_cnt <= o_acc.thread_buf_.size());
 
         decltype(block_tile_reduce<SMPLComputeDataType>(
             sp(number<0>{}).sp_compute, sequence<1>{}, f_max, SMPLComputeDataType{0})) m;
@@ -1280,6 +1282,7 @@ struct BlockFmhaPipelineQRKSVS
         };
 
         decltype(m) m_old;
+        SMPLComputeDataType o_acc_scale; // rescale o_acc in fmha_alu1() & fmha_alu_D_upd()
 
         auto fmha_alu0 = [&](auto sp_reg_idx) {
             m_old = m; // m{j-1}
@@ -1321,7 +1324,9 @@ struct BlockFmhaPipelineQRKSVS
                 SMPLComputeDataType{0}); // rowsum(Pcompute{j})
             block_tile_reduce_sync(rowsum_p, f_sum, bool_constant<false>{});
 
-            /// TODO: move some fmha_alu_D_upd() code here (0 ~ 1)
+            // update partial o_acc [0, 2)
+            static_for<0, ck_tile::min(2, fmha_alu_D_reg_cnt), 1>{}(
+                [&](auto idx) { o_acc.thread_buf_[idx] *= o_acc_scale; });
 
             // l{j}
             constexpr auto o_spans = decltype(o_acc)::get_distributed_spans();
@@ -1332,7 +1337,9 @@ struct BlockFmhaPipelineQRKSVS
                 l(i_idx) = tmp * l[i_idx] + rowsum_p[i_idx];
             });
 
-            /// TODO: move some fmha_alu_D_upd() code here (2 ~ fmha_alu_D_reg_cnt)
+            // update partial o_acc [2, fmha_alu_D_reg_cnt)
+            static_for<2, ck_tile::max(2, fmha_alu_D_reg_cnt), 1>{}(
+                [&](auto idx) { o_acc.thread_buf_[idx] *= o_acc_scale; });
 
             sp(sp_reg_idx).p = cast_tile<PDataType>(
                 tile_elementwise_in(p_compute_element_func, sp(sp_reg_idx).sp_compute));
@@ -1388,23 +1395,11 @@ struct BlockFmhaPipelineQRKSVS
         };
 
         auto fmha_alu_D_upd = [&] {
-            // Oacc{j}
-            constexpr auto o_spans = decltype(o_acc)::get_distributed_spans();
-            sweep_tile_span(o_spans[number<0>{}], [&](auto idx0) {
-                constexpr auto i_idx = make_tuple(idx0);
-                const auto tmp       = [&]() {
-                    auto row_max = m[i_idx];
-                    return ck_tile::exp2(scale_s * (m_old[i_idx] - row_max));
-                }();
+            o_acc_scale = ck_tile::exp2(scale_s * (m_old.thread_buf_[0] - m.thread_buf_[0]));
 
-                sweep_tile_span(o_spans[number<1>{}], [&](auto idx1) {
-                    constexpr auto i_j_idx = make_tuple(idx0, idx1);
-                    // FIXME: this use different equation from FA v2 paper,
-                    // but produce correc result.
-                    // Is the equation wrong?
-                    o_acc(i_j_idx) *= tmp;
-                });
-            });
+            // update partial o_acc after [fmha_alu_D_reg_cnt]
+            static_for<fmha_alu_D_reg_cnt, o_acc.thread_buf_.size(), 1>{}(
+                [&](auto idx) { o_acc.thread_buf_[idx] *= o_acc_scale; });
         };
 
         auto fmha_mask = [&](auto sp_reg_idx) {
