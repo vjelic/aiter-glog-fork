@@ -10,6 +10,7 @@ from aiter.ops.triton.gemm_a16w16_atomic import gemm_a16w16_atomic
 from op_tests.triton_tests.utils.types import str_to_torch_dtype
 from op_tests.triton_tests.utils import minimal_x_vals
 
+
 def generate_gemm_a16w16_inputs(M, N, K, dtype, layout="TN", output=True):
     if isinstance(dtype, str):
         dtype = str_to_torch_dtype[dtype]
@@ -70,6 +71,7 @@ def get_x_vals():
         (16384, 8192, 1024),
     ]
     return x_vals
+
 
 @pytest.mark.parametrize("activation", ["gelu", "gelu_tanh", "silu", "silu_exp2"])
 @pytest.mark.parametrize("M, N, K", minimal_x_vals(get_x_vals()))

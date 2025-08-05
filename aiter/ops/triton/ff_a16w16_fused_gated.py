@@ -249,8 +249,12 @@ def ff_a16w16_fused_gated(
     """
 
     # Shape checks
-    assert x.shape[1] == w_up.shape[1] == w_down.shape[1], f"Incompatible matrix shapes: x:{x.shape}, w_up:{w_up.shape}, w_down:{w_down.shape}"
-    assert w_up.shape[0] == w_down.shape[0] * 2, f"Incompatible matrix shapes: w_up:{w_up.shape}, w_down:{w_down.shape}"
+    assert (
+        x.shape[1] == w_up.shape[1] == w_down.shape[1]
+    ), f"Incompatible matrix shapes: x:{x.shape}, w_up:{w_up.shape}, w_down:{w_down.shape}"
+    assert (
+        w_up.shape[0] == w_down.shape[0] * 2
+    ), f"Incompatible matrix shapes: w_up:{w_up.shape}, w_down:{w_down.shape}"
     assert w_up.shape[0] % 2 == 0, "Shape incompatible with gating"
 
     N, K = w_up.shape

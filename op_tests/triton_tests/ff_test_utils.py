@@ -3,9 +3,14 @@ import torch.nn.functional as F
 import triton
 from op_tests.triton_tests.utils.types import str_to_torch_dtype
 
+
 def generate_ff_inputs(
-    batch, hidden_dim, intermediate_dim, dtype, layout="TN", 
-    gating=False, 
+    batch,
+    hidden_dim,
+    intermediate_dim,
+    dtype,
+    layout="TN",
+    gating=False,
     output=True,
     y_init="empty",
 ):
@@ -50,14 +55,25 @@ def generate_ff_inputs(
 
     return x, w1, w2, out_dtype, intermediate, y
 
+
 def ff_ungated_test(
     fn: callable,
-    batch: int, hidden_dim: int, intermediate_dim: int, dtype, output, activation,
-    y_init="empty"
+    batch: int,
+    hidden_dim: int,
+    intermediate_dim: int,
+    dtype,
+    output,
+    activation,
+    y_init="empty",
 ):
     x, w1, w2, out_dtype, _, y = generate_ff_inputs(
-        batch, hidden_dim, intermediate_dim, dtype, gating=False, output=output,
-        y_init=y_init
+        batch,
+        hidden_dim,
+        intermediate_dim,
+        dtype,
+        gating=False,
+        output=output,
+        y_init=y_init,
     )
     torch_out = F.linear(x, w1, bias=None)
     if activation == "gelu" or activation == "gelu_tanh":
@@ -95,12 +111,22 @@ def ff_ungated_test(
 
 def ff_gated_test(
     fn: callable,
-    batch: int, hidden_dim: int, intermediate_dim: int, dtype, output, activation,
+    batch: int,
+    hidden_dim: int,
+    intermediate_dim: int,
+    dtype,
+    output,
+    activation,
     y_init: str,
 ):
     x, w1, w2, out_dtype, _, y = generate_ff_inputs(
-        batch, hidden_dim, intermediate_dim, dtype, gating=True, output=output,
-        y_init=y_init
+        batch,
+        hidden_dim,
+        intermediate_dim,
+        dtype,
+        gating=True,
+        output=output,
+        y_init=y_init,
     )
     torch_out = F.linear(x, w1, bias=None)
     if activation == "gelu" or activation == "gelu_tanh":

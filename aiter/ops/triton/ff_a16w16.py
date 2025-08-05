@@ -28,16 +28,18 @@ def ff_a16w16_nogate(
     activation: One of ("silu", "relu", "gelu", "gelu_tanh", "silu_exp2", None)
     """
     # Shape checks
-    assert x.shape[1] == w_up.shape[1] == w_down.shape[1], f"Incompatible matrix shapes: x:{x.shape}, w_up:{w_up.shape}, w_down:{w_down.shape}"
-    assert w_up.shape[0] == w_down.shape[0], f"Incompatible matrix shapes: w_up:{w_up.shape}, w_down:{w_down.shape}"
+    assert (
+        x.shape[1] == w_up.shape[1] == w_down.shape[1]
+    ), f"Incompatible matrix shapes: x:{x.shape}, w_up:{w_up.shape}, w_down:{w_down.shape}"
+    assert (
+        w_up.shape[0] == w_down.shape[0]
+    ), f"Incompatible matrix shapes: w_up:{w_up.shape}, w_down:{w_down.shape}"
 
     M, K = x.shape
     N = w_up.shape[0]
 
     if intermediate is None:
-        intermediate = torch.empty(
-            (M, N), dtype=dtype, device=x.device
-        )
+        intermediate = torch.empty((M, N), dtype=dtype, device=x.device)
 
     intermediate = gemm_a16w16(
         x,
@@ -76,17 +78,19 @@ def ff_a16w16_gated(
     activation: One of ("silu", "relu", "gelu", "gelu_tanh", "silu_exp2", None)
     """
     # Shape checks
-    assert x.shape[1] == w_up.shape[1] == w_down.shape[1], f"Incompatible matrix shapes: x:{x.shape}, w_up:{w_up.shape}, w_down:{w_down.shape}"
-    assert w_up.shape[0] == w_down.shape[0] * 2, f"Incompatible matrix shapes: w_up:{w_up.shape}, w_down:{w_down.shape}"
+    assert (
+        x.shape[1] == w_up.shape[1] == w_down.shape[1]
+    ), f"Incompatible matrix shapes: x:{x.shape}, w_up:{w_up.shape}, w_down:{w_down.shape}"
+    assert (
+        w_up.shape[0] == w_down.shape[0] * 2
+    ), f"Incompatible matrix shapes: w_up:{w_up.shape}, w_down:{w_down.shape}"
     assert w_up.shape[0] % 2 == 0, "Shape incompatible with gating"
 
     M, K = x.shape
     N = w_up.shape[0]
 
     if intermediate is None:
-        intermediate = torch.empty(
-            (M, N//2), dtype=dtype, device=x.device
-        )
+        intermediate = torch.empty((M, N // 2), dtype=dtype, device=x.device)
     intermediate = gemm_a16w16_gated(
         x,
         w_up,
