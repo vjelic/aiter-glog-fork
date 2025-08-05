@@ -1086,7 +1086,8 @@ struct BlockFmhaPipelineQRKSVS
         statically_indexed_array<sp_compute_type, 2> sp;
 
         decltype(gemm_1.MakeCBlockTile()) o_acc;
-        constexpr index_t fmha_alu_D_reg_cnt = 0;
+        constexpr index_t fmha_alu_D_reg_cnt = 0; // threshold to decide how many fmha_alu_D_upd()
+                                                  // instructions should we move to fmha_alu1()
         static_assert(fmha_alu_D_reg_cnt <= o_acc.thread_buf_.size());
 
         decltype(block_tile_reduce<SMPLComputeDataType>(
@@ -1290,16 +1291,17 @@ struct BlockFmhaPipelineQRKSVS
                           "assuming that each thread holds 1 rowmax value");
             auto m_latest = block_tile_reduce<SMPLComputeDataType>(
                 sp(sp_reg_idx).sp_compute, sequence<1>{}, f_max, m.thread_buf_[0]);
-#if 1
-            block_tile_reduce_sync(m_latest, f_max, bool_constant<false>{});
-#else
-            // assuming thaat we are using 32x32 mfma
+#if defined(__gfx950__)
+            // assuming that we are using 32x32 mfma
             int32x2_t swapped_regs =
                 __builtin_amdgcn_permlane32_swap(bit_cast<int32_t>(m_latest.thread_buf_[0]),
                                                  bit_cast<int32_t>(m_latest.thread_buf_[0]),
-                                                 true,
+                                                 false,
                                                  false);
-            m_latest.thread_buf_[0] = bit_cast<SMPLComputeDataType>(swapped_regs.x);
+            m_latest.thread_buf_[0] = ck_tile::max(bit_cast<SMPLComputeDataType>(swapped_regs.x),
+                                                   bit_cast<SMPLComputeDataType>(swapped_regs.y));
+#else
+            block_tile_reduce_sync(m_latest, f_max, bool_constant<false>{});
 #endif
             m = m_latest;
             /// TODO: move some fmha_alu1() code here if necessary
