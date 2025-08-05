@@ -10,6 +10,7 @@ from aiter.test_common import (
 from aiter.test_mha_common import (
     attention_ref,
 )
+import itertools
 import pytest
 import sys
 from dataclasses import dataclass
@@ -211,18 +212,25 @@ if __name__ == "__main__":
         head_sizes: Tuple[int, ...]
 
     mha_type = "mha"
-    dtype = dtypes.bf16
-    causal = True
+    causal = False
     local = False
     profile = True
     seed = 0
 
     problem_sizes = [
         # batch_size, nheads, (seqlen_q, seqlen_k), (d, d_v)
+        ProblemSize(32, 16, (512,), (128,)),
+        ProblemSize(16, 16, (1024,), (128,)),
+        ProblemSize(8, 16, (2048,), (128,)),
+        ProblemSize(4, 16, (4096,), (128,)),
+        ProblemSize(2, 16, (8192,), (128,)),
+        ProblemSize(1, 16, (16384,), (128,)),
         ProblemSize(1, 64, (16384,), (128,)),
     ]
 
-    for problem_size in problem_sizes:
+    for dtype, problem_size in itertools.product(
+        [dtypes.fp16, dtypes.bf16], problem_sizes
+    ):
         batch_size = problem_size.batch_size
         nheads = problem_size.nheads
         seqlen_q, seqlen_k = (
@@ -236,7 +244,9 @@ if __name__ == "__main__":
             else problem_size.head_sizes * 2
         )
 
-        print(f"b:{batch_size}, h:{nheads}/{nheads}, s={seqlen_q}/{seqlen_k}")
+        print(
+            f"b:{batch_size}, h:{nheads}/{nheads}, s={seqlen_q}/{seqlen_k}, causal={causal}, dtype={dtype}"
+        )
 
         test_fmha_v3_fwd_ck(
             batch_size,
