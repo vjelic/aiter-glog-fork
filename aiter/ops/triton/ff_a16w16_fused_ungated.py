@@ -84,12 +84,8 @@ def _ff_a16w16_fused_ungated(
 
     acc_dtype = tl.float32 if y_ptr.type.element_ty != tl.int8 else tl.int32
 
-    offs_w1n = pid_n.to(tl.int64) * BLOCK_SIZE_N + tl.arange(
-        0, BLOCK_SIZE_N
-    )
-    w1_ptrs = w1_ptr + (
-        offs_k[:, None] * stride_w1k + offs_w1n[None, :] * stride_w1n
-    )
+    offs_w1n = pid_n.to(tl.int64) * BLOCK_SIZE_N + tl.arange(0, BLOCK_SIZE_N)
+    w1_ptrs = w1_ptr + (offs_k[:, None] * stride_w1k + offs_w1n[None, :] * stride_w1n)
     acc = tl.zeros((BLOCK_SIZE_M, BLOCK_SIZE_N), dtype=acc_dtype)
 
     for k in range(0, tl.cdiv(K, BLOCK_SIZE_K)):
@@ -110,8 +106,7 @@ def _ff_a16w16_fused_ungated(
             )
             w1 = tl.load(
                 w1_ptrs,
-                mask=(offs_k[:, None] < K - k * BLOCK_SIZE_K)
-                & (offs_w1n[None, :] < N),
+                mask=(offs_k[:, None] < K - k * BLOCK_SIZE_K) & (offs_w1n[None, :] < N),
                 other=0.0,
                 cache_modifier=cache_modifier,
             )
@@ -127,9 +122,7 @@ def _ff_a16w16_fused_ungated(
 
     acc = acc.to(w2_ptr.type.element_ty)
 
-    offs_w2n = pid_n.to(tl.int64) * BLOCK_SIZE_N + tl.arange(
-        0, BLOCK_SIZE_N
-    )
+    offs_w2n = pid_n.to(tl.int64) * BLOCK_SIZE_N + tl.arange(0, BLOCK_SIZE_N)
 
     w2_ptrs = w2_ptr + (offs_w2n[:, None] * stride_w2n + offs_k[None, :] * stride_w2k)
 

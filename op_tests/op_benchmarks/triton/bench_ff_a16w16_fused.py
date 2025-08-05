@@ -3,12 +3,15 @@ import torch
 import triton
 import math
 from aiter.ops.triton.ff_a16w16_fused_gated import ff_a16w16_fused_gated
-from op_tests.triton_tests.test_ff_a16w16_fused import (
-    generate_ff_a16w16_inputs,
+from aiter.ops.triton.ff_a16w16_fused_ungated import ff_a16w16_fused_ungated
+from aiter.ops.triton.ff_a16w16 import ff_a16w16_gated, ff_a16w16_nogate
+from op_tests.triton_tests.ff_test_utils import (
+    generate_ff_inputs,
 )
 from op_tests.op_benchmarks.triton.utils.argparse import (
     get_parser,
     get_ff_args,
+    add_argparse_ff,
 )
 
 from op_tests.op_benchmarks.triton.utils.benchmark_utils import (
@@ -42,7 +45,12 @@ def get_model_benchmark_object(
     else:
         raise NotImplementedError(f"{args.metric} is not supported")
 
-    line_names = ["fc1"]
+    evaluation_metric_to_unit = {
+        "throughput": "TFLOPS",
+        "time": "Time_(ms)",
+        "bandwidth": "Bandwidth_(GB/s)",  # spaces break prettytable parsing
+    }
+    line_names = [evaluation_metric_to_unit[args.metric]]
     line_vals = line_names
 
     mpl_colors = plt.rcParams["axes.prop_cycle"].by_key()["color"]
@@ -51,7 +59,7 @@ def get_model_benchmark_object(
         x_vals=x_vals_list,
         x_log=True,
         y_log=True,
-        line_arg="layer",
+        line_arg="unit",
         line_vals=line_vals,
         line_names=line_names,
         styles=[
@@ -70,37 +78,56 @@ def bench_fn(
     intermediate_dim: int,
     metric: str,
     layout: str,
+    gating: bool,
     activation: str = None,
+    e2e_fused: bool = False,
     **kwargs,
 ):
     # NOTE: Assume bias and output has the same dtype
     c_dtype = torch.bfloat16
-    x, w1, w2, out_dtype, y = generate_ff_a16w16_inputs(
+    x, w1, w2, out_dtype, _, y = generate_ff_inputs(
         batch,
         hidden_dim,
         intermediate_dim,
         c_dtype,
         layout=layout,
-        gating=True,
+        gating=gating,
         output=True,
     )
 
     # flops
-    flops_gemm1 = 2.0 * batch * hidden_dim * intermediate_dim * 2
-    flops_gate = batch * intermediate_dim
-    flops_gemm2 = 2.0 * batch * intermediate_dim * hidden_dim
-    flops = flops_gemm1 + flops_gate + flops_gemm2
-    if activation is not None:
-        flops += batch * intermediate_dim
+    if gating:
+        flops_gemm1 = 2.0 * batch * hidden_dim * intermediate_dim * 2
+        flops_gate = batch * intermediate_dim
+        flops_gemm2 = 2.0 * batch * intermediate_dim * hidden_dim
+        flops = flops_gemm1 + flops_gate + flops_gemm2
+        if activation is not None:
+            flops += batch * intermediate_dim
+    else:
+        flops = 4.0 * batch * hidden_dim * intermediate_dim
+        if activation is not None:
+            flops += batch * intermediate_dim
 
     # memory transfer
-    mem_read = (batch * intermediate_dim) * x.element_size() + (
-        hidden_dim * intermediate_dim * 2
-    ) * w1.element_size()
+    if gating:
+        mem_read = (batch * intermediate_dim) * x.element_size() + (
+            hidden_dim * intermediate_dim * 2
+        ) * w1.element_size()
+    else:
+        mem_read = (
+            batch * intermediate_dim * x.element_size()
+            + (hidden_dim * intermediate_dim) * w1.element_size()
+        )
     mem_write = (batch * hidden_dim) * x.element_size()
     mem = mem_read + mem_write
+
+    if e2e_fused:
+        fn = ff_a16w16_fused_gated if gating else ff_a16w16_fused_ungated
+    else:
+        fn = ff_a16w16_gated if gating else ff_a16w16_nogate
+
     ms = triton.testing.do_bench(
-        lambda: ff_a16w16_fused_gated(x, w1, w2, c_dtype, y, activation=activation),
+        lambda: fn(x, w1, w2, c_dtype, y=y, activation=activation),
         warmup=25,
         rep=100,  # noqa: E731
     )
@@ -122,7 +149,11 @@ def run_model_benchmark(args):
     """
     Runs benchmark given a --model argument.
     """
-    benchmark = get_model_benchmark_object("Fused FF A16W16 Gated Benchmark", args)
+    if args.e2e:
+        label = "E2E"
+    else:
+        label = "Act+Gate+GEMM" if not args.ungated else "Act+GEMM"
+    benchmark = get_model_benchmark_object(f"Fused FF A16W16 {label} Benchmark", args)
 
     @triton.testing.perf_report([benchmark])
     def bench_a16w16(M, hidden_dim, intermediate_dim, metric, **kwargs):
@@ -134,7 +165,9 @@ def run_model_benchmark(args):
             intermediate_dim,
             metric,
             args.layout,
+            gating=not args.ungated,
             activation=args.activation,
+            e2e_fused=args.e2e,
         )
 
     bench_a16w16.run(save_path="." if args.o else None, print_data=True)
@@ -144,13 +177,26 @@ def run_shape_benchmark(args):
     """
     Runs a benchmark with given tensor shapes.
     """
-    benchmark = get_shape_benchmark_object("Fused FF A16W16 Gated Benchmark", args)
+    if args.e2e:
+        label = "E2E"
+    else:
+        label = "Act+Gate+GEMM" if not args.ungated else "Act+GEMM"
+    benchmark = get_shape_benchmark_object(f"Fused FF A16W16 {label} Benchmark", args)
 
     @triton.testing.perf_report([benchmark])
     def bench_a16w16(M, N, K, metric, **kwargs):
         # Divide N by tensor parallel
         N = math.ceil(N / args.tp)
-        return bench_fn(M, N, K, metric, args.layout, activation=args.activation)
+        return bench_fn(
+            M,
+            N,
+            K,
+            metric,
+            args.layout,
+            gating=not args.ungated,
+            activation=args.activation,
+            e2e_fused=args.e2e,
+        )
 
     bench_a16w16.run(save_path="." if args.o else None, print_data=True)
 
@@ -168,9 +214,7 @@ def run_benchmark(args, defaults):
                 )
         run_model_benchmark(args)
     else:
-        unsupported_args = [
-            "fc1",
-        ]
+        unsupported_args = []
         for arg in unsupported_args:
             if getattr(args, arg, None) != getattr(defaults, arg, None):
                 raise Exception(
@@ -180,46 +224,21 @@ def run_benchmark(args, defaults):
 
 
 def parse_args():
-    parser = get_parser(kernel_name="Fused FF A16W16 Gated")
-    parser.add_argument(
-        "-tp",
-        type=int,
-        default=1,
-        help="Tensor parallel (divides intermediate_size)",
-    )
-    parser.add_argument(
-        "--layout",
-        type=str,
-        choices=["TT", "TN", "NT", "NN"],
-        default="TN",
-        help="Layout of input and weight matrix",
-    )
-    parser.add_argument(
-        "-M",
-        type=int,
-        default=None,
-        help="M dim of model benchmark if only one model is under test",
-    )
-    parser.add_argument(
-        "--shape",
-        type=int,
-        nargs="+",
-        metavar=("DIM"),
-        help="user-defined shape to benchmark. Can be 3D (M, N, K) or 4D (B, M, N, K) for batched kernels.",
-    )
-    parser.add_argument(
-        "-print_vgpr",
-        action="store_true",
-        help="Print VGPR usage for Triton kernels.",
-    )
-    parser.add_argument(
-        "-o", action="store_true", help="Write performance results to CSV file"
-    )
+    parser = get_parser(kernel_name="Fused FF")
+    parser = add_argparse_ff(parser)
     parser.add_argument(
         "--activation",
         type=str,
         default=None,
         help="Optional activation function to apply to the output. One of ('gelu', 'gelu_tanh', 'silu', 'silu_exp2', 'relu').",
+    )
+    parser.add_argument(
+        "-ungated",
+        action="store_true",
+        help="Use an ungated FF (e.g silu instead of swiglu).",
+    )
+    parser.add_argument(
+        "-e2e", action="store_true", help="Bench end-to-end (E2E) fused kernel."
     )
     return get_ff_args(parser)
 
@@ -229,7 +248,7 @@ def main():
     if args.print_vgpr:
         print("Retrieving VGPR usage for Triton kernels...")
         fun = lambda: run_benchmark(args, defaults)  # noqa: E731
-        print_vgpr(fun, "Fused FF")
+        print_vgpr(fun, "E2E Fused FF")
         return 0
     run_benchmark(args, defaults)
 
