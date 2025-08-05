@@ -44,7 +44,7 @@
 
 #define ENALBE_INLINE_ASM_ELEMWISE_OPS 0
 
-#define ADD_SBARRIER_FOR_PHASE0 0
+#define ADD_SBARRIER_FOR_PHASE0 1
 
 namespace aiter {
 namespace detail {
