@@ -1505,9 +1505,11 @@ struct BlockFmhaPipelineQRKSVS
                     __builtin_amdgcn_s_barrier();
                     __builtin_amdgcn_sched_barrier(0);
                     cl_calc(xdl_SP_p23_reg_idx, gemm1);
-                    fmha_alu_D_upd();
 
                     sched_core_loop(cl_p, number<2>{});
+                    __builtin_amdgcn_sched_barrier(0);
+                    fmha_alu_D_upd();
+
                     __builtin_amdgcn_sched_barrier(0);
                     // phase3
                     ASM_MARKER("phase3 Wave0-3");
@@ -1577,8 +1579,10 @@ struct BlockFmhaPipelineQRKSVS
                     __builtin_amdgcn_s_barrier();
                     __builtin_amdgcn_sched_barrier(0);
                     cl_calc(xdl_SP_p23_reg_idx, gemm1);
-                    fmha_alu_D_upd();
+
                     sched_core_loop(cl_p, number<3>{});
+                    __builtin_amdgcn_sched_barrier(0);
+                    fmha_alu_D_upd();
                 }
                 return result;
             };
