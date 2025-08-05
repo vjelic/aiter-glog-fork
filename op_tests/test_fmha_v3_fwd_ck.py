@@ -12,6 +12,8 @@ from aiter.test_mha_common import (
 )
 import pytest
 import sys
+from dataclasses import dataclass
+from typing import Tuple
 
 
 def run_torch(
@@ -40,13 +42,16 @@ def run_torch(
 def profile_func(target_func, *args, **kwargs):
     return target_func(*args, **kwargs)
 
+
 def flops(batch, seqlen, headdim, nheads, causal, mode="fwd"):
     assert mode in ["fwd", "bwd", "fwd_bwd"]
     f = 4 * batch * seqlen**2 * nheads * headdim // (2 if causal else 1)
     return f if mode == "fwd" else (2.5 * f if mode == "bwd" else 3.5 * f)
 
+
 def efficiency(flop, time_in_us):
-    return (flop / time_in_us / 10**6)
+    return flop / time_in_us / 10**6
+
 
 @pytest.mark.parametrize("batch_size", [5])
 @pytest.mark.parametrize("nheads", [6])
@@ -158,10 +163,7 @@ def test_fmha_v3_fwd_ck(
             window_size_left=window_size[0],
             window_size_right=window_size[1],
         )
-        tflops = efficiency(
-            flops(batch_size, seqlen_q, d, nheads, causal),
-            time
-        )
+        tflops = efficiency(flops(batch_size, seqlen_q, d, nheads, causal), time)
         print(f"time: {time:.2f} us, {tflops:.2f} TFlops")
     else:
         out = attention(
@@ -194,32 +196,59 @@ def test_fmha_v3_fwd_ck(
     if not profile:
         print(f"Output max diff: {(out - out_ref).abs().max().item()}")
         print(f"Output Pytorch max diff: {(out_pt - out_ref).abs().max().item()}")
-    assert (out - out_ref).abs().max().item() <= 2 * (out_pt - out_ref).abs().max().item()
+    assert (out - out_ref).abs().max().item() <= 2 * (
+        out_pt - out_ref
+    ).abs().max().item()
 
 
 if __name__ == "__main__":
-    batch_size = 1
-    nheads = 64
-    common_seqlen = 16384
-    (seqlen_q, seqlen_k) = (common_seqlen, common_seqlen)
-    d = 128
-    d_v = 128
+
+    @dataclass
+    class ProblemSize:
+        batch_size: int
+        nheads: int
+        seqlens: Tuple[int, ...]
+        head_sizes: Tuple[int, ...]
+
     mha_type = "mha"
     dtype = dtypes.bf16
+    causal = True
+    local = False
+    profile = True
     seed = 0
-    print(f'b:{batch_size}, h:{nheads}/{nheads}, s={seqlen_q}/{seqlen_k}')
 
-    test_fmha_v3_fwd_ck(
-        batch_size,
-        nheads,
-        seqlen_q,
-        seqlen_k,
-        d,
-        d_v,
-        False,
-        False,
-        mha_type,
-        dtype,
-        seed,
-        profile=True
-    )
+    problem_sizes = [
+        # batch_size, nheads, (seqlen_q, seqlen_k), (d, d_v)
+        ProblemSize(1, 64, (16384,), (128,)),
+    ]
+
+    for problem_size in problem_sizes:
+        batch_size = problem_size.batch_size
+        nheads = problem_size.nheads
+        seqlen_q, seqlen_k = (
+            problem_size.seqlens
+            if 1 < len(problem_size.seqlens)
+            else problem_size.seqlens * 2
+        )
+        d, d_v = (
+            problem_size.head_sizes
+            if 1 < len(problem_size.head_sizes)
+            else problem_size.head_sizes * 2
+        )
+
+        print(f"b:{batch_size}, h:{nheads}/{nheads}, s={seqlen_q}/{seqlen_k}")
+
+        test_fmha_v3_fwd_ck(
+            batch_size,
+            nheads,
+            seqlen_q,
+            seqlen_k,
+            d,
+            d_v,
+            causal,
+            local,
+            mha_type,
+            dtype,
+            seed,
+            profile=profile,
+        )
