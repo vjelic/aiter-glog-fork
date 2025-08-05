@@ -40,6 +40,13 @@ def run_torch(
 def profile_func(target_func, *args, **kwargs):
     return target_func(*args, **kwargs)
 
+def flops(batch, seqlen, headdim, nheads, causal, mode="fwd"):
+    assert mode in ["fwd", "bwd", "fwd_bwd"]
+    f = 4 * batch * seqlen**2 * nheads * headdim // (2 if causal else 1)
+    return f if mode == "fwd" else (2.5 * f if mode == "bwd" else 3.5 * f)
+
+def efficiency(flop, time_in_us):
+    return (flop / time_in_us / 10**6)
 
 @pytest.mark.parametrize("batch_size", [5])
 @pytest.mark.parametrize("nheads", [6])
@@ -151,7 +158,11 @@ def test_fmha_v3_fwd_ck(
             window_size_left=window_size[0],
             window_size_right=window_size[1],
         )
-        print(f"time: {time}")
+        tflops = efficiency(
+            flops(batch_size, seqlen_q, d, nheads, causal),
+            time
+        )
+        print(f"time: {time:.2f} us, {tflops:.2f} TFlops")
     else:
         out = attention(
             q,
@@ -188,13 +199,15 @@ def test_fmha_v3_fwd_ck(
 
 if __name__ == "__main__":
     batch_size = 1
-    nheads = 1
-    (seqlen_q, seqlen_k) = (256, 32)
+    nheads = 64
+    common_seqlen = 16384
+    (seqlen_q, seqlen_k) = (common_seqlen, common_seqlen)
     d = 128
     d_v = 128
     mha_type = "mha"
     dtype = dtypes.bf16
     seed = 0
+    print(f'b:{batch_size}, h:{nheads}/{nheads}, s={seqlen_q}/{seqlen_k}')
 
     test_fmha_v3_fwd_ck(
         batch_size,
@@ -208,4 +221,5 @@ if __name__ == "__main__":
         mha_type,
         dtype,
         seed,
+        profile=True
     )
