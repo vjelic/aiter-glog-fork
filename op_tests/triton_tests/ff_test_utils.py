@@ -4,7 +4,10 @@ import triton
 from op_tests.triton_tests.utils.types import str_to_torch_dtype
 
 def generate_ff_inputs(
-    batch, hidden_dim, intermediate_dim, dtype, layout="TN", gating=False, output=True
+    batch, hidden_dim, intermediate_dim, dtype, layout="TN", 
+    gating=False, 
+    output=True,
+    y_init="empty",
 ):
     if isinstance(dtype, str):
         dtype = str_to_torch_dtype[dtype]
@@ -34,8 +37,14 @@ def generate_ff_inputs(
     intermediate = None
     y = None
     if output:
-        intermediate = torch.empty((batch, intermediate_dim), dtype=dtype).cuda()
-        y = torch.empty((batch, hidden_dim), dtype=dtype).cuda()
+        if y_init == "empty":
+            intermediate = torch.empty((batch, intermediate_dim), dtype=dtype).cuda()
+            y = torch.empty((batch, hidden_dim), dtype=dtype).cuda()
+        elif y_init == "zeros":
+            intermediate = torch.zeros((batch, intermediate_dim), dtype=dtype).cuda()
+            y = torch.zeros((batch, hidden_dim), dtype=dtype).cuda()
+        else:
+            raise ValueError(f"Unsupported y_init value: {y_init}")
 
     out_dtype = dtype
 
@@ -43,10 +52,12 @@ def generate_ff_inputs(
 
 def ff_ungated_test(
     fn: callable,
-    batch: int, hidden_dim: int, intermediate_dim: int, dtype, output, activation
+    batch: int, hidden_dim: int, intermediate_dim: int, dtype, output, activation,
+    y_init="empty"
 ):
     x, w1, w2, out_dtype, _, y = generate_ff_inputs(
-        batch, hidden_dim, intermediate_dim, dtype, gating=False, output=output
+        batch, hidden_dim, intermediate_dim, dtype, gating=False, output=output,
+        y_init=y_init
     )
     torch_out = F.linear(x, w1, bias=None)
     if activation == "gelu" or activation == "gelu_tanh":
@@ -84,10 +95,12 @@ def ff_ungated_test(
 
 def ff_gated_test(
     fn: callable,
-    batch: int, hidden_dim: int, intermediate_dim: int, dtype, output, activation
+    batch: int, hidden_dim: int, intermediate_dim: int, dtype, output, activation,
+    y_init: str,
 ):
     x, w1, w2, out_dtype, _, y = generate_ff_inputs(
-        batch, hidden_dim, intermediate_dim, dtype, gating=True, output=output
+        batch, hidden_dim, intermediate_dim, dtype, gating=True, output=output,
+        y_init=y_init
     )
     torch_out = F.linear(x, w1, bias=None)
     if activation == "gelu" or activation == "gelu_tanh":
