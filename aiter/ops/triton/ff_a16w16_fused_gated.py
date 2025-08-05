@@ -157,7 +157,7 @@ def _ff_a16w16_fused_gated(
     offs_w2n = pid_n.to(tl.int64) * (BLOCK_SIZE_N // 2) + tl.arange(
         0, BLOCK_SIZE_N // 2
     )
-    # (BLOCK_N // 2, BLOCK_K)
+
     w2_ptrs = w2_ptr + (offs_w2n[:, None] * stride_w2n + offs_k[None, :] * stride_w2k)
 
     offs_ym = pid_m.to(tl.int64) * BLOCK_SIZE_M + tl.arange(0, BLOCK_SIZE_M)
@@ -238,8 +238,8 @@ def ff_a16w16_fused_gated(
     - X: Matrix X with shape (M, K).
     - w_up: Up-projection W with shape (N, K).
     - w_down: Down-projection W with shape (N//2, K).
-    - dtype: Optional parameter to specifcy bf16 or fp16 datatype. Default is bf16
-    - Y: Output Matrix Y with shape (M, N//2).
+    - dtype: Optional parameter to specify bf16 or fp16 datatype. Default is bf16
+    - Y: Output Matrix Y with shape (M, K).
     If this is none, then it's created by this API and returned as output.
     - activation: Optional activation function to apply to the gating activations.
     One of ("gelu", "gelu_tanh", "silu", "silu_exp2", "relu", None)
@@ -249,10 +249,11 @@ def ff_a16w16_fused_gated(
     """
 
     # Shape checks
-    assert x.shape[1] == w_up.shape[1] == w_down.shape[1], "Incompatible matrix shapes."
-    assert w_up.shape[0] == w_down.shape[0] * 2, "Incompatible matrix shapes."
+    assert x.shape[1] == w_up.shape[1] == w_down.shape[1], f"Incompatible matrix shapes: x:{x.shape}, w_up:{w_up.shape}, w_down:{w_down.shape}"
+    assert w_up.shape[0] == w_down.shape[0] * 2, f"Incompatible matrix shapes: w_up:{w_up.shape}, w_down:{w_down.shape}"
+    assert w_up.shape[0] % 2 == 0, "Shape incompatible with gating"
+
     N, K = w_up.shape
-    assert w_down.shape == (N // 2, K), "Incompatible matrix shapes."
     M = x.shape[0]
     if M > 32:
         warnings.warn(

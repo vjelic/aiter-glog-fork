@@ -76,7 +76,13 @@ def bench_fn(
     # NOTE: Assume bias and output has the same dtype
     c_dtype = torch.bfloat16
     x, w1, w2, out_dtype, y = generate_ff_a16w16_inputs(
-        batch, hidden_dim, intermediate_dim, c_dtype, layout=layout, gating=True, output=True
+        batch,
+        hidden_dim,
+        intermediate_dim,
+        c_dtype,
+        layout=layout,
+        gating=True,
+        output=True,
     )
 
     # flops
@@ -88,7 +94,9 @@ def bench_fn(
         flops += batch * intermediate_dim
 
     # memory transfer
-    mem_read = (batch * intermediate_dim) * x.element_size() + (hidden_dim * intermediate_dim * 2) * w1.element_size()
+    mem_read = (batch * intermediate_dim) * x.element_size() + (
+        hidden_dim * intermediate_dim * 2
+    ) * w1.element_size()
     mem_write = (batch * hidden_dim) * x.element_size()
     mem = mem_read + mem_write
     ms = triton.testing.do_bench(
@@ -120,7 +128,14 @@ def run_model_benchmark(args):
     def bench_a16w16(M, hidden_dim, intermediate_dim, metric, **kwargs):
         intermediate_dim = math.ceil(intermediate_dim / args.tp)
 
-        return bench_fn(M, hidden_dim, intermediate_dim, metric, args.layout, activation=args.activation)
+        return bench_fn(
+            M,
+            hidden_dim,
+            intermediate_dim,
+            metric,
+            args.layout,
+            activation=args.activation,
+        )
 
     bench_a16w16.run(save_path="." if args.o else None, print_data=True)
 

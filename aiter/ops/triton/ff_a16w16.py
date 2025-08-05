@@ -20,29 +20,24 @@ def ff_a16w16_nogate(
     """
     Full feed-forward block with gating (e.g swiglu).
 
-    x: torch.Tensor (B, hidden_dim)
-    w_up: torch.Tensor (intermediate_dim, hidden_dim)
-    w_down: torch.Tensor (hidden_dim, intermediate_dim)
-    y: torch.Tensor (B, hidden_dim)
-    activation: One of ("silu", "gelu", "relu")
+    x: torch.Tensor (M, K)
+    w_up: torch.Tensor (N, K)
+    w_down: torch.Tensor (N, K)
+    intermediate: torch.Tensor (M, N)
+    y: torch.Tensor (M, K)
+    activation: One of ("silu", "relu", "gelu", "gelu_tanh", "silu_exp2", None)
     """
     # Shape checks
-    assert x.shape[1] == w_up.shape[1] == w_down.shape[0], "Incompatible matrix shapes."
-    assert w_up.shape[0] == w_down.shape[1], "Incompatible matrix shapes."
-    batch, hidden_dim = x.shape
-    intermediate_dim = w_up.shape[0]
+    assert x.shape[1] == w_up.shape[1] == w_down.shape[1], f"Incompatible matrix shapes: x:{x.shape}, w_up:{w_up.shape}, w_down:{w_down.shape}"
+    assert w_up.shape[0] == w_down.shape[0], f"Incompatible matrix shapes: w_up:{w_up.shape}, w_down:{w_down.shape}"
+
+    M, K = x.shape
+    N = w_up.shape[0]
 
     if intermediate is None:
         intermediate = torch.empty(
-            (batch, intermediate_dim), dtype=dtype, device=x.device
+            (M, N), dtype=dtype, device=x.device
         )
-
-    activation_mapping = {
-        "gelu": "gelu_tanh",
-        "silu": "silu_exp2",
-        "relu": "relu",
-        None: None,
-    }
 
     intermediate = gemm_a16w16(
         x,
@@ -50,12 +45,12 @@ def ff_a16w16_nogate(
         dtype=dtype,
         y=intermediate,
         config=config,
-        activation=activation_mapping[activation],
+        activation=activation,
     )
 
     if y is None:
-        y = torch.empty((batch, hidden_dim), dtype=dtype, device=x.device)
-    y = gemm_a16w16(intermediate, w_down, dtype=dtype, config=config, y=y)
+        y = torch.empty((M, K), dtype=dtype, device=x.device)
+    y = gemm_a16w16(intermediate, w_down.T, dtype=dtype, config=config, y=y)
 
     return y
 
@@ -73,26 +68,24 @@ def ff_a16w16_gated(
     """
     Full feed-forward block with gating (e.g swiglu).
 
-    x: torch.Tensor (B, hidden_dim)
-    w_up: torch.Tensor (intermediate_dim * 2, hidden_dim)
-    w_down: torch.Tensor (hidden_dim, intermediate_dim)
-    y: torch.Tensor (B, hidden_dim)
-    activation: One of ("geglu", "swiglu", "reglu")
+    x: torch.Tensor (M, K)
+    w_up: torch.Tensor (N, K)
+    w_down: torch.Tensor (N//2, K)
+    intermediate: torch.Tensor (M, N//2)
+    y: torch.Tensor (M, K)
+    activation: One of ("silu", "relu", "gelu", "gelu_tanh", "silu_exp2", None)
     """
     # Shape checks
-    assert x.shape[1] == w_up.shape[1] == w_down.shape[0], "Incompatible matrix shapes."
-    assert w_up.shape[0] == w_down.shape[1] * 2, "Incompatible matrix shapes."
-    batch, hidden_dim = x.shape
-    intermediate_dim = w_down.shape[1]
-    activation_mapping = {
-        "geglu": "gelu_tanh",
-        "swiglu": "silu_exp2",
-        "reglu": "relu",
-        None: None,
-    }
+    assert x.shape[1] == w_up.shape[1] == w_down.shape[1], f"Incompatible matrix shapes: x:{x.shape}, w_up:{w_up.shape}, w_down:{w_down.shape}"
+    assert w_up.shape[0] == w_down.shape[0] * 2, f"Incompatible matrix shapes: w_up:{w_up.shape}, w_down:{w_down.shape}"
+    assert w_up.shape[0] % 2 == 0, "Shape incompatible with gating"
+
+    M, K = x.shape
+    N = w_up.shape[0]
+
     if intermediate is None:
         intermediate = torch.empty(
-            (batch, intermediate_dim), dtype=dtype, device=x.device
+            (M, N//2), dtype=dtype, device=x.device
         )
     intermediate = gemm_a16w16_gated(
         x,
@@ -100,10 +93,10 @@ def ff_a16w16_gated(
         y=intermediate,
         dtype=dtype,
         config=config,
-        activation=activation_mapping[activation],
+        activation=activation,
     )
     if y is None:
-        y = torch.empty((batch, hidden_dim), dtype=dtype, device=x.device)
-    y = gemm_a16w16(intermediate, w_down, dtype=dtype, config=config, y=y)
+        y = torch.empty((M, K), dtype=dtype, device=x.device)
+    y = gemm_a16w16(intermediate, w_down.T, dtype=dtype, config=config, y=y)
 
     return y
