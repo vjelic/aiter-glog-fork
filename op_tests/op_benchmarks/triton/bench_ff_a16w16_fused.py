@@ -248,7 +248,7 @@ def main():
     if args.print_vgpr:
         print("Retrieving VGPR usage for Triton kernels...")
         fun = lambda: run_benchmark(args, defaults)  # noqa: E731
-        print_vgpr(fun, "E2E Fused FF")
+        print_vgpr(fun, "Fused FF")
         return 0
     run_benchmark(args, defaults)
 
