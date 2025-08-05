@@ -23,7 +23,7 @@ from aiter.ops.triton.activation import _get_activation_from_str
     }
 )
 @triton.jit
-def _ff_a16w16_fused_gated(
+def _ff_a16w16_fused_ungated(
     x_ptr,
     w1_ptr,
     w2_ptr,
@@ -84,39 +84,22 @@ def _ff_a16w16_fused_gated(
 
     acc_dtype = tl.float32 if y_ptr.type.element_ty != tl.int8 else tl.int32
 
-    """
-    Our effective block size is actually BLOCK_N // 2.
-    Per Triton program, we compute the matmul for TWO tiles of C of shape (BLOCK_M, BLOCK_N // 2) -
-    one on the left side of C and one on the right side.
-    """
-    offs_w1n0 = pid_n.to(tl.int64) * (BLOCK_SIZE_N // 2) + tl.arange(
-        0, BLOCK_SIZE_N // 2
+    offs_w1n = pid_n.to(tl.int64) * BLOCK_SIZE_N + tl.arange(
+        0, BLOCK_SIZE_N
     )
-    offs_w1n1 = (
-        (pid_n.to(tl.int64) * (BLOCK_SIZE_N // 2) + tl.arange(0, BLOCK_SIZE_N // 2))
-    ) + (N // 2)
-    w1n0_ptrs = w1_ptr + (
-        offs_k[:, None] * stride_w1k + offs_w1n0[None, :] * stride_w1n
+    w1_ptrs = w1_ptr + (
+        offs_k[:, None] * stride_w1k + offs_w1n[None, :] * stride_w1n
     )
-    w1n1_ptrs = w1_ptr + (
-        offs_k[:, None] * stride_w1k + offs_w1n1[None, :] * stride_w1n
-    )
-    acc0 = tl.zeros((BLOCK_SIZE_M, BLOCK_SIZE_N // 2), dtype=acc_dtype)
-    acc1 = tl.zeros((BLOCK_SIZE_M, BLOCK_SIZE_N // 2), dtype=acc_dtype)
+    acc = tl.zeros((BLOCK_SIZE_M, BLOCK_SIZE_N), dtype=acc_dtype)
 
     for k in range(0, tl.cdiv(K, BLOCK_SIZE_K)):
         # Load the next block of A and B, generate a mask by checking the K dimension.
         # If it is out of bounds, set it to 0.
         if EVEN_K:
             x = tl.load(x_ptrs, mask=offs_xm[:, None] < M)
-            w1n0 = tl.load(
-                w1n0_ptrs,
-                mask=offs_w1n0[None, :] < (N // 2),
-                cache_modifier=cache_modifier,
-            )
-            w1n1 = tl.load(
-                w1n1_ptrs,
-                mask=offs_w1n1[None, :] < N,
+            w1 = tl.load(
+                w1_ptrs,
+                mask=offs_w1n[None, :] < N,
                 cache_modifier=cache_modifier,
             )
         else:
@@ -125,37 +108,27 @@ def _ff_a16w16_fused_gated(
                 mask=(offs_xm[:, None] < M) & (offs_k[None, :] < K - k * BLOCK_SIZE_K),
                 other=0.0,
             )
-            w1n0 = tl.load(
-                w1n0_ptrs,
+            w1 = tl.load(
+                w1_ptrs,
                 mask=(offs_k[:, None] < K - k * BLOCK_SIZE_K)
-                & (offs_w1n0[None, :] < (N // 2)),
-                other=0.0,
-                cache_modifier=cache_modifier,
-            )
-            w1n1 = tl.load(
-                w1n1_ptrs,
-                mask=(offs_k[:, None] < K - k * BLOCK_SIZE_K)
-                & (offs_w1n1[None, :] < N),
+                & (offs_w1n[None, :] < N),
                 other=0.0,
                 cache_modifier=cache_modifier,
             )
 
-        acc0 += tl.dot(x, w1n0, input_precision="ieee")
-        acc1 += tl.dot(x, w1n1, input_precision="ieee")
+        acc += tl.dot(x, w1, input_precision="ieee")
 
         # Advance the ptrs to the next K block.
         x_ptrs += BLOCK_SIZE_K * stride_xk
-        w1n0_ptrs += BLOCK_SIZE_K * stride_w1k
-        w1n1_ptrs += BLOCK_SIZE_K * stride_w1k
+        w1_ptrs += BLOCK_SIZE_K * stride_w1k
 
     if use_activation:
-        acc0 = activation(acc0)
+        acc = activation(acc)
 
-    acc_gated = acc0 * acc1
-    acc_gated = acc_gated.to(w2_ptr.type.element_ty)
+    acc = acc.to(w2_ptr.type.element_ty)
 
-    offs_w2n = pid_n.to(tl.int64) * (BLOCK_SIZE_N // 2) + tl.arange(
-        0, BLOCK_SIZE_N // 2
+    offs_w2n = pid_n.to(tl.int64) * BLOCK_SIZE_N + tl.arange(
+        0, BLOCK_SIZE_N
     )
 
     w2_ptrs = w2_ptr + (offs_w2n[:, None] * stride_w2n + offs_k[None, :] * stride_w2k)
@@ -167,16 +140,16 @@ def _ff_a16w16_fused_gated(
         if EVEN_K:
             w2 = tl.load(
                 w2_ptrs,
-                mask=offs_w2n[:, None] < (N // 2),
+                mask=offs_w2n[:, None] < N,
             )
         else:
             w2 = tl.load(
                 w2_ptrs,
-                mask=(offs_w2n[:, None] < (N // 2))
+                mask=(offs_w2n[:, None] < N)
                 & ((offs_k[None, :] + k * BLOCK_SIZE_K) < K),
                 other=0.0,
             )
-        partial_sum_y = tl.dot(acc_gated, w2)
+        partial_sum_y = tl.dot(acc, w2)
         # tl.device_print("w2:", w2)
         # tl.device_print("partial y:", partial_sum_y)
         y_mask = (offs_ym[:, None] < M) & ((offs_k[None, :] + BLOCK_SIZE_K * k) < K)
@@ -221,7 +194,7 @@ def _get_config(
         return _get_config._config_dict[key]["M_GEQ_4096"]
 
 
-def ff_a16w16_fused_gated(
+def ff_a16w16_fused_ungated(
     x,
     w_up,
     w_down,
@@ -231,17 +204,16 @@ def ff_a16w16_fused_gated(
     activation: Optional[str] = None,
 ):
     """
-    Computes a full feed-forward operation with a gated activation (e.g FF with SwiGLU)
-    Uses the first half of the output (along the N dim) as a gate for the second half.
+    Computes a full feed-forward operation with activation (e.g FF with Relu)
 
     Key parameters:
     - X: Matrix X with shape (M, K).
     - w_up: Up-projection W with shape (N, K).
-    - w_down: Down-projection W with shape (N//2, K).
+    - w_down: Down-projection W with shape (N, K).
     - dtype: Optional parameter to specify bf16 or fp16 datatype. Default is bf16
     - Y: Output Matrix Y with shape (M, K).
     If this is none, then it's created by this API and returned as output.
-    - activation: Optional activation function to apply to the gating activations.
+    - activation: Optional activation function to apply.
     One of ("gelu", "gelu_tanh", "silu", "silu_exp2", "relu", None)
 
     Returns:
@@ -253,7 +225,7 @@ def ff_a16w16_fused_gated(
         x.shape[1] == w_up.shape[1] == w_down.shape[1]
     ), f"Incompatible matrix shapes: x:{x.shape}, w_up:{w_up.shape}, w_down:{w_down.shape}"
     assert (
-        w_up.shape[0] == w_down.shape[0] * 2
+        w_up.shape[0] == w_down.shape[0]
     ), f"Incompatible matrix shapes: w_up:{w_up.shape}, w_down:{w_down.shape}"
 
     N, K = w_up.shape
@@ -262,8 +234,6 @@ def ff_a16w16_fused_gated(
         warnings.warn(
             "The fused FF kernel is slower than the unfused equivalent for large batch sizes (>32)."
         )
-
-    assert N % 2 == 0, "Weight shape incompatible with gating (N not divisible by 2)"
 
     w_up = w_up.T
 
@@ -278,7 +248,7 @@ def ff_a16w16_fused_gated(
     grid = lambda META: (  # noqa: E731
         triton.cdiv(M, META["BLOCK_SIZE_M"]) * triton.cdiv(N, META["BLOCK_SIZE_N"]),
     )
-    _ff_a16w16_fused_gated[grid](
+    _ff_a16w16_fused_ungated[grid](
         x,
         w_up,
         w_down,

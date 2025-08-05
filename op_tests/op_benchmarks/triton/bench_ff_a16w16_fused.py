@@ -3,7 +3,7 @@ import torch
 import triton
 import math
 from aiter.ops.triton.ff_a16w16_fused_gated import ff_a16w16_fused_gated
-from op_tests.triton_tests.test_ff_a16w16_fused_gated import (
+from op_tests.triton_tests.test_ff_a16w16_fused import (
     generate_ff_a16w16_inputs,
 )
 from op_tests.op_benchmarks.triton.utils.argparse import (
