@@ -9,7 +9,7 @@ from op_tests.triton_tests.ff_test_utils import ff_gated_test, ff_ungated_test
 
 @pytest.mark.parametrize("activation", ["silu_exp2", "gelu_tanh", "relu", None])
 @pytest.mark.parametrize(
-    "batch, hidden_dim, intermediate_dim", minimal_x_vals(get_x_vals())
+    "batch, hidden_dim, intermediate_dim", minimal_x_vals(get_x_vals(), sample=5)
 )
 @pytest.mark.parametrize("dtype", [torch.float16, torch.bfloat16])
 @pytest.mark.parametrize("output", [True, False])
