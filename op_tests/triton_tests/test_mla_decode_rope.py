@@ -445,7 +445,7 @@ def test_op_fwd_rope_integration(
     torch.cuda.empty_cache()  # Helps avoid hangs in large tests
     torch.manual_seed(0)
 
-    kv_indptr, kv_indices, q, kv_cache, attn_logits, rotary_emb, positions = (
+    kv_indptr, kv_indices, q, kv_cache, attn_logits, rotary_emb, positions, _ = (
         input_helper(
             B,
             H,
