@@ -9,7 +9,6 @@ from aiter.ops.triton.batched_gemm_a8w8_a_per_token_group_prequant_w_per_batched
 )
 from aiter.ops.triton.utils.arch_info import get_fp8_dtypes
 from aiter.ops.triton.utils.types import str_to_torch_dtype
-import torch.nn.functional as F
 from typing import Union
 
 
