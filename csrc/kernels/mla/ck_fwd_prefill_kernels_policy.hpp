@@ -293,8 +293,8 @@ struct CkMlaPrefillPolicy
 
     CK_TILE_HOST_DEVICE static constexpr auto GetKNopeSingleRepeatSize()
     {
-        constexpr int32_t kKPack = 16 / sizeof(scalar_t);
-        return (Traits::kKNopeLdsBlkSize + kKPack) * sizeof(scalar_t);
+        constexpr int32_t kKPack = 16 / sizeof(InOutType);
+        return (Traits::kKNopeLdsBlkSize + kKPack) * sizeof(InOutType);
     }
 
     template <int32_t KPerBlock, int32_t RepeatK>
@@ -308,8 +308,8 @@ struct CkMlaPrefillPolicy
 
         // 16 means max load elemtments number in an instrution: b128->16bytes
         // 4  means max load elemtments number to lds in gfx942: b32 ->4bytes
-        constexpr int32_t kKPack  = 16 / sizeof(scalar_t);
-        constexpr int32_t KVector = 4 / sizeof(scalar_t);
+        constexpr int32_t kKPack  = 16 / sizeof(InOutType);
+        constexpr int32_t KVector = 4 / sizeof(InOutType);
         constexpr int32_t kPad    = kKPack;
 
         static_assert((warpSize * KVector >= kKPerBlock) && (warpSize * KVector % kKPerBlock == 0));
@@ -323,7 +323,7 @@ struct CkMlaPrefillPolicy
     template <int32_t KPerBlock, int32_t RepeatK>
     CK_TILE_HOST_DEVICE static constexpr auto GetSingleKSpaceSize()
     {
-        return GetSingleKElementSpaceSize<KPerBlock, RepeatK>() * sizeof(scalar_t);
+        return GetSingleKElementSpaceSize<KPerBlock, RepeatK>() * sizeof(InOutType);
     }
 
     template <int32_t KPerBlock, int32_t RepeatK, int32_t IBuf = 0>
@@ -338,8 +338,8 @@ struct CkMlaPrefillPolicy
         constexpr int32_t NumWarps   = Traits::kNumWarps;
         constexpr int32_t warpSize   = ck_tile::get_warp_size();
 
-        constexpr int32_t kKPack  = 16 / sizeof(scalar_t);
-        constexpr int32_t KVector = 4 / sizeof(scalar_t);
+        constexpr int32_t kKPack  = 16 / sizeof(InOutType);
+        constexpr int32_t KVector = 4 / sizeof(InOutType);
         constexpr int32_t kPad =
             kKPack; // for async-copy, this pad is between warps. Optimize this for lds_read speed
 
@@ -442,8 +442,8 @@ struct CkMlaPrefillPolicy
         constexpr int32_t NumWarps   = Traits::kNumWarps;
         constexpr int32_t warpSize   = ck_tile::get_warp_size();
 
-        constexpr int32_t kKPack  = 16 / sizeof(scalar_t);
-        constexpr int32_t KVector = 4 / sizeof(scalar_t);
+        constexpr int32_t kKPack  = 16 / sizeof(InOutType);
+        constexpr int32_t KVector = 4 / sizeof(InOutType);
         constexpr int32_t kPad    = kKPack; // for async-copy, this pad is between warps
 
         static_assert(warpSize * KVector >= kKPerBlock && warpSize * KVector % kKPerBlock == 0);
@@ -567,12 +567,13 @@ struct CkMlaPrefillPolicy
         return v_lds_block_desc;
     }
 
+    template <int32_t NPerBlock>
     CK_TILE_HOST_DEVICE static constexpr auto MakeVLdsStoreBlockDescriptor()
     {
-        constexpr int32_t kNPerBlock = Traits::kSizeDV;
+        constexpr int32_t kNPerBlock = NPerBlock;
         constexpr int32_t kKPerBlock = Traits::kBlockK1;
 
-        constexpr int32_t kKPack = 16 / sizeof(scalar_t);
+        constexpr int32_t kKPack = 16 / sizeof(InOutType);
 
         constexpr auto v_lds_block_desc_0 = make_naive_tensor_descriptor(
             ck_tile::make_tuple(ck_tile::number<kKPerBlock / kKPack>{},
@@ -604,8 +605,8 @@ struct CkMlaPrefillPolicy
         constexpr int32_t NumWarps   = Traits::kNumWarps;
         constexpr int32_t warpSize   = ck_tile::get_warp_size();
 
-        constexpr int32_t kKPack  = 16 / sizeof(scalar_t);
-        constexpr int32_t KVector = 8 / sizeof(scalar_t); // 4
+        constexpr int32_t kKPack  = 16 / sizeof(InOutType);
+        constexpr int32_t KVector = 8 / sizeof(InOutType); // 4
         constexpr int32_t kPad    = kKPack; // for async-copy, this pad is between warps
 
         static_assert(warpSize * KVector >= kKPerBlock && warpSize * KVector % kKPerBlock == 0);
@@ -691,8 +692,8 @@ struct CkMlaPrefillPolicy
     CK_TILE_HOST_DEVICE static constexpr int32_t GetSmemSizeSingleV()
     {
         constexpr int32_t Banks        = 32; /// TODO: need change based on arch
-        constexpr int32_t PixelsPerRow = Banks * 4 / sizeof(scalar_t);
-        constexpr int32_t kKPack       = 16 / sizeof(scalar_t);
+        constexpr int32_t PixelsPerRow = Banks * 4 / sizeof(InOutType);
+        constexpr int32_t kKPack       = 16 / sizeof(InOutType);
         static_assert(PixelsPerRow % kKPack == 0);
         constexpr int32_t NPerRow    = PixelsPerRow / kKPack;
         constexpr int32_t kNPerBlock = Traits::kBlockN1;
@@ -701,7 +702,7 @@ struct CkMlaPrefillPolicy
         static_assert(kKPerBlock % kKPack == 0);
 
         return (kKPerBlock / kKPack) * (kNPerBlock / NPerRow) * (PixelsPerRow + kKPack) *
-               sizeof(scalar_t);
+               sizeof(InOutType);
     }
 
     CK_TILE_HOST_DEVICE static constexpr int32_t GetSmemSizeK()
@@ -709,7 +710,7 @@ struct CkMlaPrefillPolicy
         return Traits::kKVLoadOnce ? (GetSingleKElementSpaceSize<Traits::kKNopeLdsBlkSize,
                                                                  Traits::kKNopeLdsIterations>() +
                                       GetSingleKElementSpaceSize<Traits::kSizeRope, 1>()) *
-                                         sizeof(scalar_t)
+                                         sizeof(InOutType)
                                    : Traits::kNumPrefetchKV * GetSmemSizeSingleKV();
     }
 
@@ -739,7 +740,7 @@ struct CkMlaPrefillPolicy
     template <int32_t KPerBlock = Traits::kBlockK0>
     CK_TILE_HOST_DEVICE static constexpr auto MakeKDramTileDistribution()
     {
-        if constexpr(Traits::kKVLoadOnce == false)
+        if constexpr(Traits::kAsyncLoadK == false)
         {
             constexpr int32_t kBlockSize = Traits::kNumThreadsGemm0;
             constexpr int32_t kNPerBlock = Traits::kBlockN0;
@@ -770,7 +771,7 @@ struct CkMlaPrefillPolicy
             constexpr int32_t NumWarps   = Traits::kNumWarps;
             constexpr int32_t warpSize   = ck_tile::get_warp_size();
 
-            constexpr int32_t KVector = 4 / sizeof(scalar_t);
+            constexpr int32_t KVector = 4 / sizeof(InOutType);
 
             static_assert(warpSize * KVector >= kKPerBlock && warpSize * KVector % kKPerBlock == 0);
             constexpr int32_t LanesPerK  = kKPerBlock / KVector; // within a wave
@@ -823,8 +824,8 @@ struct CkMlaPrefillPolicy
 
         // 4 for dram -> lds max vector size in gfx942
         constexpr int32_t kMaxWarps = 8;
-        constexpr int32_t kKVector  = 4 / sizeof(scalar_t);
-        constexpr int32_t kNVector  = 4 * kMaxWarps / Traits::kNumWarps / sizeof(scalar_t);
+        constexpr int32_t kKVector  = 4 / sizeof(InOutType);
+        constexpr int32_t kNVector  = 4 * kMaxWarps / Traits::kNumWarps / sizeof(InOutType);
 
         constexpr int32_t kKLanes     = kKPerBlock / (kKNumWarps * kKVector);
         constexpr int32_t kLaneGroups = warpSize / kKLanes;
@@ -854,8 +855,8 @@ struct CkMlaPrefillPolicy
 
         // 4 for dram -> lds max vector size in gfx942
         constexpr int32_t kMaxWarps = 8;
-        constexpr int32_t kKVector  = 4 / sizeof(scalar_t);
-        constexpr int32_t kNVector  = 4 * kMaxWarps / Traits::kNumWarps / sizeof(scalar_t);
+        constexpr int32_t kKVector  = 4 / sizeof(InOutType);
+        constexpr int32_t kNVector  = 4 * kMaxWarps / Traits::kNumWarps / sizeof(InOutType);
 
         constexpr int32_t kKLanes     = kKPerBlock / (kKNumWarps * kKVector);
         constexpr int32_t kLaneGroups = warpSize / kKLanes;

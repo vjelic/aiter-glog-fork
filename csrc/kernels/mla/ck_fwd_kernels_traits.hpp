@@ -47,8 +47,10 @@ struct CkMlaPrefillKernelTrait
     static constexpr bool kPadSeqLenK                = true;
     static constexpr bool kKVLoadOnce                = kKVLoadOnce_;
     static constexpr bool kEnableXqa                 = kEnableXqa_;
+    static constexpr bool kAsyncLoadK                = true;
+    static constexpr bool kAsyncLoadV                = kKVLoadOnce_;
 
-    static constexpr int32_t kNumPrefetchK  = kKVLoadOnce_ ? 2 : 1;
+    static constexpr int32_t kNumPrefetchK  = 2;
     static constexpr int32_t kNumPrefetchV  = 1;
     static constexpr int32_t kNumPrefetchKV = ck_tile::max(kNumPrefetchK, kNumPrefetchV);
 

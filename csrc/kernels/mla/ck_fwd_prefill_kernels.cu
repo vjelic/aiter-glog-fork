@@ -1017,10 +1017,12 @@ ck_mla_fwd_prefill_with_kvcache_impl(
         }();
     );
     // assert(is_causal == false);
-    // assert(query.scalar_type() == at::ScalarType::BFloat16);
+    // assert(query_nope.scalar_type() == at::ScalarType::BFloat16);
+    // assert(query_rope.value().scalar_type() == at::ScalarType::BFloat16);
+    // assert(is_rope_separate == false);
     // using scalar_t = ck_tile::bf16_t;
     // using out_t = std::conditional_t<kForceOutAcc, acc_t, scalar_t>;
-    // dispatch_ck_mla_fwd_splictkv_prefill<Traits, scalar_t, acc_t, out_t, false>(params);
+    // dispatch_ck_mla_fwd_splictkv_prefill<Traits, scalar_t, acc_t, out_t, false, false>(params);
 
 
     return {output.to(opts), softmax_lse};
