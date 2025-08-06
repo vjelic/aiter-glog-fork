@@ -896,7 +896,14 @@ struct BlockFmhaPipelineQRKSVS
                     });
                     __builtin_amdgcn_sched_group_barrier(0x002, 16, 0); // VALU
                 }
-                else {}
+                else
+                {
+                    static_for<0, 8, 1>{}([&](auto) {
+                        __builtin_amdgcn_sched_group_barrier(0x008, 1, 0); // MFMA
+                        __builtin_amdgcn_sched_group_barrier(0x002, 3, 0); // VALU
+                    });
+                    __builtin_amdgcn_sched_group_barrier(0x002, 16, 0); // VALU
+                }
             }
             else if constexpr(phase == 1)
             {
@@ -910,7 +917,7 @@ struct BlockFmhaPipelineQRKSVS
             {
                 if constexpr(FmhaMask::IsMasking)
                 {
-                    /// FIXME: remove weird v_perm_b32 and re-write followingsched_group_barrier()
+                    /// FIXME: remove weird v_perm_b32 and re-write following sched_group_barrier()
                     /// calls
                     // __builtin_amdgcn_sched_group_barrier(0x002, 10, 0); // VALU
                     static_for<0, 8, 1>{}([&](auto) {
@@ -919,7 +926,17 @@ struct BlockFmhaPipelineQRKSVS
                     });
                     __builtin_amdgcn_sched_group_barrier(0x002, 16, 0); // VALU
                 }
-                else {}
+                else
+                {
+                    /// FIXME: remove weird v_perm_b32 and re-write following sched_group_barrier()
+                    /// calls
+                    __builtin_amdgcn_sched_group_barrier(0x002, 4, 0); // VALU
+                    static_for<0, 8, 1>{}([&](auto) {
+                        __builtin_amdgcn_sched_group_barrier(0x008, 1, 0); // MFMA
+                        __builtin_amdgcn_sched_group_barrier(0x002, 4, 0); // VALU
+                    });
+                    __builtin_amdgcn_sched_group_barrier(0x002, 16, 0); // VALU
+                }
             }
             else if constexpr(phase == 3)
             {
@@ -962,7 +979,14 @@ struct BlockFmhaPipelineQRKSVS
                     });
                     __builtin_amdgcn_sched_group_barrier(0x002, 16, 0); // VALU
                 }
-                else {}
+                else
+                {
+                    static_for<0, 8, 1>{}([&](auto) {
+                        __builtin_amdgcn_sched_group_barrier(0x008, 1, 0); // MFMA
+                        __builtin_amdgcn_sched_group_barrier(0x002, 3, 0); // VALU
+                    });
+                    __builtin_amdgcn_sched_group_barrier(0x002, 16, 0); // VALU
+                }
             }
             else if constexpr(phase == 2)
             {
@@ -976,7 +1000,7 @@ struct BlockFmhaPipelineQRKSVS
             {
                 if constexpr(FmhaMask::IsMasking)
                 {
-                    /// FIXME: remove weird v_perm_b32 and re-write followingsched_group_barrier()
+                    /// FIXME: remove weird v_perm_b32 and re-write following sched_group_barrier()
                     /// calls
                     // __builtin_amdgcn_sched_group_barrier(0x002, 10, 0); // VALU
                     static_for<0, 8, 1>{}([&](auto) {
@@ -985,7 +1009,17 @@ struct BlockFmhaPipelineQRKSVS
                     });
                     __builtin_amdgcn_sched_group_barrier(0x002, 16, 0); // VALU
                 }
-                else {}
+                else
+                {
+                    /// FIXME: remove weird v_perm_b32 and re-write following sched_group_barrier()
+                    /// calls
+                    __builtin_amdgcn_sched_group_barrier(0x002, 4, 0); // VALU
+                    static_for<0, 8, 1>{}([&](auto) {
+                        __builtin_amdgcn_sched_group_barrier(0x008, 1, 0); // MFMA
+                        __builtin_amdgcn_sched_group_barrier(0x002, 4, 0); // VALU
+                    });
+                    __builtin_amdgcn_sched_group_barrier(0x002, 16, 0); // VALU
+                }
             }
         }
     }
