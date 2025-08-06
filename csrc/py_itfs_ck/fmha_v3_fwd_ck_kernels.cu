@@ -888,28 +888,43 @@ struct BlockFmhaPipelineQRKSVS
         {
             if constexpr(phase == 0)
             {
-                static_for<0, 8, 1>{}([&](auto) {
-                    __builtin_amdgcn_sched_group_barrier(0x008, 1, 0); // MFMA
-                    __builtin_amdgcn_sched_group_barrier(0x002, 6, 0); // VALU
-                });
-                __builtin_amdgcn_sched_group_barrier(0x002, 16, 0); // VALU
+                if constexpr(FmhaMask::IsMasking)
+                {
+                    static_for<0, 8, 1>{}([&](auto) {
+                        __builtin_amdgcn_sched_group_barrier(0x008, 1, 0); // MFMA
+                        __builtin_amdgcn_sched_group_barrier(0x002, 6, 0); // VALU
+                    });
+                    __builtin_amdgcn_sched_group_barrier(0x002, 16, 0); // VALU
+                }
+                else {}
             }
             else if constexpr(phase == 1)
             {
-                /// NOTICE: unable to schedule fmha_mask() SALUs
+                if constexpr(FmhaMask::IsMasking)
+                {
+                    /// NOTICE: unable to schedule fmha_mask() SALUs
+                }
+                else {}
             }
             else if constexpr(phase == 2)
             {
-                /// FIXME: remove weird v_perm_b32 and re-write followingsched_group_barrier() calls
-                // __builtin_amdgcn_sched_group_barrier(0x002, 10, 0); // VALU
-                static_for<0, 8, 1>{}([&](auto) {
-                    __builtin_amdgcn_sched_group_barrier(0x008, 1, 0); // MFMA
-                    __builtin_amdgcn_sched_group_barrier(0x002, 6, 0); // VALU
-                });
-                __builtin_amdgcn_sched_group_barrier(0x002, 16, 0); // VALU
+                if constexpr(FmhaMask::IsMasking)
+                {
+                    /// FIXME: remove weird v_perm_b32 and re-write followingsched_group_barrier()
+                    /// calls
+                    // __builtin_amdgcn_sched_group_barrier(0x002, 10, 0); // VALU
+                    static_for<0, 8, 1>{}([&](auto) {
+                        __builtin_amdgcn_sched_group_barrier(0x008, 1, 0); // MFMA
+                        __builtin_amdgcn_sched_group_barrier(0x002, 6, 0); // VALU
+                    });
+                    __builtin_amdgcn_sched_group_barrier(0x002, 16, 0); // VALU
+                }
+                else {}
             }
             else if constexpr(phase == 3)
             {
+                if constexpr(FmhaMask::IsMasking)
+                {
 #if 0
                 static_for<0, 8, 1>{}([&](auto) {
                     __builtin_amdgcn_sched_group_barrier(0x100, 1, 0); // DS read
@@ -917,12 +932,16 @@ struct BlockFmhaPipelineQRKSVS
                 });
                 __builtin_amdgcn_sched_group_barrier(0x001, 16, 0); // ALU
 #endif
+                }
+                else {}
             }
         }
         else
         {
             if constexpr(phase == 0)
             {
+                if constexpr(FmhaMask::IsMasking)
+                {
 #if 0
                 static_for<0, 8, 1>{}([&](auto) {
                     __builtin_amdgcn_sched_group_barrier(0x100, 1, 0); // DS read
@@ -930,28 +949,43 @@ struct BlockFmhaPipelineQRKSVS
                 });
                 __builtin_amdgcn_sched_group_barrier(0x001, 16, 0); // ALU
 #endif
+                }
+                else {}
             }
             else if constexpr(phase == 1)
             {
-                static_for<0, 8, 1>{}([&](auto) {
-                    __builtin_amdgcn_sched_group_barrier(0x008, 1, 0); // MFMA
-                    __builtin_amdgcn_sched_group_barrier(0x002, 6, 0); // VALU
-                });
-                __builtin_amdgcn_sched_group_barrier(0x002, 16, 0); // VALU
+                if constexpr(FmhaMask::IsMasking)
+                {
+                    static_for<0, 8, 1>{}([&](auto) {
+                        __builtin_amdgcn_sched_group_barrier(0x008, 1, 0); // MFMA
+                        __builtin_amdgcn_sched_group_barrier(0x002, 6, 0); // VALU
+                    });
+                    __builtin_amdgcn_sched_group_barrier(0x002, 16, 0); // VALU
+                }
+                else {}
             }
             else if constexpr(phase == 2)
             {
-                /// NOTICE: unable to schedule fmha_mask() SALUs
+                if constexpr(FmhaMask::IsMasking)
+                {
+                    /// NOTICE: unable to schedule fmha_mask() SALUs
+                }
+                else {}
             }
             else if constexpr(phase == 3)
             {
-                /// FIXME: remove weird v_perm_b32 and re-write followingsched_group_barrier() calls
-                // __builtin_amdgcn_sched_group_barrier(0x002, 10, 0); // VALU
-                static_for<0, 8, 1>{}([&](auto) {
-                    __builtin_amdgcn_sched_group_barrier(0x008, 1, 0); // MFMA
-                    __builtin_amdgcn_sched_group_barrier(0x002, 6, 0); // VALU
-                });
-                __builtin_amdgcn_sched_group_barrier(0x002, 16, 0); // VALU
+                if constexpr(FmhaMask::IsMasking)
+                {
+                    /// FIXME: remove weird v_perm_b32 and re-write followingsched_group_barrier()
+                    /// calls
+                    // __builtin_amdgcn_sched_group_barrier(0x002, 10, 0); // VALU
+                    static_for<0, 8, 1>{}([&](auto) {
+                        __builtin_amdgcn_sched_group_barrier(0x008, 1, 0); // MFMA
+                        __builtin_amdgcn_sched_group_barrier(0x002, 6, 0); // VALU
+                    });
+                    __builtin_amdgcn_sched_group_barrier(0x002, 16, 0); // VALU
+                }
+                else {}
             }
         }
     }
@@ -3270,6 +3304,7 @@ std::vector<at::Tensor> fmha_v3_fwd_ck(const at::Tensor& q, // [b, sq, hq, d]
         {
 #if !DEBUG_SINGLE_INST || \
     (DEBUG_SINGLE_INST_DTYPE == DEBUG_DTYPE_FP16 && DEBUG_SINGLE_INST_MASK == DEBUG_MASK_NONE)
+#if 0
             if(seqlen_q % 256 == 0 && seqlen_k % 32 == 0)
             {
                 launch<get_kernel_t<FmhaFwdFp16, false, false>>(args);
@@ -3279,11 +3314,14 @@ std::vector<at::Tensor> fmha_v3_fwd_ck(const at::Tensor& q, // [b, sq, hq, d]
                 launch<get_kernel_t<FmhaFwdFp16, true, false>>(args);
             }
 #endif
+            launch<get_kernel_t<FmhaFwdFp16, true, false>>(args);
+#endif
         }
         else
         {
 #if !DEBUG_SINGLE_INST || \
     (DEBUG_SINGLE_INST_DTYPE == DEBUG_DTYPE_FP16 && DEBUG_SINGLE_INST_MASK == DEBUG_MASK_CAUSAL)
+#if 0
             if(seqlen_q % 256 == 0 && seqlen_k % 32 == 0)
             {
                 launch<get_kernel_t<FmhaFwdFp16, false, true>>(args);
@@ -3293,6 +3331,8 @@ std::vector<at::Tensor> fmha_v3_fwd_ck(const at::Tensor& q, // [b, sq, hq, d]
                 launch<get_kernel_t<FmhaFwdFp16, true, true>>(args);
             }
 #endif
+            launch<get_kernel_t<FmhaFwdFp16, true, true>>(args);
+#endif
         }
     }
     else if(q_dtype == at::ScalarType::BFloat16)
@@ -3301,6 +3341,7 @@ std::vector<at::Tensor> fmha_v3_fwd_ck(const at::Tensor& q, // [b, sq, hq, d]
         {
 #if !DEBUG_SINGLE_INST || \
     (DEBUG_SINGLE_INST_DTYPE == DEBUG_DTYPE_BF16 && DEBUG_SINGLE_INST_MASK == DEBUG_MASK_NONE)
+#if 0
             if(seqlen_q % 256 == 0 && seqlen_k % 32 == 0)
             {
                 launch<get_kernel_t<FmhaFwdBf16, false, false>>(args);
@@ -3310,11 +3351,14 @@ std::vector<at::Tensor> fmha_v3_fwd_ck(const at::Tensor& q, // [b, sq, hq, d]
                 launch<get_kernel_t<FmhaFwdBf16, true, false>>(args);
             }
 #endif
+            launch<get_kernel_t<FmhaFwdBf16, true, false>>(args);
+#endif
         }
         else
         {
 #if !DEBUG_SINGLE_INST || \
     (DEBUG_SINGLE_INST_DTYPE == DEBUG_DTYPE_BF16 && DEBUG_SINGLE_INST_MASK == DEBUG_MASK_CAUSAL)
+#if 0
             if(seqlen_q % 256 == 0 && seqlen_k % 32 == 0)
             {
                 launch<get_kernel_t<FmhaFwdBf16, false, true>>(args);
@@ -3323,6 +3367,8 @@ std::vector<at::Tensor> fmha_v3_fwd_ck(const at::Tensor& q, // [b, sq, hq, d]
             {
                 launch<get_kernel_t<FmhaFwdBf16, true, true>>(args);
             }
+#endif
+            launch<get_kernel_t<FmhaFwdBf16, true, true>>(args);
 #endif
         }
     }
