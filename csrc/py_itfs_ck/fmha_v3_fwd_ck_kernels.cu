@@ -99,6 +99,15 @@ CK_TILE_DEVICE float mul_impl_vv(float lhs, float rhs)
     return lhs * rhs;
 #endif
 }
+
+CK_TILE_DEVICE float fma_impl_vsv(float a, float b, float c)
+{
+    float result;
+    asm volatile("v_fma_f32 %[result], %[a], %[b], %[c]"
+                 : [result] "=v"(result)
+                 : [a] "v"(a), [b] "s"(b), [c] "v"(c));
+    return result;
+}
 } // namespace detail
 
 struct BlockFmhaPipelineQRKSVSDefaultPolicy
@@ -1356,17 +1365,18 @@ struct BlockFmhaPipelineQRKSVS
             block_tile_reduce_sync(m_latest, f_max, bool_constant<false>{});
 #endif
             m = m_latest;
-            /// TODO: move some fmha_alu1() code here if necessary
+
             constexpr auto p_spans =
                 std::decay_t<decltype(sp(sp_reg_idx).sp_compute)>::get_distributed_spans();
             sweep_tile_span(p_spans[number<0>{}], [&](auto idx0) {
                 constexpr auto i_idx = make_tuple(idx0);
                 sweep_tile_span(p_spans[number<1>{}], [&](auto idx1) {
-                    constexpr auto i_j_idx = make_tuple(idx0, idx1);
-                    sp_delta(sp_reg_idx)(i_j_idx) =
-                        scale_s * sp(sp_reg_idx).sp_compute(i_j_idx) - scale_s * m(i_j_idx);
+                    constexpr auto i_j_idx        = make_tuple(idx0, idx1);
+                    sp_delta(sp_reg_idx)(i_j_idx) = detail::fma_impl_vsv(
+                        sp(sp_reg_idx).sp_compute(i_j_idx), scale_s, -scale_s * m(i_j_idx));
                 });
             });
+            /// TODO: move some fmha_alu1() code here if necessary
         };
 
         auto fmha_alu1 = [&](auto sp_reg_idx) {
