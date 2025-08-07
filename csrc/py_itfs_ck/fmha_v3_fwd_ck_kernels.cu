@@ -674,6 +674,129 @@ struct BlockFmhaPipelineQRKSVSDefaultPolicy
     }
 };
 
+template <typename PipelineProblem, bool kIsMasking>
+struct CoreLoopScheduler;
+
+template <typename PipelineProblem>
+struct CoreLoopScheduler<PipelineProblem, /*kIsMasking=*/true>
+{
+    template <ck_tile::index_t WaveGroup, ck_tile::index_t Phase>
+    CK_TILE_DEVICE static constexpr void schedule(ck_tile::number<WaveGroup>,
+                                                  ck_tile::number<Phase>)
+    {
+        using namespace ck_tile;
+
+        if constexpr(WaveGroup == 0)
+        {
+            if constexpr(Phase == 0)
+            {
+                static_for<0, 8, 1>{}([&](auto) {
+                    __builtin_amdgcn_sched_group_barrier(0x008, 1, 0); // MFMA
+                    __builtin_amdgcn_sched_group_barrier(0x002, 6, 0); // VALU
+                });
+                __builtin_amdgcn_sched_group_barrier(0x002, 16, 0); // VALU
+            }
+            else if constexpr(Phase == 1) {}
+            else if constexpr(Phase == 2)
+            {
+                /// FIXME: remove weird v_perm_b32 and re-write following sched_group_barrier()
+                /// calls
+                // __builtin_amdgcn_sched_group_barrier(0x002, 10, 0); // VALU
+                static_for<0, 8, 1>{}([&](auto) {
+                    __builtin_amdgcn_sched_group_barrier(0x008, 1, 0); // MFMA
+                    __builtin_amdgcn_sched_group_barrier(0x002, 6, 0); // VALU
+                });
+                __builtin_amdgcn_sched_group_barrier(0x002, 16, 0); // VALU
+            }
+            else if constexpr(Phase == 3) {}
+        }
+        else
+        {
+            if constexpr(Phase == 0) {}
+            else if constexpr(Phase == 1)
+            {
+                static_for<0, 8, 1>{}([&](auto) {
+                    __builtin_amdgcn_sched_group_barrier(0x008, 1, 0); // MFMA
+                    __builtin_amdgcn_sched_group_barrier(0x002, 6, 0); // VALU
+                });
+                __builtin_amdgcn_sched_group_barrier(0x002, 16, 0); // VALU
+            }
+            else if constexpr(Phase == 2) {}
+            else if constexpr(Phase == 3)
+            {
+                /// FIXME: remove weird v_perm_b32 and re-write following sched_group_barrier()
+                /// calls
+                // __builtin_amdgcn_sched_group_barrier(0x002, 10, 0); // VALU
+                static_for<0, 8, 1>{}([&](auto) {
+                    __builtin_amdgcn_sched_group_barrier(0x008, 1, 0); // MFMA
+                    __builtin_amdgcn_sched_group_barrier(0x002, 6, 0); // VALU
+                });
+                __builtin_amdgcn_sched_group_barrier(0x002, 16, 0); // VALU
+            }
+        }
+    }
+};
+
+template <typename PipelineProblem>
+struct CoreLoopScheduler<PipelineProblem, /*kIsMasking=*/false>
+{
+    template <ck_tile::index_t WaveGroup, ck_tile::index_t Phase>
+    CK_TILE_DEVICE static constexpr void schedule(ck_tile::number<WaveGroup>,
+                                                  ck_tile::number<Phase>)
+    {
+        using namespace ck_tile;
+
+        if constexpr(WaveGroup == 0)
+        {
+            if constexpr(Phase == 0)
+            {
+                static_for<0, 8, 1>{}([&](auto) {
+                    __builtin_amdgcn_sched_group_barrier(0x008, 1, 0); // MFMA
+                    __builtin_amdgcn_sched_group_barrier(0x002, 3, 0); // VALU
+                });
+                __builtin_amdgcn_sched_group_barrier(0x002, 16, 0); // VALU
+            }
+            else if constexpr(Phase == 1) {}
+            else if constexpr(Phase == 2)
+            {
+                /// FIXME: remove weird v_perm_b32 and re-write following sched_group_barrier()
+                /// calls
+                __builtin_amdgcn_sched_group_barrier(0x002, 4, 0); // VALU
+                static_for<0, 8, 1>{}([&](auto) {
+                    __builtin_amdgcn_sched_group_barrier(0x008, 1, 0); // MFMA
+                    __builtin_amdgcn_sched_group_barrier(0x002, 4, 0); // VALU
+                });
+                __builtin_amdgcn_sched_group_barrier(0x002, 16, 0); // VALU
+            }
+            else if constexpr(Phase == 3) {}
+        }
+        else
+        {
+            if constexpr(Phase == 0) {}
+            else if constexpr(Phase == 1)
+            {
+                static_for<0, 8, 1>{}([&](auto) {
+                    __builtin_amdgcn_sched_group_barrier(0x008, 1, 0); // MFMA
+                    __builtin_amdgcn_sched_group_barrier(0x002, 3, 0); // VALU
+                });
+                __builtin_amdgcn_sched_group_barrier(0x002, 16, 0); // VALU
+            }
+            else if constexpr(Phase == 2) {}
+            else if constexpr(Phase == 3)
+            {
+                /// FIXME: remove weird v_perm_b32 and re-write following sched_group_barrier()
+                /// calls
+                __builtin_amdgcn_sched_group_barrier(0x002, 4, 0); // VALU
+                static_for<0, 8, 1>{}([&](auto) {
+                    __builtin_amdgcn_sched_group_barrier(0x008, 1, 0); // MFMA
+                    __builtin_amdgcn_sched_group_barrier(0x002, 4, 0); // VALU
+                });
+                __builtin_amdgcn_sched_group_barrier(0x002, 16, 0); // VALU
+            }
+        }
+    }
+};
+
 // This pipeline is qkv all located in LDS
 template <typename Problem_, typename Policy_ = BlockFmhaPipelineQRKSVSDefaultPolicy>
 struct BlockFmhaPipelineQRKSVS
@@ -876,152 +999,6 @@ struct BlockFmhaPipelineQRKSVS
     CK_TILE_DEVICE static constexpr void s_waitcnt_lgkmcnt()
     {
         s_waitcnt<63, Lgkmcnt>();
-    }
-
-    template <ck_tile::index_t WaveGroup, ck_tile::index_t Phase>
-    CK_TILE_DEVICE static constexpr void sched_core_loop(ck_tile::number<WaveGroup> cl_p,
-                                                         ck_tile::number<Phase> phase)
-    {
-        using namespace ck_tile;
-
-        if constexpr(cl_p == 0)
-        {
-            if constexpr(phase == 0)
-            {
-                if constexpr(FmhaMask::IsMasking)
-                {
-                    static_for<0, 8, 1>{}([&](auto) {
-                        __builtin_amdgcn_sched_group_barrier(0x008, 1, 0); // MFMA
-                        __builtin_amdgcn_sched_group_barrier(0x002, 6, 0); // VALU
-                    });
-                    __builtin_amdgcn_sched_group_barrier(0x002, 16, 0); // VALU
-                }
-                else
-                {
-                    static_for<0, 8, 1>{}([&](auto) {
-                        __builtin_amdgcn_sched_group_barrier(0x008, 1, 0); // MFMA
-                        __builtin_amdgcn_sched_group_barrier(0x002, 3, 0); // VALU
-                    });
-                    __builtin_amdgcn_sched_group_barrier(0x002, 16, 0); // VALU
-                }
-            }
-            else if constexpr(phase == 1)
-            {
-                if constexpr(FmhaMask::IsMasking)
-                {
-                    /// NOTICE: unable to schedule fmha_mask() SALUs
-                }
-                else {}
-            }
-            else if constexpr(phase == 2)
-            {
-                if constexpr(FmhaMask::IsMasking)
-                {
-                    /// FIXME: remove weird v_perm_b32 and re-write following sched_group_barrier()
-                    /// calls
-                    // __builtin_amdgcn_sched_group_barrier(0x002, 10, 0); // VALU
-                    static_for<0, 8, 1>{}([&](auto) {
-                        __builtin_amdgcn_sched_group_barrier(0x008, 1, 0); // MFMA
-                        __builtin_amdgcn_sched_group_barrier(0x002, 6, 0); // VALU
-                    });
-                    __builtin_amdgcn_sched_group_barrier(0x002, 16, 0); // VALU
-                }
-                else
-                {
-                    /// FIXME: remove weird v_perm_b32 and re-write following sched_group_barrier()
-                    /// calls
-                    __builtin_amdgcn_sched_group_barrier(0x002, 4, 0); // VALU
-                    static_for<0, 8, 1>{}([&](auto) {
-                        __builtin_amdgcn_sched_group_barrier(0x008, 1, 0); // MFMA
-                        __builtin_amdgcn_sched_group_barrier(0x002, 4, 0); // VALU
-                    });
-                    __builtin_amdgcn_sched_group_barrier(0x002, 16, 0); // VALU
-                }
-            }
-            else if constexpr(phase == 3)
-            {
-                if constexpr(FmhaMask::IsMasking)
-                {
-#if 0
-                static_for<0, 8, 1>{}([&](auto) {
-                    __builtin_amdgcn_sched_group_barrier(0x100, 1, 0); // DS read
-                    __builtin_amdgcn_sched_group_barrier(0x001, 1, 0); // ALU
-                });
-                __builtin_amdgcn_sched_group_barrier(0x001, 16, 0); // ALU
-#endif
-                }
-                else {}
-            }
-        }
-        else
-        {
-            if constexpr(phase == 0)
-            {
-                if constexpr(FmhaMask::IsMasking)
-                {
-#if 0
-                static_for<0, 8, 1>{}([&](auto) {
-                    __builtin_amdgcn_sched_group_barrier(0x100, 1, 0); // DS read
-                    __builtin_amdgcn_sched_group_barrier(0x001, 1, 0); // ALU
-                });
-                __builtin_amdgcn_sched_group_barrier(0x001, 16, 0); // ALU
-#endif
-                }
-                else {}
-            }
-            else if constexpr(phase == 1)
-            {
-                if constexpr(FmhaMask::IsMasking)
-                {
-                    static_for<0, 8, 1>{}([&](auto) {
-                        __builtin_amdgcn_sched_group_barrier(0x008, 1, 0); // MFMA
-                        __builtin_amdgcn_sched_group_barrier(0x002, 6, 0); // VALU
-                    });
-                    __builtin_amdgcn_sched_group_barrier(0x002, 16, 0); // VALU
-                }
-                else
-                {
-                    static_for<0, 8, 1>{}([&](auto) {
-                        __builtin_amdgcn_sched_group_barrier(0x008, 1, 0); // MFMA
-                        __builtin_amdgcn_sched_group_barrier(0x002, 3, 0); // VALU
-                    });
-                    __builtin_amdgcn_sched_group_barrier(0x002, 16, 0); // VALU
-                }
-            }
-            else if constexpr(phase == 2)
-            {
-                if constexpr(FmhaMask::IsMasking)
-                {
-                    /// NOTICE: unable to schedule fmha_mask() SALUs
-                }
-                else {}
-            }
-            else if constexpr(phase == 3)
-            {
-                if constexpr(FmhaMask::IsMasking)
-                {
-                    /// FIXME: remove weird v_perm_b32 and re-write following sched_group_barrier()
-                    /// calls
-                    // __builtin_amdgcn_sched_group_barrier(0x002, 10, 0); // VALU
-                    static_for<0, 8, 1>{}([&](auto) {
-                        __builtin_amdgcn_sched_group_barrier(0x008, 1, 0); // MFMA
-                        __builtin_amdgcn_sched_group_barrier(0x002, 6, 0); // VALU
-                    });
-                    __builtin_amdgcn_sched_group_barrier(0x002, 16, 0); // VALU
-                }
-                else
-                {
-                    /// FIXME: remove weird v_perm_b32 and re-write following sched_group_barrier()
-                    /// calls
-                    __builtin_amdgcn_sched_group_barrier(0x002, 4, 0); // VALU
-                    static_for<0, 8, 1>{}([&](auto) {
-                        __builtin_amdgcn_sched_group_barrier(0x008, 1, 0); // MFMA
-                        __builtin_amdgcn_sched_group_barrier(0x002, 4, 0); // VALU
-                    });
-                    __builtin_amdgcn_sched_group_barrier(0x002, 16, 0); // VALU
-                }
-            }
-        }
     }
 
     template <typename QDramBlockWindowTmp,
@@ -1528,6 +1505,8 @@ struct BlockFmhaPipelineQRKSVS
             auto memV = number<0>{};
             auto memK = number<1>{};
 
+            using Scheduler = CoreLoopScheduler<Problem, FmhaMask::IsMasking>;
+
             auto iteration = [&](auto pi) {
                 auto xdl_SP_p01_reg_idx = number<1>{} - pi;
                 auto xdl_SP_p23_reg_idx = pi;
@@ -1565,7 +1544,7 @@ struct BlockFmhaPipelineQRKSVS
                     cl_calc(xdl_SP_p01_reg_idx, gemm0);
                     fmha_alu1(xdl_SP_p23_reg_idx);
 
-                    sched_core_loop(cl_p, number<0>{});
+                    Scheduler::schedule(cl_p, number<0>{});
                     __builtin_amdgcn_sched_barrier(0);
                     // phase1
                     ASM_MARKER("phase1 Wave0-3");
@@ -1576,7 +1555,7 @@ struct BlockFmhaPipelineQRKSVS
                     cl_load(memK, K_w0_lds_wr_idx, V_w0_lds_rd_idx);
                     fmha_mask(xdl_SP_p01_reg_idx);
 
-                    sched_core_loop(cl_p, number<1>{});
+                    Scheduler::schedule(cl_p, number<1>{});
                     __builtin_amdgcn_sched_barrier(0);
                     // phase2
                     ASM_MARKER("phase2 Wave0-3");
@@ -1586,7 +1565,7 @@ struct BlockFmhaPipelineQRKSVS
                     __builtin_amdgcn_sched_barrier(0);
                     cl_calc(xdl_SP_p23_reg_idx, gemm1);
 
-                    sched_core_loop(cl_p, number<2>{});
+                    Scheduler::schedule(cl_p, number<2>{});
                     __builtin_amdgcn_sched_barrier(0);
                     fmha_alu_D_upd();
 
@@ -1599,7 +1578,7 @@ struct BlockFmhaPipelineQRKSVS
                     __builtin_amdgcn_sched_barrier(0);
                     cl_load(memV, V_w0_lds_wr_idx, K_w0_lds_rd_idx);
 
-                    sched_core_loop(cl_p, number<3>{});
+                    Scheduler::schedule(cl_p, number<3>{});
                     kv_token_start += kN0;
                     if(num_total_loop <= ++i_total_loops)
                     {
@@ -1624,7 +1603,7 @@ struct BlockFmhaPipelineQRKSVS
                     }
                     cl_load(memV, V_w4_lds_wr_idx, K_w4_lds_rd_idx);
 
-                    sched_core_loop(cl_p, number<0>{});
+                    Scheduler::schedule(cl_p, number<0>{});
                     __builtin_amdgcn_sched_barrier(0);
                     // phase1
                     ASM_MARKER("phase1 Wave4-7");
@@ -1635,7 +1614,7 @@ struct BlockFmhaPipelineQRKSVS
                     cl_calc(xdl_SP_p01_reg_idx, gemm0);
                     fmha_alu1(xdl_SP_p23_reg_idx);
 
-                    sched_core_loop(cl_p, number<1>{});
+                    Scheduler::schedule(cl_p, number<1>{});
                     __builtin_amdgcn_sched_barrier(0);
                     // phase2
                     ASM_MARKER("phase2 Wave4-7");
@@ -1644,7 +1623,7 @@ struct BlockFmhaPipelineQRKSVS
                     cl_load(memK, K_w4_lds_wr_idx, V_w4_lds_rd_idx);
                     fmha_mask(xdl_SP_p01_reg_idx);
 
-                    sched_core_loop(cl_p, number<2>{});
+                    Scheduler::schedule(cl_p, number<2>{});
                     kv_token_start += kN0;
                     if(num_total_loop <= ++i_total_loops)
                     {
@@ -1660,7 +1639,7 @@ struct BlockFmhaPipelineQRKSVS
                     __builtin_amdgcn_sched_barrier(0);
                     cl_calc(xdl_SP_p23_reg_idx, gemm1);
 
-                    sched_core_loop(cl_p, number<3>{});
+                    Scheduler::schedule(cl_p, number<3>{});
                     __builtin_amdgcn_sched_barrier(0);
                     fmha_alu_D_upd();
                 }
