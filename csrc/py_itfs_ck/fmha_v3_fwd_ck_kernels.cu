@@ -40,7 +40,7 @@
 
 #define DEBUG_SINGLE_INST 0
 #define DEBUG_SINGLE_INST_DTYPE DEBUG_DTYPE_BF16
-#define DEBUG_SINGLE_INST_MASK DEBUG_MASK_CAUSAL
+#define DEBUG_SINGLE_INST_MASK DEBUG_MASK_NONE
 
 #define ENALBE_INLINE_ASM_ELEMWISE_OPS 0
 
@@ -1333,6 +1333,8 @@ struct BlockFmhaPipelineQRKSVS
 
         decltype(m) m_old;
         SMPLComputeDataType o_acc_scale; // rescale o_acc in fmha_alu1() & fmha_alu_D_upd()
+        /// TODO: remove the sp_delta and use sp_compute directly
+        statically_indexed_array<decltype(sp(number<0>{}).sp_compute), 2> sp_delta;
 
         auto fmha_alu0 = [&](auto sp_reg_idx) {
             m_old = m; // m{j-1}
@@ -1355,6 +1357,16 @@ struct BlockFmhaPipelineQRKSVS
 #endif
             m = m_latest;
             /// TODO: move some fmha_alu1() code here if necessary
+            constexpr auto p_spans =
+                std::decay_t<decltype(sp(sp_reg_idx).sp_compute)>::get_distributed_spans();
+            sweep_tile_span(p_spans[number<0>{}], [&](auto idx0) {
+                constexpr auto i_idx = make_tuple(idx0);
+                sweep_tile_span(p_spans[number<1>{}], [&](auto idx1) {
+                    constexpr auto i_j_idx = make_tuple(idx0, idx1);
+                    sp_delta(sp_reg_idx)(i_j_idx) =
+                        scale_s * sp(sp_reg_idx).sp_compute(i_j_idx) - scale_s * m(i_j_idx);
+                });
+            });
         };
 
         auto fmha_alu1 = [&](auto sp_reg_idx) {
@@ -1363,9 +1375,9 @@ struct BlockFmhaPipelineQRKSVS
             sweep_tile_span(p_spans[number<0>{}], [&](auto idx0) {
                 constexpr auto i_idx = make_tuple(idx0);
                 sweep_tile_span(p_spans[number<1>{}], [&](auto idx1) {
-                    constexpr auto i_j_idx             = make_tuple(idx0, idx1);
-                    sp(sp_reg_idx).sp_compute(i_j_idx) = ck_tile::exp2(
-                        scale_s * sp(sp_reg_idx).sp_compute[i_j_idx] - scale_s * m[i_idx]);
+                    constexpr auto i_j_idx = make_tuple(idx0, idx1);
+                    sp(sp_reg_idx).sp_compute(i_j_idx) =
+                        ck_tile::exp2(sp_delta(sp_reg_idx)(i_j_idx));
                 });
             });
 
