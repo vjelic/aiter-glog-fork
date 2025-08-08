@@ -31,6 +31,15 @@ FMHA_FWD_API = """#include <iostream>
 #include <hip/hip_fp16.h>
 #include "mha_fwd.h"
 
+#if {F_HAS_AITER_ASM_DIR_FUNC}
+const char *{F_AITER_ASM_DIR_FUNC}();
+#else
+static inline const char *get_default_aiter_asm_dir()
+{{
+    return "{F_AITER_ASM_DIR}";
+}}
+#endif
+
 namespace aiter {{
 
 struct __attribute__((packed)) fmha_fwd_v3_args
@@ -139,8 +148,8 @@ class fmha_fwd_v3_kernel
     {{
         int length = strlen(name);
         std::string kernel_func_name = "_ZN5aiter" + std::to_string(length) + name + "E";
-        std::string AITER_ASM_DIR = "{F_AITER_ASM_DIR}";
-        HIP_CALL(hipModuleLoad(&module, (AITER_ASM_DIR + hsaco).c_str()));
+        std::string AITER_ASM_DIR = {F_AITER_ASM_DIR_FUNC}();
+        HIP_CALL(hipModuleLoad(&module, (AITER_ASM_DIR + "{F_AITER_ASM_SUBDIR}" + hsaco).c_str()));
         HIP_CALL(hipModuleGetFunction(&kernel_func, module, kernel_func_name.c_str()));
     }}
 
@@ -300,7 +309,10 @@ def write_blobs(output_dir: Optional[str]) -> None:
     output_dir.mkdir(parents=True, exist_ok=True)
 
     forward_kernel = FMHA_FWD_KERNEL_HEADER + FMHA_FWD_API.format(
-        F_AITER_ASM_DIR=get_asm_dir() + "fmha_v3_fwd/" + asm_sub_dir,
+        F_HAS_AITER_ASM_DIR_FUNC = "1" if "AITER_ASM_DIR_FUNC" in os.environ else "0",
+        F_AITER_ASM_DIR_FUNC=os.getenv("AITER_ASM_DIR_FUNC", "get_default_aiter_asm_dir"),
+        F_AITER_ASM_DIR=get_asm_dir(),
+        F_AITER_ASM_SUBDIR= "fmha_v3_fwd/" + asm_sub_dir,
         F_tile_size_kv=ts_kv,
         F_dispatch=arch_dispatch,
         F_tune_knob=TUNE_KNOB if gfx == "gfx950" else "",

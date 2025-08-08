@@ -38,6 +38,15 @@ FMHA_BWD_API = """
 #include <hip/hip_fp16.h>
 #include "mha_bwd.h"
 
+#if {F_HAS_AITER_ASM_DIR_FUNC}
+const char *{F_AITER_ASM_DIR_FUNC}();
+#else
+static inline const char *get_default_aiter_asm_dir()
+{{
+    return "{F_AITER_ASM_DIR}";
+}}
+#endif
+
 namespace aiter {{
 
 struct __attribute__((packed)) fmha_bwd_v3_args
@@ -657,7 +666,7 @@ class fmha_dq_shuffle_kernel
     {{
         int length = strlen(name);
         std::string kernel_func_name = "_ZN5aiter" + std::to_string(length) + name + "E";
-        std::string AITER_ASM_DIR = "{F_AITER_ASM_DIR}";
+        std::string AITER_ASM_DIR = {F_AITER_ASM_DIR_FUNC}();
         HIP_CALL(hipModuleLoad(&module, (AITER_ASM_DIR + "fmha_v3_bwd/" + hsaco).c_str()));
         HIP_CALL(hipModuleGetFunction(&kernel_func, module, kernel_func_name.c_str()));
     }}
@@ -701,7 +710,7 @@ class fmha_bwd_v3_kernel
     {{
         int length = strlen(name);
         std::string kernel_func_name = "_ZN5aiter" + std::to_string(length) + name + "E";
-        std::string AITER_ASM_DIR = "{F_AITER_ASM_DIR}";
+        std::string AITER_ASM_DIR = {F_AITER_ASM_DIR_FUNC}();
         HIP_CALL(hipModuleLoad(&module, (AITER_ASM_DIR + "fmha_v3_bwd/" + hsaco).c_str()));
         HIP_CALL(hipModuleGetFunction(&kernel_func, module, kernel_func_name.c_str()));
     }}
@@ -2891,6 +2900,8 @@ def write_blobs(
     dq_shuffle_kernel_define = "" if get_gfx() == "gfx942" else DQ_SHUFFLE_KERNEL_DEFINE
     dq_shuffle_kernel_call = "" if get_gfx() == "gfx942" else DQ_SHUFFLE_KERNEL_CALL
     dqdkdv_kernel = FMHA_BWD_KERNEL_HEADER + FMHA_BWD_API.format(
+        F_HAS_AITER_ASM_DIR_FUNC = "1" if "AITER_ASM_DIR_FUNC" in os.environ else "0",
+        F_AITER_ASM_DIR_FUNC=os.getenv("AITER_ASM_DIR_FUNC", "get_default_aiter_asm_dir"),
         F_AITER_ASM_DIR=get_asm_dir(),
         F_tile_size_kv=ts_kv,
         F_seqlen_limit=seqlen_limit,
