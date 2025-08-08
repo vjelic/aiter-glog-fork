@@ -484,7 +484,7 @@ for test in l_test:
                             quant="fp8quant",
                             use_g1u1=True,
                             shared_E=0,
-                            activation=ActivationType.Gelu,
+                            activation=ActivationType.Silu,
                         )
                         #   quant='fp8quant', use_g1u1=True)
 
