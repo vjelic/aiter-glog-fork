@@ -12,7 +12,6 @@ from aiter.jit.core import (
 )
 
 root_dir = Path(__file__).resolve().parents[2]
-print(f"root_dir: {root_dir}")
 
 
 def copy_built_kernels(out_dir: Path, module_names: list) -> None:
@@ -28,6 +27,44 @@ def copy_built_kernels(out_dir: Path, module_names: list) -> None:
         if so_file.exists():
             dst = out_dir / f"{module_name}.so"
             shutil.copy2(so_file, dst)
+
+
+def get_filter_fwd_from_md_name(md_name):
+    filter_fwd = "*"
+    parts = md_name.split("_")[3:]  # skip 'mha', 'varlen', 'fwd'
+
+    for p in parts:
+        if p == "fp16":
+            filter_fwd += "fp16*"
+        elif p == "bf16":
+            filter_fwd += "bf16*"
+        elif p == "logits":
+            filter_fwd += "_logits*"
+        elif p == "nlogits":
+            filter_fwd += "_nlogits*"
+        elif p == "bias":
+            filter_fwd += "_bias*"
+        elif p == "alibi":
+            filter_fwd += "_alibi*"
+        elif p == "nbias":
+            filter_fwd += "_nbias*"
+        elif p == "nmask":
+            filter_fwd += "_nmask*"
+        elif p == "mask":
+            filter_fwd += "_mask*"
+        elif p == "lse":
+            filter_fwd += "_lse*"
+        elif p == "nlse":
+            filter_fwd += "_nlse*"
+        elif p == "ndropout":
+            filter_fwd += "_ndropout*"
+        elif p == "dropout":
+            filter_fwd += "_dropout*"
+        elif p == "nskip":
+            filter_fwd += "_nskip*"
+        elif p == "skip":
+            filter_fwd += "_skip*"
+    return filter_fwd
 
 
 def main():
@@ -53,13 +90,10 @@ def main():
     )
     args = parser.parse_args()
 
-    # Print build configuration
-    print("Aiter AOT build summary:")
-    print(f"  out_dir: {args.out_dir}")
-
     # Use provided modules or default set
     modules_to_build = args.modules or [
-        # "module_mha_varlen_fwd",
+        "module_mha_varlen_fwd",
+        "module_moe_ck2stages",
         # "moduel_fmla_asm_fwd" # TODO: waiting on aiter merge
         "module_quant",
         "module_rmsnorm",
@@ -104,7 +138,7 @@ def main():
                 "flags_extra_hip": build_args.get("flags_extra_hip", []),
                 "blob_gen_cmd": build_args.get("blob_gen_cmd", ""),
                 "extra_include": build_args.get("extra_include", [])
-                + [os.path.join(root_dir, "csrc")],
+                + [os.path.join(root_dir, "csrc", "include")],
                 "extra_ldflags": build_args.get("extra_ldflags", None),
                 "verbose": build_args.get("verbose", False),
                 "is_python_module": build_args.get("is_python_module", True),
@@ -123,9 +157,8 @@ def main():
                 for rt_module_name in rt_module_names:
                     so_file = jit_dir / f"{rt_module_name}.so"
                     if not so_file.exists() or args.force_rebuild:
-                        print(f"Building runtime variant: {rt_module_name}")
                         variant_args = filtered_args.copy()
-                        filter_fwd = rt_module_name.replace("mha_varlen_fwd", "*", 1)
+                        filter_fwd = get_filter_fwd_from_md_name(rt_module_name)
                         blob_gen_cmd = [
                             f"{CK_DIR}/example/ck_tile/01_fmha/generate.py -d fwd "
                             "--receipt 200 --filter {} --output_dir {{}}".format(
@@ -141,6 +174,30 @@ def main():
                         blob_gen_cmd.append(
                             f"{AITER_CSRC_DIR}/cpp_itfs/mha_fwd_generate.py --receipt 3 --output_dir {{}}"
                         )
+                        variant_args["blob_gen_cmd"] = blob_gen_cmd
+                        build_module(rt_module_name, **variant_args)
+            elif module_name == "module_moe_ck2stages":
+                # Build runtime variants explicitly
+                rt_module_names = [
+                    "module_moe_ck2stages_f8_f8_b16_silu_per_token_mulWeightStage2",
+                ]
+                for rt_module_name in rt_module_names:
+                    so_file = jit_dir / f"{rt_module_name}.so"
+                    if not so_file.exists() or args.force_rebuild:
+                        variant_args = filtered_args.copy()
+                        parts = rt_module_name.split("_")
+                        # prefix = "_".join(parts[:3])  # 'module_moe_ck2stages'
+                        Adtype = parts[3]
+                        Bdtype = parts[4]
+                        Cdtype = parts[5]
+                        act = parts[6]
+                        quant_type = "_".join(parts[7:-1])  # "per_token"
+                        mul_routed_weight_stage = int(
+                            parts[-1].replace("mulWeightStage", "")
+                        )
+                        blob_gen_cmd = [
+                            f"{AITER_CSRC_DIR}/ck_gemm_moe_2stages_codegen/gen_instances.py -a {Adtype} -b {Bdtype} -c {Cdtype} -q {quant_type} -act {act} -m {mul_routed_weight_stage} -w {{}}"
+                        ]
                         variant_args["blob_gen_cmd"] = blob_gen_cmd
                         build_module(rt_module_name, **variant_args)
             else:
