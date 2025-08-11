@@ -411,9 +411,11 @@ parser.add_argument(
 )
 
 args = parser.parse_args()
+
 args.activation = {"gelu": ActivationType.Gelu, "silu": ActivationType.Silu}[
     args.activation
 ]
+
 if args.test is not None:
     l_test = [args.test]
 for test in l_test:
