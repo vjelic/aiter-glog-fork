@@ -395,8 +395,25 @@ parser.add_argument(
     help="""Top-k value.
     e.g.: -k 5""",
 )
+parser.add_argument(
+    "-a",
+    "--activation",
+    type=str,
+    choices=[
+        "silu",
+        "gelu",
+    ],
+    default="silu",
+    help="""Activation function.
+    e.g.: -a silu
+          or -a gelu
+    """,
+)
 
 args = parser.parse_args()
+args.activation = {"gelu": ActivationType.Gelu, "silu": ActivationType.Silu}[
+    args.activation
+]
 if args.test is not None:
     l_test = [args.test]
 for test in l_test:
@@ -484,7 +501,7 @@ for test in l_test:
                             quant="fp8quant",
                             use_g1u1=True,
                             shared_E=0,
-                            activation=ActivationType.Silu,
+                            activation=args.activation,
                         )
                         #   quant='fp8quant', use_g1u1=True)
 
