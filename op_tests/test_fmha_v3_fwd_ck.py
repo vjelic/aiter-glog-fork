@@ -178,28 +178,28 @@ def test_fmha_v3_fwd_ck(
 
     # print_tensor(out.squeeze(0).squeeze(1), 'O')
 
-    out_ref = run_torch(
-        q,
-        k,
-        v,
-        causal=causal,
-        window_size=window_size,
-    )
-
-    # print_tensor(out_ref.squeeze(0).squeeze(1), 'out_ref')
-
-    out_pt = run_torch(
-        q, k, v, causal=causal, window_size=window_size, upcast=False, reorder_ops=True
-    )
-
-    # print_tensor(out_pt.squeeze(0).squeeze(1), 'out_pt')
-
     if not profile:
+        out_ref = run_torch(
+            q,
+            k,
+            v,
+            causal=causal,
+            window_size=window_size,
+        )
+
+        # print_tensor(out_ref.squeeze(0).squeeze(1), 'out_ref')
+
+        out_pt = run_torch(
+            q, k, v, causal=causal, window_size=window_size, upcast=False, reorder_ops=True
+        )
+
+        # print_tensor(out_pt.squeeze(0).squeeze(1), 'out_pt')
+
         print(f"Output max diff: {(out - out_ref).abs().max().item()}")
         print(f"Output Pytorch max diff: {(out_pt - out_ref).abs().max().item()}")
-    assert (out - out_ref).abs().max().item() <= 2 * (
-        out_pt - out_ref
-    ).abs().max().item()
+        assert (out - out_ref).abs().max().item() <= 2 * (
+            out_pt - out_ref
+        ).abs().max().item()
 
 
 if __name__ == "__main__":
@@ -226,6 +226,7 @@ if __name__ == "__main__":
         ProblemSize(2, 16, (8192,), (128,)),
         ProblemSize(1, 16, (16384,), (128,)),
         ProblemSize(1, 64, (16384,), (128,)),
+        ProblemSize(1, 40, (37200,), (128,)),
     ]
 
     for dtype, problem_size in itertools.product(
