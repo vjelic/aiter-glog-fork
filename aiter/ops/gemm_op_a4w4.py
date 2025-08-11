@@ -105,7 +105,23 @@ def gemm_a4w4(
     )
 
 
-@compile_ops("module_gemm_a4w4_asm")
+def gen_gemm_a4w4_asm_fake_tensors(
+    A: Tensor,  # A:[M, K/2] f4x2
+    B: Tensor,  # B:[N, K/2] f4x2
+    A_scale: Tensor,  # A_scale:[M, K/32] e8m0 paded
+    B_scale: Tensor,  # B_scale:[N, K/32] e8m0 paded
+    out: Tensor,  # Out:[M, N] bf16
+    kernelName: str,
+    bias: Optional[Tensor] = None,  # bias:[1, N] f32
+    alpha: Optional[float] = 1.0,
+    beta: Optional[float] = 0.0,
+    bpreshuffle: Optional[bool] = True,
+    log2_k_split: Optional[int] = None,
+) -> Tensor:
+    return out
+
+
+@compile_ops("module_gemm_a4w4_asm", gen_fake=gen_gemm_a4w4_asm_fake_tensors)
 def gemm_a4w4_asm(
     A: Tensor,  # A:[M, K/2] f4x2
     B: Tensor,  # B:[N, K/2] f4x2
@@ -118,10 +134,23 @@ def gemm_a4w4_asm(
     beta: Optional[float] = 0.0,
     bpreshuffle: Optional[bool] = True,
     log2_k_split: Optional[int] = None,
-) -> torch.Tensor: ...
+) -> Tensor: ...
 
 
-@compile_ops("module_gemm_a4w4_blockscale")
+def gen_gemm_a4w4_blockscale_fake_tensors(
+    XQ: torch.Tensor,
+    WQ: torch.Tensor,
+    x_scale: torch.Tensor,
+    w_scale: torch.Tensor,
+    Out: torch.Tensor,
+    splitK: int = 0,
+) -> torch.Tensor:
+    return Out
+
+
+@compile_ops(
+    "module_gemm_a4w4_blockscale", gen_fake=gen_gemm_a4w4_blockscale_fake_tensors
+)
 def gemm_a4w4_blockscale(
     XQ: torch.Tensor,
     WQ: torch.Tensor,
@@ -129,10 +158,14 @@ def gemm_a4w4_blockscale(
     w_scale: torch.Tensor,
     Out: torch.Tensor,
     splitK: int = 0,
-) -> torch.Tensor: ...
+) -> Tensor: ...
 
 
-@compile_ops("module_gemm_a4w4_blockscale_tune", fc_name="gemm_a4w4_blockscale_tune")
+@compile_ops(
+    "module_gemm_a4w4_blockscale_tune",
+    fc_name="gemm_a4w4_blockscale_tune",
+    gen_fake=gen_gemm_a4w4_blockscale_fake_tensors,
+)
 def gemm_a4w4_blockscale_tune(
     XQ: torch.Tensor,
     WQ: torch.Tensor,
@@ -141,4 +174,4 @@ def gemm_a4w4_blockscale_tune(
     Out: torch.Tensor,
     kernelId: int,
     splitK: int = 0,
-) -> torch.Tensor: ...
+) -> Tensor: ...

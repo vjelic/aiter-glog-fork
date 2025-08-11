@@ -44,7 +44,7 @@ def weight_quant(
         weight_qt, weight_scale = aiter.pertoken_quant(
             weight.view(E, -1), quant_dtype=quant_dtype
         )
-    elif qType == QuantType.per_128x128:
+    elif qType == QuantType.per_1x128:
         weight_qt = (
             weight.view(E, dim1 // 128, 128, dim2 // 128, 128)
             .permute(0, 1, 3, 2, 4)
@@ -121,8 +121,8 @@ def ck_moe_stage1_fwd_out(
         q_type,
         act_type,
     )
-    if q_type == QuantType.per_128x128:
-        quant_func = aiter.get_hip_quant(QuantType.per_1x128)
+    if q_type == QuantType.per_1x128:
+        quant_func = aiter.get_hip_quant(q_type)
         a2, a2_scale = quant_func(
             out,
             quant_dtype=a1_qt.dtype,
@@ -219,6 +219,7 @@ def go(
         q_dtype_a = eval(q_dtype_a)
         q_dtype_w = eval(q_dtype_w)
         q_type = eval(q_type)
+        q_type = QuantType.per_1x128 if q_type == QuantType.per_128x128 else q_type
         print("\nStart tuning", line)
         if not use_g1u1:
             print("no moe solution(g1u0) can tune for ", line)
@@ -236,7 +237,7 @@ def go(
         w2_qt = w2_qt.view(w2.shape)
         score = torch.randn((token, expert), dtype=dtype)
         topk_weights, topk_ids = fused_topk(input, score, topk, True)
-        if q_type == QuantType.per_128x128:
+        if q_type == QuantType.per_1x128:
             a1_qt, a1_scale = aiter.pertoken_quant(
                 input.view(token, -1, 128), quant_dtype=q_dtype_a
             )
@@ -261,7 +262,7 @@ def go(
             doweight=doweight_stage1,
         )
 
-        if q_type == QuantType.per_128x128:
+        if q_type == QuantType.per_1x128:
             ref1, ref_scale = aiter.pertoken_quant(
                 ref1.view(ref1.shape[0], -1, 128), quant_dtype=q_dtype_a
             )
@@ -300,7 +301,7 @@ def go(
             return kernel_dict
 
         extraInfo = ""
-        if q_type == QuantType.per_128x128:
+        if q_type == QuantType.per_1x128:
             extraInfo += "_blockscale"
         if doweight_stage1:
             extraInfo += "_doweight"
@@ -340,23 +341,31 @@ def go(
                 moe_sorting(topk_ids, topk_weights, expert, model_dim, dtype, blockM)
             )
             del moe_buf
-            if q_type != QuantType.per_128x128:
+            if q_type != QuantType.per_1x128:
                 out1 = torch.empty(
                     (token, topk, inter_dim),
                     dtype=dtype,
                 )
+                ref1_asm = ref1
             else:
                 ratio = a1_scale.element_size() // a1_qt.element_size()
-                out1 = torch.empty(
+                out1 = torch.zeros(
                     (token + (token * ratio + 127) // 128, topk, inter_dim),
                     dtype=q_dtype_a,
                 )
+                ref1_asm = torch.zeros_like(out1)
+                ref1_asm[:token] = a2_qt
+                ref1_asm[token:, ...].view(-1)[
+                    : token * topk * inter_dim * ratio // 128
+                ] = a2_scale.view(q_dtype_a).view(-1)
 
             if use_g1u1 and q_dtype_w != torch.int4:
                 for el in asm_kernels.get(blockM, []):
                     tasks.append(
                         (
                             ("stage1", el, blockM),  # tag
+                            None,
+                            (),
                             asm_stage1,  # func
                             (
                                 a1_qt,
@@ -365,7 +374,7 @@ def go(
                                 sorted_ids,
                                 sorted_expert_ids,
                                 num_valid_ids,
-                                out1.view(dtypes.bf16),
+                                out1,
                                 topk,
                                 blockM,
                                 el,
@@ -374,7 +383,7 @@ def go(
                                 q_type,
                                 (
                                     a1_scale.t().contiguous()
-                                    if q_type == QuantType.per_128x128
+                                    if q_type == QuantType.per_1x128
                                     else a1_scale
                                 ),
                                 w1_scale,
@@ -384,7 +393,7 @@ def go(
                             None,
                             (),
                             {},
-                            (ref1),
+                            (ref1_asm),
                             0.01,
                             0.01,
                             True,
@@ -413,6 +422,8 @@ def go(
                     tasks_ck.append(
                         (
                             ("stage1", kernel.name, blockM),  # tag
+                            None,
+                            (),
                             ck_moe_stage1_fwd_out,  # func
                             (
                                 a1_qt,
@@ -448,6 +459,8 @@ def go(
                     tasks_ck.append(
                         (
                             ("stage2", kernel.name, blockM),  # tag
+                            None,
+                            (),
                             ck_moe_stage2_fwd_out,  # func
                             (
                                 a2_qt,
@@ -483,6 +496,7 @@ def go(
         print(f"tasks is {len(tasks)}, tasks_ck is {len(tasks_ck)}")
         in_data = [(len(tasks) + len(tasks_ck), ())]
         rets = mp_tuner(tasks + tasks_ck, in_data, 1, True)
+        print(rets)
 
         profileDF = []
         for (stage, kernelName, block_m), us, err in rets:

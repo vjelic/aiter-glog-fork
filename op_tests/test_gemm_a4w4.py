@@ -69,7 +69,7 @@ def run_gemm_asm(
         )
         out = out_reset
 
-    return aiter.gemm_a4w4_asm(
+    aiter.gemm_a4w4_asm(
         x,
         weightshuffle,
         x_scale,
@@ -80,6 +80,7 @@ def run_gemm_asm(
         bpreshuffle=bpreshuffle,
         log2_k_split=log2_k_split,
     )
+    return out
 
 
 @benchmark()
