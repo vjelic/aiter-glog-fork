@@ -701,7 +701,7 @@ struct CoreLoopScheduler<PipelineProblem, /*kIsMasking=*/true>
             {
                 static_for<0, 8, 1>{}([&](auto) {
                     __builtin_amdgcn_sched_group_barrier(0x008, 1, 0); // MFMA
-                    __builtin_amdgcn_sched_group_barrier(0x002, 6, 0); // VALU
+                    __builtin_amdgcn_sched_group_barrier(0x002, 3, 0); // VALU
                 });
                 __builtin_amdgcn_sched_group_barrier(0x002, 16, 0); // VALU
             }
@@ -710,10 +710,10 @@ struct CoreLoopScheduler<PipelineProblem, /*kIsMasking=*/true>
             {
                 /// FIXME: remove weird v_perm_b32 and re-write following sched_group_barrier()
                 /// calls
-                // __builtin_amdgcn_sched_group_barrier(0x002, 10, 0); // VALU
+                __builtin_amdgcn_sched_group_barrier(0x002, 4, 0); // VALU
                 static_for<0, 8, 1>{}([&](auto) {
                     __builtin_amdgcn_sched_group_barrier(0x008, 1, 0); // MFMA
-                    __builtin_amdgcn_sched_group_barrier(0x002, 6, 0); // VALU
+                    __builtin_amdgcn_sched_group_barrier(0x002, 4, 0); // VALU
                 });
                 __builtin_amdgcn_sched_group_barrier(0x002, 16, 0); // VALU
             }
@@ -726,7 +726,7 @@ struct CoreLoopScheduler<PipelineProblem, /*kIsMasking=*/true>
             {
                 static_for<0, 8, 1>{}([&](auto) {
                     __builtin_amdgcn_sched_group_barrier(0x008, 1, 0); // MFMA
-                    __builtin_amdgcn_sched_group_barrier(0x002, 6, 0); // VALU
+                    __builtin_amdgcn_sched_group_barrier(0x002, 3, 0); // VALU
                 });
                 __builtin_amdgcn_sched_group_barrier(0x002, 16, 0); // VALU
             }
@@ -735,10 +735,10 @@ struct CoreLoopScheduler<PipelineProblem, /*kIsMasking=*/true>
             {
                 /// FIXME: remove weird v_perm_b32 and re-write following sched_group_barrier()
                 /// calls
-                // __builtin_amdgcn_sched_group_barrier(0x002, 10, 0); // VALU
+                __builtin_amdgcn_sched_group_barrier(0x002, 4, 0); // VALU
                 static_for<0, 8, 1>{}([&](auto) {
                     __builtin_amdgcn_sched_group_barrier(0x008, 1, 0); // MFMA
-                    __builtin_amdgcn_sched_group_barrier(0x002, 6, 0); // VALU
+                    __builtin_amdgcn_sched_group_barrier(0x002, 4, 0); // VALU
                 });
                 __builtin_amdgcn_sched_group_barrier(0x002, 16, 0); // VALU
             }
