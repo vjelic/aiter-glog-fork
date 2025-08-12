@@ -219,14 +219,15 @@ def log_args(func, *args, **kwargs):
 def post_process_data(df, num_iters, warm_iter=1):
     """remove abnormal data"""
     device_df = df[df["device_type"].astype(str).str.contains("DeviceType.CUDA")]
-    # print(device_df)
+    if device_df.empty:
+        return [], 0
     kernels_num = int(len(device_df) / num_iters)
     test_df = device_df.reset_index()
     grouped_kernel_df = test_df.groupby(test_df.index // kernels_num, sort=False).agg(
         {"self_device_time_total": "sum", "index": list}
     )
     # rm warm iters
-    sum_df = grouped_kernel_df.drop([i for i in range(warm_iter)]).reset_index()
+    sum_df = grouped_kernel_df.iloc[warm_iter:].reset_index(drop=True)
     out_range_idx = []
     if num_iters > 30:
         # IQR to remove abnormal data
