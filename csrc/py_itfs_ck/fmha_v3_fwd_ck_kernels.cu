@@ -3139,7 +3139,6 @@ struct get_kernel
         false, // kIsGroupMode
         fmha_variant,
         fmha_mask,
-        false, // kUseTrLoad
         fmha_traits>;
 
     using fmha_pipeline = aiter::BlockFmhaPipelineQRKSVS<fmha_problem>;
