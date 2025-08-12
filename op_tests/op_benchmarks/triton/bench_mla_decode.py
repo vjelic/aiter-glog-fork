@@ -4,7 +4,7 @@ from op_tests.op_benchmarks.triton.utils.benchmark_utils import (
     get_model_configs,
     get_available_models,
     print_vgpr,
-    get_caller_name_no_ext
+    get_caller_name_no_ext,
 )
 from aiter.ops.triton.mla_decode_rope import decode_attention_fwd_grouped_rope
 import torch
@@ -67,7 +67,6 @@ def benchmark(args):
         x_names, x_vals_list = model_benchmark_configs(args)
 
     line_vals = ["mla_decode_fwd"]
-
 
     configs.append(
         triton.testing.Benchmark(
