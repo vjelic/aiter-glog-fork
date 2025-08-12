@@ -5,7 +5,9 @@
       "waves_per_eu": 2,
       "num_warps": 4,
       "num_ctas": 1,
-      "num_stages": 1
+      "num_stages": 1,
+      "matrix_instr_nonkdim": 16,
+      "kpack": 1
   },
   "large_head_or_fp32": {
       "BLOCK_M": 32,
@@ -13,6 +15,8 @@
       "waves_per_eu": 0,
       "num_warps": 4,
       "num_ctas": 1,
-      "num_stages": 1
+      "num_stages": 1,
+      "matrix_instr_nonkdim": 16,
+      "kpack": 1
   } 
 }
