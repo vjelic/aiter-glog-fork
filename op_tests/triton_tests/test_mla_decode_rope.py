@@ -109,15 +109,19 @@ def ref_compute(
     qk_rope_head_dim = k_input.shape[-1] - kv_lora_rank
 
     if use_rope:
-        q_input = torch.empty(B, H, kv_lora_rank + qk_rope_head_dim, dtype=q.dtype).to(device)
+        q_input = torch.empty(B, H, kv_lora_rank + qk_rope_head_dim, dtype=q.dtype).to(
+            device
+        )
         q_nope_out, q_pe = q.split([kv_lora_rank, qk_rope_head_dim], dim=-1)
 
         # Extract k_pe for each batch item separately to handle variable sequence lengths
-        k_pe_t = torch.empty(B, 1, 1, qk_rope_head_dim, dtype=k_input.dtype, device=device)
+        k_pe_t = torch.empty(
+            B, 1, 1, qk_rope_head_dim, dtype=k_input.dtype, device=device
+        )
 
         for b in range(B):
             start_idx = kv_indptr[b].item()
-            end_idx = kv_indptr[b+1].item()
+            end_idx = kv_indptr[b + 1].item()
             if end_idx > start_idx:  # Check if this batch has any sequence
                 # Get the last token's position for this batch
                 batch_k = k_input[start_idx:end_idx]
@@ -129,9 +133,9 @@ def ref_compute(
         # Update k_input with rotated embeddings for each batch
         for b in range(B):
             start_idx = kv_indptr[b].item()
-            end_idx = kv_indptr[b+1].item()
+            end_idx = kv_indptr[b + 1].item()
             if end_idx > start_idx:
-                k_input[end_idx-1, 0, kv_lora_rank:] = k_pe_t[b, 0, 0]
+                k_input[end_idx - 1, 0, kv_lora_rank:] = k_pe_t[b, 0, 0]
 
         q_input[..., :kv_lora_rank] = q_nope_out
         q_input[..., kv_lora_rank:] = q_pe
@@ -193,7 +197,7 @@ def ref_compute_full_fwd(
     # Process each batch item separately to handle variable sequence lengths
     for b in range(B):
         start_idx = kv_indptr[b].item()
-        end_idx = kv_indptr[b+1].item()
+        end_idx = kv_indptr[b + 1].item()
         if end_idx > start_idx:  # Check if this batch has any sequence
             # Get the last token's position embedding for this batch
             batch_k = k_input[start_idx:end_idx]
@@ -202,13 +206,13 @@ def ref_compute_full_fwd(
     if use_rope:
         q_pe, k_pe_t = rotary_emb(positions, q_pe.unsqueeze(2), k_pe_t)
         q_pe = q_pe.squeeze()
-        
+
         # Update k_input with rotated embeddings for each batch
         for b in range(B):
             start_idx = kv_indptr[b].item()
-            end_idx = kv_indptr[b+1].item()
+            end_idx = kv_indptr[b + 1].item()
             if end_idx > start_idx:
-                k_input[end_idx-1, 0, kv_lora_rank:] = k_pe_t[b, 0, 0]
+                k_input[end_idx - 1, 0, kv_lora_rank:] = k_pe_t[b, 0, 0]
 
     q_input[..., :kv_lora_rank] = q_nope_out
     q_input[..., kv_lora_rank:] = q_pe
@@ -381,7 +385,7 @@ def test_op_fwd_rope_neox(
             dtype,
             device,
             is_neox_style=is_neox_style,
-            equal_seqlens=equal_seqlens
+            equal_seqlens=equal_seqlens,
         )
     )
 
@@ -493,7 +497,7 @@ def test_op_fwd_rope_integration(
             dtype,
             device,
             is_neox_style=is_neox_style,
-            equal_seqlens=equal_seqlens
+            equal_seqlens=equal_seqlens,
         )
     )
 
