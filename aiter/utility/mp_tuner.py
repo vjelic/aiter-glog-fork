@@ -5,7 +5,7 @@ import multiprocessing as mp
 import time
 from aiter.test_common import checkAllclose
 from aiter import dtypes
-import traceback
+
 
 def worker(
     gpuIDMap,
@@ -80,7 +80,6 @@ def worker(
 
     except Exception as e:
         print(f"Error in process:{pid} info:{info}: {e}")
-        traceback.print_exc()
         if res is None and ref is not None:
             print("The output is None, can't match with reference")
         us = float("inf")
