@@ -109,14 +109,30 @@ def ref_compute(
     qk_rope_head_dim = k_input.shape[-1] - kv_lora_rank
 
     if use_rope:
-        q_input = torch.empty(B, H, kv_lora_rank + qk_rope_head_dim, dtype=q.dtype).to(
-            device
-        )
+        q_input = torch.empty(B, H, kv_lora_rank + qk_rope_head_dim, dtype=q.dtype).to(device)
         q_nope_out, q_pe = q.split([kv_lora_rank, qk_rope_head_dim], dim=-1)
-        k_pe_t = k_input.view(B, 1, S, -1)[:, :, -1:, kv_lora_rank:]
+
+        # Extract k_pe for each batch item separately to handle variable sequence lengths
+        k_pe_t = torch.empty(B, 1, 1, qk_rope_head_dim, dtype=k_input.dtype, device=device)
+
+        for b in range(B):
+            start_idx = kv_indptr[b].item()
+            end_idx = kv_indptr[b+1].item()
+            if end_idx > start_idx:  # Check if this batch has any sequence
+                # Get the last token's position for this batch
+                batch_k = k_input[start_idx:end_idx]
+                k_pe_t[b, 0, 0] = batch_k[-1, 0, kv_lora_rank:]
+
         q_pe, k_pe_t = rotary_emb(positions, q_pe.unsqueeze(2), k_pe_t)
         q_pe = q_pe.squeeze()
-        k_input.view(B, 1, S, -1)[:, :, -1:, kv_lora_rank:] = k_pe_t
+
+        # Update k_input with rotated embeddings for each batch
+        for b in range(B):
+            start_idx = kv_indptr[b].item()
+            end_idx = kv_indptr[b+1].item()
+            if end_idx > start_idx:
+                k_input[end_idx-1, 0, kv_lora_rank:] = k_pe_t[b, 0, 0]
+
         q_input[..., :kv_lora_rank] = q_nope_out
         q_input[..., kv_lora_rank:] = q_pe
     else:
@@ -171,13 +187,28 @@ def ref_compute_full_fwd(
     )
     q_nope_out, q_pe = q.split([kv_lora_rank, qk_rope_head_dim], dim=-1)
 
-    k_pe_t = k_input.view(B, 1, S, -1)[:, :, -1:, kv_lora_rank:]
+    # Initialize k_pe_t tensor for storing the last position embeddings for each batch
+    k_pe_t = torch.empty(B, 1, 1, qk_rope_head_dim, dtype=k_input.dtype, device=device)
+
+    # Process each batch item separately to handle variable sequence lengths
+    for b in range(B):
+        start_idx = kv_indptr[b].item()
+        end_idx = kv_indptr[b+1].item()
+        if end_idx > start_idx:  # Check if this batch has any sequence
+            # Get the last token's position embedding for this batch
+            batch_k = k_input[start_idx:end_idx]
+            k_pe_t[b, 0, 0] = batch_k[-1, 0, kv_lora_rank:]
 
     if use_rope:
         q_pe, k_pe_t = rotary_emb(positions, q_pe.unsqueeze(2), k_pe_t)
         q_pe = q_pe.squeeze()
-
-    k_input.view(B, 1, S, -1)[:, :, -1:, kv_lora_rank:] = k_pe_t
+        
+        # Update k_input with rotated embeddings for each batch
+        for b in range(B):
+            start_idx = kv_indptr[b].item()
+            end_idx = kv_indptr[b+1].item()
+            if end_idx > start_idx:
+                k_input[end_idx-1, 0, kv_lora_rank:] = k_pe_t[b, 0, 0]
 
     q_input[..., :kv_lora_rank] = q_nope_out
     q_input[..., kv_lora_rank:] = q_pe
@@ -317,6 +348,7 @@ def test_op_fwd_rope(
 )
 @pytest.mark.parametrize("dtype", [torch.bfloat16, torch.float32])
 @pytest.mark.parametrize("use_rope", [True])
+@pytest.mark.parametrize("equal_seqlens", [True, False])
 @pytest.mark.parametrize("is_neox_style", [True, False])
 def test_op_fwd_rope_neox(
     B,
@@ -327,6 +359,7 @@ def test_op_fwd_rope_neox(
     rotary_dim,
     dtype,
     use_rope,
+    equal_seqlens,
     is_neox_style,
     num_kv_splits=2,
     sm_scale=1.0,
@@ -348,6 +381,7 @@ def test_op_fwd_rope_neox(
             dtype,
             device,
             is_neox_style=is_neox_style,
+            equal_seqlens=equal_seqlens
         )
     )
 
@@ -426,6 +460,7 @@ def test_op_fwd_rope_neox(
 )
 @pytest.mark.parametrize("dtype", [torch.bfloat16, torch.float32])
 @pytest.mark.parametrize("use_rope", [True, False])
+@pytest.mark.parametrize("equal_seqlens", [True, False])
 @pytest.mark.parametrize("is_neox_style", [True, False])
 def test_op_fwd_rope_integration(
     B,
@@ -436,6 +471,7 @@ def test_op_fwd_rope_integration(
     rotary_dim,
     dtype,
     use_rope,
+    equal_seqlens,
     is_neox_style,
     num_kv_splits=2,
     sm_scale=1.0,
@@ -457,6 +493,7 @@ def test_op_fwd_rope_integration(
             dtype,
             device,
             is_neox_style=is_neox_style,
+            equal_seqlens=equal_seqlens
         )
     )
 
