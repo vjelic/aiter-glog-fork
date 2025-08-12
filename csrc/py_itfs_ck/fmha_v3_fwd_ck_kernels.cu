@@ -761,9 +761,12 @@ struct CoreLoopScheduler<PipelineProblem, /*kIsMasking=*/false>
             {
                 static_for<0, 8, 1>{}([&](auto) {
                     __builtin_amdgcn_sched_group_barrier(0x008, 1, 0); // MFMA
-                    __builtin_amdgcn_sched_group_barrier(0x002, 3, 0); // VALU
+                    /// FIXME: Although we set 2 VALUs here, the compiler still creates a cluster of
+                    /// (2+ v_exp + 2 v_add). It seems that sched_group_barrier() can currently
+                    /// control only the v_add instructions. Use a larger number once we are able to
+                    /// control the v_exp scheduling as well.
+                    __builtin_amdgcn_sched_group_barrier(0x002, 2, 0); // VALU
                 });
-                __builtin_amdgcn_sched_group_barrier(0x002, 16, 0); // VALU
             }
             else if constexpr(Phase == 1) {}
             else if constexpr(Phase == 2)
@@ -775,7 +778,6 @@ struct CoreLoopScheduler<PipelineProblem, /*kIsMasking=*/false>
                     __builtin_amdgcn_sched_group_barrier(0x008, 1, 0); // MFMA
                     __builtin_amdgcn_sched_group_barrier(0x002, 4, 0); // VALU
                 });
-                __builtin_amdgcn_sched_group_barrier(0x002, 16, 0); // VALU
             }
             else if constexpr(Phase == 3) {}
         }
@@ -786,9 +788,12 @@ struct CoreLoopScheduler<PipelineProblem, /*kIsMasking=*/false>
             {
                 static_for<0, 8, 1>{}([&](auto) {
                     __builtin_amdgcn_sched_group_barrier(0x008, 1, 0); // MFMA
-                    __builtin_amdgcn_sched_group_barrier(0x002, 3, 0); // VALU
+                    /// FIXME: Although we set 2 VALUs here, the compiler still creates a cluster of
+                    /// (2+ v_exp + 2 v_add). It seems that sched_group_barrier() can currently
+                    /// control only the v_add instructions. Use a larger number once we are able to
+                    /// control the v_exp scheduling as well.
+                    __builtin_amdgcn_sched_group_barrier(0x002, 2, 0); // VALU
                 });
-                __builtin_amdgcn_sched_group_barrier(0x002, 16, 0); // VALU
             }
             else if constexpr(Phase == 2) {}
             else if constexpr(Phase == 3)
@@ -800,7 +805,6 @@ struct CoreLoopScheduler<PipelineProblem, /*kIsMasking=*/false>
                     __builtin_amdgcn_sched_group_barrier(0x008, 1, 0); // MFMA
                     __builtin_amdgcn_sched_group_barrier(0x002, 4, 0); // VALU
                 });
-                __builtin_amdgcn_sched_group_barrier(0x002, 16, 0); // VALU
             }
         }
     }
