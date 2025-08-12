@@ -176,7 +176,6 @@ def benchmark(args):
             x_names, x_vals_list = get_prefill_benchmark_configs()
 
     line_vals = ["fwd_Time_(ms)"]
-    plot_name = args.plot_name + f"-causal-{causal}-equal_seqlens-{args.equal_seqlens}"
 
     configs.append(
         triton.testing.Benchmark(

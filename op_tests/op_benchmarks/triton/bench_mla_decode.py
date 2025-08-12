@@ -4,6 +4,7 @@ from op_tests.op_benchmarks.triton.utils.benchmark_utils import (
     get_model_configs,
     get_available_models,
     print_vgpr,
+    get_caller_name_no_ext
 )
 from aiter.ops.triton.mla_decode_rope import decode_attention_fwd_grouped_rope
 import torch
@@ -67,7 +68,6 @@ def benchmark(args):
 
     line_vals = ["mla_decode_fwd"]
 
-    plot_name = args.plot_name + "mla_decode"
 
     configs.append(
         triton.testing.Benchmark(
@@ -78,7 +78,7 @@ def benchmark(args):
             line_names=line_vals,
             styles=[("red", "-"), ("green", "-")],
             ylabel="ms",
-            plot_name=plot_name,
+            plot_name=get_caller_name_no_ext(),
             args={"sm_scale": 1.0, "logit_cap": 0.0, "device": args.device},
         )
     )
@@ -169,12 +169,6 @@ def parse_args():
         + ", ".join(available_models)
         + "]. Use 'all' to benchmark all models. Provide model family (the part before -) to benchmark all models in that family. One can provide multiple as --model \"llama3,mistral_7B\""
     )
-    parser.add_argument(
-        "--plot_name",
-        type=str,
-        default="MLA-prefill",
-        help="Name for the results plot|table",
-    )
     parser.add_argument("--model", type=str, default="", help=model_help)
     parser.add_argument("-b", type=int, default=0, help="Batch size")
     parser.add_argument("--seqlen", type=int, default=0, help="Sequence length")
@@ -212,7 +206,7 @@ def run_bench(args):
 def main():
     args = parse_args()
     if args.print_vgpr:  # print the vgpr usage of the kernel
-        print_vgpr(lambda: run_bench(args), table_start=args.plot_name)
+        print_vgpr(lambda: run_bench(args), table_start=get_caller_name_no_ext())
         return 0
     run_bench(args)
 
