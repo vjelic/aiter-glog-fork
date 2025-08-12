@@ -2,7 +2,7 @@ import triton
 from op_tests.op_benchmarks.triton.utils.benchmark_utils import (
     get_model_configs,
     print_vgpr,
-    get_caller_name_no_ext
+    get_caller_name_no_ext,
 )
 import torch
 import sys
