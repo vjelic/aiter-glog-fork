@@ -219,7 +219,7 @@ def log_args(func, *args, **kwargs):
 def post_process_data(df, num_iters, warm_iter=1):
     """remove abnormal data"""
     device_df = df[df["device_type"].astype(str).str.contains("DeviceType.CUDA")]
-    #print(device_df)
+    # print(device_df)
     kernels_num = int(len(device_df) / num_iters)
     test_df = device_df.reset_index()
     grouped_kernel_df = test_df.groupby(test_df.index // kernels_num, sort=False).agg(
