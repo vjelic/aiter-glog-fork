@@ -1758,7 +1758,7 @@ struct BlockFmhaPipelineQRKSVS
         {
             fmha_post_process(number<1>{});
         }
-        else
+        if(!(num_total_loop % 2))
         {
             fmha_post_process(number<0>{});
         }
