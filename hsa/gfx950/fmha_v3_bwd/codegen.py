@@ -30,23 +30,23 @@ struct __attribute__((packed)) fmha_bwd_v3_args_gfx950
     p2 _p1;
     void *ptr_dv;   // 0x20
     p2 _p2;
-    void *ptr_q;    // 0x30
+    const void *ptr_q;    // 0x30
     p2 _p3;
-    void *ptr_k;    // 0x40
+    const void *ptr_k;    // 0x40
     p2 _p4;
-    void *ptr_v;    // 0x50
+    const void *ptr_v;    // 0x50
     p2 _p5;
-    void *ptr_do;   // 0x60
+    const void *ptr_do;   // 0x60
     p2 _p6;
-    void *ptr_lse;  // 0x70
+    const void *ptr_lse;  // 0x70
     p2 _p7;
-    void *ptr_d;    // 0x80
+    const void *ptr_d;    // 0x80
     p2 _p8;
     float scalar;   // 0x90
     p3 _p9;
     float log2e;    // 0xa0
     p3 _p10;
-    unsigned int seq_len_q; //s_seq_len_q 0xb0
+    unsigned int seqlen_q; //s_seq_len_q 0xb0
     p3 _p11;
     unsigned int Ts; //s_Seqs_k*sub_K   0xc0
     p3 _p12;
@@ -66,7 +66,7 @@ struct __attribute__((packed)) fmha_bwd_v3_args_gfx950
     p3 _p19;
     unsigned int Seqs_dk; //s_Seqs_dk  0x140
     p3 _p20;
-    unsigned int seq_len_k; //batch mode 0x150
+    unsigned int seqlen_k; //batch mode 0x150
     p3 _p21;
     unsigned int head_dim_q; //batch&group mode for headdim padding 0x160
     p3 _p22;
@@ -417,7 +417,7 @@ class fmha_dq_shuffle_kernel
         HIP_CALL(hipModuleGetFunction(&kernel_func, module, kernel_func_name.c_str()));
     }}
 
-    # TODO: maybe update fmha_bwd_dq_shuffle_args
+    // TODO: maybe update fmha_bwd_dq_shuffle_args
     void
     launch_kernel(fmha_bwd_v3_traits fmha_v3_traits, fmha_bwd_dq_shuffle_args args, const ck_tile::stream_config& s) const
     {{
@@ -1022,41 +1022,6 @@ float fmha_bwd_v3_genl_gfx950(const ck_tile::stream_config& s, fmha_bwd_args a)
     if(s.log_level_ > 0)
         std::cout << ", " << fmha_bwd_dot_do_o_get_name_<dot_do_o_trait_>() << ", " << FmhaBwdV3Name<dq_dk_dv_v3_traits_>::bwd_v3_name << ", " << fmha_bwd_convert_dq_get_name_<convert_dq_trait_>() << std::flush;
     fmha_bwd_v3_args_gfx950 args;
-    # TODO: fill in all args
-    args.ptr_dq   = a.dq_acc_ptr;
-    args.ptr_dk   = a.dk_ptr;
-    args.ptr_dv   = a.dv_ptr;
-    args.ptr_q    = a.q_ptr;
-    args.ptr_k    = a.k_ptr;
-    args.ptr_v    = a.v_ptr;
-    args.ptr_do   = a.do_ptr;
-    args.ptr_lse  = a.lse_ptr;
-    args.ptr_d    = a.d_ptr;
-    args.scalar   = a.scale;
-    args.log2e    = ck_tile::log2e_v<float>;
-    args.ratio    = a.nhead_q / a.nhead_k;
-    args.seqlen_q = a.seqlen_q;
-    args.seqlen_k = a.seqlen_k;
-    args.head_dim = a.hdim_q;
-    args.nhead_q  = a.nhead_q;
-    args.Hs_q     = a.nhead_stride_q * 2;
-    args.BAs_q    = a.batch_stride_q * 2;
-    args.Seqs_q   = a.stride_q * 2;
-    args.Hs_k     = a.nhead_stride_k * 2;
-    args.BAs_k    = a.batch_stride_k * 2;
-    args.Seqs_k   = a.stride_k * 2;
-    args.Hs_v     = a.nhead_stride_v * 2;
-    args.BAs_v    = a.batch_stride_v * 2;
-    args.Seqs_v   = a.stride_v * 2;
-    args.Hs_do    = a.nhead_stride_do * 2;
-    args.BAs_do   = a.batch_stride_do * 2;
-    args.Seqs_do  = a.stride_do * 2;
-    args.Hs_dk    = a.nhead_stride_dk * 2;
-    args.BAs_dk   = a.batch_stride_dk * 2;
-    args.Seqs_dk  = a.stride_dk * 2;
-    args.Hs_dv    = a.nhead_stride_dv * 2;
-    args.BAs_dv   = a.batch_stride_dv * 2;
-    args.Seqs_dv  = a.stride_dv * 2;
 
     args.ptr_dq         = a.dq_acc_ptr;
     args.ptr_dk         = a.dk_ptr;
@@ -1070,8 +1035,8 @@ float fmha_bwd_v3_genl_gfx950(const ck_tile::stream_config& s, fmha_bwd_args a)
     args.scalar         = a.scale;
     args.log2e          = ck_tile::log2e_v<float>;;
     args.ratio          = a.nhead_q / a.nhead_k;
-    args.seq_len_q      = a.seqlen_q;
-    args.seq_len_k      = a.seqlen_k;
+    args.seqlen_q       = a.seqlen_q;
+    args.seqlen_k       = a.seqlen_k;
     args.head_dim_q     = a.hdim_q;
     args.nhead_q        = a.nhead_q;
     args.Ts             = FmhaBwdV3Ts<dq_dk_dv_v3_traits_>::ts_kv * a.stride_k * 2;
@@ -1298,16 +1263,16 @@ float fmha_bwd_v3(mha_bwd_traits t, fmha_bwd_args a, const ck_tile::stream_confi
                                 using dot_do_o_trait_ = fmha_bwd_dot_do_o_traits_<128, FmhaBwdFp16, false, false, true>;
                                 using dq_dk_dv_v3_traits_ = fmha_bwd_dq_dk_dv_v3_traits_<128, FmhaBwdFp16, false, true, 0, true, true, GPUArch::gfx950>;
                                 using convert_dq_trait_ = fmha_bwd_convert_dq_traits_<128, FmhaBwdFp16, false, false, true, false>;
-                                // const std::string bwd_v3_name = "bwd_v3_hd128_fp16_a32_psskddv";
-                                r = fmha_bwd_v3_genl_<dot_do_o_trait_, dq_dk_dv_v3_traits_, convert_dq_trait_>(s, a);
+                                // const std::string bwd_v3_name = "bwd_hd128_fp16_a32_psskddv";
+                                r = fmha_bwd_v3_genl_gfx950<dot_do_o_trait_, dq_dk_dv_v3_traits_, convert_dq_trait_>(s, a);
                                 return r;
                             }}
                             else if((a.seqlen_q % 64 != 0) && (a.hdim_q != 128)){{
                                 using dot_do_o_trait_ = fmha_bwd_dot_do_o_traits_<128, FmhaBwdFp16, false, true, true>;
                                 using dq_dk_dv_v3_traits_ = fmha_bwd_dq_dk_dv_v3_traits_<128, FmhaBwdFp16, false, true, 0, true, true, GPUArch::gfx950>;
                                 using convert_dq_trait_ = fmha_bwd_convert_dq_traits_<128, FmhaBwdFp16, false, true, true, false>;
-                                // const std::string bwd_v3_name = "bwd_v3_hd128_fp16_a32_psskddv";
-                                r = fmha_bwd_v3_genl_<dot_do_o_trait_, dq_dk_dv_v3_traits_, convert_dq_trait_>(s, a);
+                                // const std::string bwd_v3_name = "bwd_hd128_fp16_a32_psskddv";
+                                r = fmha_bwd_v3_genl_gfx950<dot_do_o_trait_, dq_dk_dv_v3_traits_, convert_dq_trait_>(s, a);
                                 return r;
                             }}
                         }}
