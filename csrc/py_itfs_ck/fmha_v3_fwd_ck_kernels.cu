@@ -703,7 +703,6 @@ struct CoreLoopScheduler<PipelineProblem, /*kIsMasking=*/true>
                     __builtin_amdgcn_sched_group_barrier(0x008, 1, 0); // MFMA
                     __builtin_amdgcn_sched_group_barrier(0x002, 3, 0); // VALU
                 });
-                __builtin_amdgcn_sched_group_barrier(0x002, 16, 0); // VALU
             }
             else if constexpr(Phase == 1) {}
             else if constexpr(Phase == 2)
@@ -715,7 +714,6 @@ struct CoreLoopScheduler<PipelineProblem, /*kIsMasking=*/true>
                     __builtin_amdgcn_sched_group_barrier(0x008, 1, 0); // MFMA
                     __builtin_amdgcn_sched_group_barrier(0x002, 4, 0); // VALU
                 });
-                __builtin_amdgcn_sched_group_barrier(0x002, 16, 0); // VALU
             }
             else if constexpr(Phase == 3) {}
         }
@@ -728,7 +726,6 @@ struct CoreLoopScheduler<PipelineProblem, /*kIsMasking=*/true>
                     __builtin_amdgcn_sched_group_barrier(0x008, 1, 0); // MFMA
                     __builtin_amdgcn_sched_group_barrier(0x002, 3, 0); // VALU
                 });
-                __builtin_amdgcn_sched_group_barrier(0x002, 16, 0); // VALU
             }
             else if constexpr(Phase == 2) {}
             else if constexpr(Phase == 3)
@@ -740,7 +737,6 @@ struct CoreLoopScheduler<PipelineProblem, /*kIsMasking=*/true>
                     __builtin_amdgcn_sched_group_barrier(0x008, 1, 0); // MFMA
                     __builtin_amdgcn_sched_group_barrier(0x002, 4, 0); // VALU
                 });
-                __builtin_amdgcn_sched_group_barrier(0x002, 16, 0); // VALU
             }
         }
     }
