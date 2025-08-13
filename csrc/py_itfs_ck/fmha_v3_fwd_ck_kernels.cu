@@ -1111,15 +1111,19 @@ struct BlockFmhaPipelineQRKSVS
             },
             number<2>{});
 
-        statically_indexed_array<decltype(make_lds_tile_window<KDataType>(
-                                     nullptr,
-                                     Policy::template MakeKLdsLoadBlockDescriptor<Problem>())),
+        statically_indexed_array<decltype(make_tile_window(
+                                     make_lds_tile_window<KDataType>(
+                                         nullptr,
+                                         Policy::template MakeKLdsLoadBlockDescriptor<Problem>()),
+                                     Policy::template MakeKRegTileDistribution<Problem>())),
                                  2>
             k_lds_window_load;
 
-        statically_indexed_array<decltype(make_lds_tile_window<VDataType>(
-                                     nullptr,
-                                     Policy::template MakeVLdsLoadBlockDescriptor<Problem>())),
+        statically_indexed_array<decltype(make_tile_window(
+                                     make_lds_tile_window<VDataType>(
+                                         nullptr,
+                                         Policy::template MakeVLdsLoadBlockDescriptor<Problem>()),
+                                     Policy::template MakeVRegTileDistribution<Problem>())),
                                  2>
             v_lds_window_load;
 
@@ -1130,13 +1134,9 @@ struct BlockFmhaPipelineQRKSVS
         {
             CK_TILE_DEVICE kv_tile_type() {}
 
-            decltype(load_tile(
-                make_tile_window(k_lds_window_load(number<0>{}),
-                                 Policy::template MakeKRegTileDistribution<Problem>()))) k_tile;
+            decltype(load_tile(k_lds_window_load(number<0>{}))) k_tile;
 
-            decltype(load_tile_transpose(
-                make_tile_window(v_lds_window_load(number<0>{}),
-                                 Policy::template MakeVRegTileDistribution<Problem>()))) v_tile;
+            decltype(load_tile_transpose(v_lds_window_load(number<0>{}))) v_tile;
         } kv_tile;
 
         union sp_compute_type
@@ -1160,16 +1160,20 @@ struct BlockFmhaPipelineQRKSVS
 
         // initialize k_lds_window and v_lds_window
         static_for<0, 2, 1>{}([&](auto idx) {
-            k_lds_window_load(idx) = make_lds_tile_window<KDataType>(
-                static_cast<char*>(smem_ptr) + (idx)*Policy::template GetSmemSizeKV<Problem>(),
-                Policy::template MakeKLdsLoadBlockDescriptor<Problem>());
+            k_lds_window_load(idx) = make_tile_window(
+                make_lds_tile_window<KDataType>(
+                    static_cast<char*>(smem_ptr) + (idx)*Policy::template GetSmemSizeKV<Problem>(),
+                    Policy::template MakeKLdsLoadBlockDescriptor<Problem>()),
+                Policy::template MakeKRegTileDistribution<Problem>());
         });
 
         static_for<0, 2, 1>{}([&](auto idx) {
-            v_lds_window_load(idx) = make_lds_tile_window<VDataType>(
-                static_cast<char*>(smem_ptr) +
-                    (idx + 2) * Policy::template GetSmemSizeKV<Problem>(),
-                Policy::template MakeVLdsLoadBlockDescriptor<Problem>());
+            v_lds_window_load(idx) =
+                make_tile_window(make_lds_tile_window<VDataType>(
+                                     static_cast<char*>(smem_ptr) +
+                                         (idx + 2) * Policy::template GetSmemSizeKV<Problem>(),
+                                     Policy::template MakeVLdsLoadBlockDescriptor<Problem>()),
+                                 Policy::template MakeVRegTileDistribution<Problem>());
         });
 
         {
@@ -1323,11 +1327,7 @@ struct BlockFmhaPipelineQRKSVS
         };
 
         auto K_lds_load = [&](auto k_lds_read_idx) {
-            auto k_lds_window_for_load =
-                make_tile_window(k_lds_window_load(k_lds_read_idx),
-                                 Policy::template MakeKRegTileDistribution<Problem>());
-
-            kv_tile.k_tile = load_tile(k_lds_window_for_load);
+            kv_tile.k_tile = load_tile(k_lds_window_load(k_lds_read_idx));
         };
 
         auto V_mem_load = [&](auto v_lds_write_idx) {
@@ -1339,11 +1339,7 @@ struct BlockFmhaPipelineQRKSVS
         };
 
         auto V_lds_load = [&](auto v_lds_read_idx) {
-            auto v_lds_window_for_load =
-                make_tile_window(v_lds_window_load(v_lds_read_idx),
-                                 Policy::template MakeVRegTileDistribution<Problem>());
-
-            kv_tile.v_tile = load_tile_transpose(v_lds_window_for_load);
+            kv_tile.v_tile = load_tile_transpose(v_lds_window_load(v_lds_read_idx));
         };
 
         decltype(m) m_old;
