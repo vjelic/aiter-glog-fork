@@ -759,12 +759,13 @@ struct CoreLoopScheduler<PipelineProblem, /*kIsMasking=*/false>
         {
             if constexpr(Phase == 0)
             {
+                /// FIXME: Although we set 2 VALUs here, the compiler still creates a cluster of (2+
+                /// v_exp + 2 v_add). It seems that sched_group_barrier() can currently control only
+                /// the v_add instructions. Use a larger number once we are able to control the
+                /// v_exp scheduling as well.
+                __builtin_amdgcn_sched_group_barrier(0x002, 2, 0); // VALU
                 static_for<0, 8, 1>{}([&](auto) {
                     __builtin_amdgcn_sched_group_barrier(0x008, 1, 0); // MFMA
-                    /// FIXME: Although we set 2 VALUs here, the compiler still creates a cluster of
-                    /// (2+ v_exp + 2 v_add). It seems that sched_group_barrier() can currently
-                    /// control only the v_add instructions. Use a larger number once we are able to
-                    /// control the v_exp scheduling as well.
                     __builtin_amdgcn_sched_group_barrier(0x002, 2, 0); // VALU
                 });
             }
@@ -786,12 +787,13 @@ struct CoreLoopScheduler<PipelineProblem, /*kIsMasking=*/false>
             if constexpr(Phase == 0) {}
             else if constexpr(Phase == 1)
             {
+                /// FIXME: Although we set 2 VALUs here, the compiler still creates a cluster of (2+
+                /// v_exp + 2 v_add). It seems that sched_group_barrier() can currently control only
+                /// the v_add instructions. Use a larger number once we are able to control the
+                /// v_exp scheduling as well.
+                __builtin_amdgcn_sched_group_barrier(0x002, 2, 0); // VALU
                 static_for<0, 8, 1>{}([&](auto) {
                     __builtin_amdgcn_sched_group_barrier(0x008, 1, 0); // MFMA
-                    /// FIXME: Although we set 2 VALUs here, the compiler still creates a cluster of
-                    /// (2+ v_exp + 2 v_add). It seems that sched_group_barrier() can currently
-                    /// control only the v_add instructions. Use a larger number once we are able to
-                    /// control the v_exp scheduling as well.
                     __builtin_amdgcn_sched_group_barrier(0x002, 2, 0); // VALU
                 });
             }
