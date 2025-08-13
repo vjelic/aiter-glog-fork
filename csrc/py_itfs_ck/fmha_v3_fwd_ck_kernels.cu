@@ -1380,27 +1380,10 @@ struct BlockFmhaPipelineQRKSVS
                         sp(sp_reg_idx).sp_compute(i_j_idx), scale_s, -scale_s * m(i_j_idx));
                 });
             });
-
-            static_for<0, ck_tile::min(12, sp_delta(sp_reg_idx).thread_buf_.size()), 1>{}(
-                [&](auto idx) {
-                    sp_delta(sp_reg_idx).thread_buf_[idx] =
-                        detail::fma_impl_vsv(sp(sp_reg_idx).sp_compute.thread_buf_[idx],
-                                             scale_s,
-                                             -scale_s * m.thread_buf_[0]);
-                });
             /// TODO: move some fmha_alu1() code here if necessary
         };
 
         auto fmha_alu1 = [&](auto sp_reg_idx) {
-            static_for<ck_tile::min(12, sp_delta(sp_reg_idx).thread_buf_.size()),
-                       sp_delta(sp_reg_idx).thread_buf_.size(),
-                       1>{}([&](auto idx) {
-                sp_delta(sp_reg_idx).thread_buf_[idx] =
-                    detail::fma_impl_vsv(sp(sp_reg_idx).sp_compute.thread_buf_[idx],
-                                         scale_s,
-                                         -scale_s * m.thread_buf_[0]);
-            });
-
             constexpr auto p_spans =
                 std::decay_t<decltype(sp(sp_reg_idx).sp_compute)>::get_distributed_spans();
             sweep_tile_span(p_spans[number<0>{}], [&](auto idx0) {
