@@ -22,6 +22,102 @@ FMHA_BWD_API = """#include <hip/hip_fp16.h>
 
 namespace aiter {{
 
+struct __attribute__((packed)) fmha_bwd_v3_args_gfx950
+{{
+    void *ptr_dq; //dq or dq_acc 0x0
+    p2 _p0;
+    void *ptr_dk;   // 0x10
+    p2 _p1;
+    void *ptr_dv;   // 0x20
+    p2 _p2;
+    void *ptr_q;    // 0x30
+    p2 _p3;
+    void *ptr_k;    // 0x40
+    p2 _p4;
+    void *ptr_v;    // 0x50
+    p2 _p5;
+    void *ptr_do;   // 0x60
+    p2 _p6;
+    void *ptr_lse;  // 0x70
+    p2 _p7;
+    void *ptr_d;    // 0x80
+    p2 _p8;
+    float scalar;   // 0x90
+    p3 _p9;
+    float log2e;    // 0xa0
+    p3 _p10;
+    unsigned int seq_len_q; //s_seq_len_q 0xb0
+    p3 _p11;
+    unsigned int Ts; //s_Seqs_k*sub_K   0xc0
+    p3 _p12;
+    unsigned int Hs_q; //s_Hs_q           0xd0
+    p3 _p13;
+    unsigned int BAs_q; //s_BAs_q         0xe0
+    p3 _p14;
+    unsigned int Seqs_q; //s_Seqs_q       0xf0
+    p3 _p15;
+    unsigned int ratio;              // 0x100
+    p3 _p16;
+    unsigned int Hs_k; //s_Hs_k     // 0x110
+    p3 _p17;
+    unsigned int BAs_k; //s_BAs_k   // 0x120
+    p3 _p18;
+    unsigned int Seqs_k; //s_Seqs_k // 0x130
+    p3 _p19;
+    unsigned int Seqs_dk; //s_Seqs_dk  0x140
+    p3 _p20;
+    unsigned int seq_len_k; //batch mode 0x150
+    p3 _p21;
+    unsigned int head_dim_q; //batch&group mode for headdim padding 0x160
+    p3 _p22;
+    unsigned int head_dim_v; //batch&group mode for headdim padding 0x170
+    p3 _p23;
+    unsigned int nhead_q; // 0x180    batch mode lsed([B,H,S]) addr = batch_idx * nhead_q * seqlen_q * 4 + head_idx * seqlen_q * 4
+    p3 _p24;
+    unsigned int Hs_v; //batch&group mode 0x190
+    p3 _p25;
+    unsigned int BAs_v; //batch mode      0x1a0
+    p3 _p26;
+    unsigned int Seqs_v; //batch&group mode 0x1b0
+    p3 _p27;
+    unsigned int Hs_do; //batch&group mode 0x1c0
+    p3 _p28;
+    unsigned int BAs_do; //group mode 0x1d0
+    p3 _p29;
+    unsigned int Seqs_do; //batch&group mode 0x1e0
+    p3 _p30;
+    unsigned int Hs_dq; //batch&group mode, careful! not dq_acc 0x1f0
+    p3 _p31;
+    unsigned int BAs_dq; //group mode, careful! not dq_acc 0x200
+    p3 _p32;
+    unsigned int Seqs_dq; //batch&group mode, careful! not dq_acc 0x210
+    p3 _p33;
+    unsigned int Hs_dk; //batch&group mode    0x220
+    p3 _p34;
+    unsigned int BAs_dk; //group mode         0x230
+    p3 _p35;
+    unsigned int Hs_dv; //batch&group mode    0x240
+    p3 _p36;
+    unsigned int BAs_dv; //group mode         0x250
+    p3 _p37;
+    unsigned int Seqs_dv; //batch&group mode  0x260
+    p3 _p38;
+    unsigned int Hs_lsed; //0x270 group mode lsed([H,TotalValid_Q(90)]) addr = seqstart_q[batch_idx] * 4 + head_idx * nhead_stride_lsed(s_Hs_lsed)
+    p3 _p39;
+    void *ptr_seqstart_q; //group mode seqstart_q [0, 20, 50, 90]   0x280
+    p2 _p40;
+    void *ptr_seqstart_k; //group mode seqstart_k [0, 50, 110, 180] 0x290
+    p2 _p41;
+    void *ptr_seqstart_q_padded; //0x2a0    group mode seqstart_q_padded [0, 30(20+10), 70(20+10+30+10), 120(20+10+30+10+40+10)] if 10 is padded after each seqlen[30(20+10), 40(30+10), 50(40+10)]
+    p2 _p42;
+    void *ptr_seqstart_k_padded; //0x2b0    group mode seqstart_k_padded [0, 60(50+10), 130(50+10+60+10), 200(50+10+60+10+70+10)] if 10 is padded after each seqlen[60(50+10), 70(60+10), 80(70+10)]
+    p2 _p43;
+    int mask_x; //swa 0x2c0
+    p3 _p44;
+    int mask_y; //swa 0x2d0
+    p3 _p45;
+}};
+
 // ########################################################|HDim|    DataType| MaskType|kIsAtomic32|BF16Cvt|kIsSEQPad|kIsHDPad|         GPUArch|
 template<> struct FmhaBwdV3Name<fmha_bwd_dq_dk_dv_v3_traits_<128, FmhaBwdBf16,        0,      false,      0,    false,   false, GPUArch::gfx950>> {{ static constexpr const char * bwd_v3_name = "fmha_bwd_hd128_bf16_a16_rtne"; }};
 template<> struct FmhaBwdV3Name<fmha_bwd_dq_dk_dv_v3_traits_<128, FmhaBwdBf16,        0,      false,      1,    false,   false, GPUArch::gfx950>> {{ static constexpr const char * bwd_v3_name = "fmha_bwd_hd128_bf16_a16_rtna"; }};
@@ -308,6 +404,7 @@ template<> struct FmhaBwdV3Ts<fmha_bwd_dq_dk_dv_v3_traits_<192, FmhaBwdFp16,    
 template<> struct FmhaBwdV3Ts<fmha_bwd_dq_dk_dv_v3_traits_<192, FmhaBwdFp16,        1,       true,      0,     true,    true, GPUArch::gfx950,        true>> {{ static constexpr int ts_qo = 16; static constexpr int ts_kv = 64; }};
 
 namespace gfx950{{
+// TODO: update dq_shuffle kernel launch
 class fmha_dq_shuffle_kernel
 {{
     public:
@@ -320,6 +417,7 @@ class fmha_dq_shuffle_kernel
         HIP_CALL(hipModuleGetFunction(&kernel_func, module, kernel_func_name.c_str()));
     }}
 
+    # TODO: maybe update fmha_bwd_dq_shuffle_args
     void
     launch_kernel(fmha_bwd_v3_traits fmha_v3_traits, fmha_bwd_dq_shuffle_args args, const ck_tile::stream_config& s) const
     {{
@@ -503,6 +601,38 @@ class fmha_bwd_v3_kernel
         int gdy = fmha_v3_traits.h;
         int gdz = fmha_v3_traits.b;
 
+        HIP_CALL(hipModuleLaunchKernel(kernel_func,
+                                       gdx,
+                                       gdy,
+                                       gdz,
+                                       bdx,
+                                       1,
+                                       1,
+                                       0,
+                                       s.stream_id_,
+                                       NULL,
+                                       reinterpret_cast<void**>(&config)));
+    }}
+
+    void
+    launch_kernel(fmha_bwd_v3_traits fmha_v3_traits, fmha_bwd_v3_args_gfx950 args, const ck_tile::stream_config& s) const
+    {{
+        size_t arg_size = sizeof(args);
+        void* config[]  = {{HIP_LAUNCH_PARAM_BUFFER_POINTER,
+                           &args,
+                           HIP_LAUNCH_PARAM_BUFFER_SIZE,
+                           &arg_size,
+                           HIP_LAUNCH_PARAM_END}};
+
+        int bdx = 256;
+        int gdx = (fmha_v3_traits.s + fmha_v3_traits.ts_kv - 1) / fmha_v3_traits.ts_kv;
+        int gdy = fmha_v3_traits.h;
+        int gdz = fmha_v3_traits.b;
+        if(fmha_v3_traits.mask > 0)
+        {{
+            int num_tg = (fmha_v3_traits.s + fmha_v3_traits.ts_kv - 1) / fmha_v3_traits.ts_kv;
+            gdx        = (num_tg % 2) ? (num_tg / 2 + 1) : (num_tg / 2);
+        }}
         HIP_CALL(hipModuleLaunchKernel(kernel_func,
                                        gdx,
                                        gdy,
@@ -886,6 +1016,103 @@ float fmha_bwd_v3_swa_genl_(const ck_tile::stream_config& s, fmha_bwd_args a)
     );
 }}
 
+template <typename dot_do_o_trait_, typename dq_dk_dv_v3_traits_, typename convert_dq_trait_>
+float fmha_bwd_v3_genl_gfx950(const ck_tile::stream_config& s, fmha_bwd_args a)
+{{
+    if(s.log_level_ > 0)
+        std::cout << ", " << fmha_bwd_dot_do_o_get_name_<dot_do_o_trait_>() << ", " << FmhaBwdV3Name<dq_dk_dv_v3_traits_>::bwd_v3_name << ", " << fmha_bwd_convert_dq_get_name_<convert_dq_trait_>() << std::flush;
+    fmha_bwd_v3_args_gfx950 args;
+    # TODO: fill in all args
+    args.ptr_dq   = a.dq_acc_ptr;
+    args.ptr_dk   = a.dk_ptr;
+    args.ptr_dv   = a.dv_ptr;
+    args.ptr_q    = a.q_ptr;
+    args.ptr_k    = a.k_ptr;
+    args.ptr_v    = a.v_ptr;
+    args.ptr_do   = a.do_ptr;
+    args.ptr_lse  = a.lse_ptr;
+    args.ptr_d    = a.d_ptr;
+    args.scalar   = a.scale;
+    args.log2e    = ck_tile::log2e_v<float>;
+    args.ratio    = a.nhead_q / a.nhead_k;
+    args.seqlen_q = a.seqlen_q;
+    args.seqlen_k = a.seqlen_k;
+    args.head_dim = a.hdim_q;
+    args.nhead_q  = a.nhead_q;
+    args.Hs_q     = a.nhead_stride_q * 2;
+    args.BAs_q    = a.batch_stride_q * 2;
+    args.Seqs_q   = a.stride_q * 2;
+    args.Hs_k     = a.nhead_stride_k * 2;
+    args.BAs_k    = a.batch_stride_k * 2;
+    args.Seqs_k   = a.stride_k * 2;
+    args.Hs_v     = a.nhead_stride_v * 2;
+    args.BAs_v    = a.batch_stride_v * 2;
+    args.Seqs_v   = a.stride_v * 2;
+    args.Hs_do    = a.nhead_stride_do * 2;
+    args.BAs_do   = a.batch_stride_do * 2;
+    args.Seqs_do  = a.stride_do * 2;
+    args.Hs_dk    = a.nhead_stride_dk * 2;
+    args.BAs_dk   = a.batch_stride_dk * 2;
+    args.Seqs_dk  = a.stride_dk * 2;
+    args.Hs_dv    = a.nhead_stride_dv * 2;
+    args.BAs_dv   = a.batch_stride_dv * 2;
+    args.Seqs_dv  = a.stride_dv * 2;
+
+    args.ptr_dq         = a.dq_acc_ptr;
+    args.ptr_dk         = a.dk_ptr;
+    args.ptr_dv         = a.dv_ptr;
+    args.ptr_q          = a.q_ptr;
+    args.ptr_k          = a.k_ptr;
+    args.ptr_v          = a.v_ptr;
+    args.ptr_do         = a.do_ptr;
+    args.ptr_lse        = a.lse_ptr;
+    args.ptr_d          = a.d_ptr;
+    args.scalar         = a.scale;
+    args.log2e          = ck_tile::log2e_v<float>;;
+    args.ratio          = a.nhead_q / a.nhead_k;
+    args.seq_len_q      = a.seqlen_q;
+    args.seq_len_k      = a.seqlen_k;
+    args.head_dim_q     = a.hdim_q;
+    args.nhead_q        = a.nhead_q;
+    args.Ts             = FmhaBwdV3Ts<dq_dk_dv_v3_traits_>::ts_kv * a.stride_k * 2;
+    args.Hs_q           = a.nhead_stride_q * 2;
+    args.BAs_q          = a.batch_stride_q * 2;
+    args.Seqs_q         = a.stride_q * 2;
+    args.Hs_k           = a.nhead_stride_k * 2;
+    args.BAs_k          = a.batch_stride_k * 2;
+    args.Seqs_k         = a.stride_k * 2;
+    args.Hs_v           = a.nhead_stride_v * 2;
+    args.BAs_v          = a.batch_stride_v * 2;
+    args.Seqs_v         = a.stride_v * 2;
+    args.Hs_do          = a.nhead_stride_do * 2;
+    args.BAs_do         = a.batch_stride_do * 2;
+    args.Seqs_do        = a.stride_do * 2;
+    args.Hs_dk          = a.nhead_stride_dk * 2;
+    args.BAs_dk         = a.batch_stride_dk * 2;
+    args.Seqs_dk        = a.stride_dk * 2;
+    args.Hs_dv          = a.nhead_stride_dv * 2;
+    args.BAs_dv         = a.batch_stride_dv * 2;
+    args.Seqs_dv        = a.stride_dv * 2;
+    args.Hs_dq          = a.nhead_stride_dq * 2;
+    args.BAs_dq         = a.batch_stride_dq * 2;
+    args.Seqs_dq        = a.stride_dq * 2;
+
+    auto traits = fmha_bwd_v3_traits{{a.batch,
+                                      a.nhead_q,
+                                      a.seqlen_k,
+                                      a.hdim_q,
+                                      a.mask_type,
+                                      FmhaBwdV3Ts<dq_dk_dv_v3_traits_>::ts_qo,
+                                      FmhaBwdV3Ts<dq_dk_dv_v3_traits_>::ts_kv}};
+
+    static thread_local fmha_bwd_v3_kernel impl(FmhaBwdV3Name<dq_dk_dv_v3_traits_>::bwd_v3_name, FmhaBwdV3Buf<dq_dk_dv_v3_traits_>::bwd_v3_buf); // static here is for thread safety.
+    return ck_tile::launch_kernel(s,
+        [=](const ck_tile::stream_config& s_){{ fmha_bwd_dot_do_o_oneshot_<dot_do_o_trait_>(s_, a); }},
+        [=](const ck_tile::stream_config& s_){{ impl.launch_kernel(traits, args, s_); }},
+        [=](const ck_tile::stream_config& s_){{ fmha_bwd_convert_dq_oneshot_<convert_dq_trait_>(s_, a); }}
+    );
+}}
+
 float fmha_bwd_v3(mha_bwd_traits t, fmha_bwd_args a, const ck_tile::stream_config& s){{
     float r = -1;
 
@@ -1055,16 +1282,16 @@ float fmha_bwd_v3(mha_bwd_traits t, fmha_bwd_args a, const ck_tile::stream_confi
                                 using dot_do_o_trait_ = fmha_bwd_dot_do_o_traits_<128, FmhaBwdFp16, false, false, false>;
                                 using dq_dk_dv_v3_traits_ = fmha_bwd_dq_dk_dv_v3_traits_<128, FmhaBwdFp16, false, true, 0, true, true, GPUArch::gfx950>;
                                 using convert_dq_trait_ = fmha_bwd_convert_dq_traits_<128, FmhaBwdFp16, false, false, false, false>;
-                                // const std::string bwd_v3_name = "bwd_v3_hd128_fp16_a32_psskddv";
-                                r = fmha_bwd_v3_genl_<dot_do_o_trait_, dq_dk_dv_v3_traits_, convert_dq_trait_>(s, a);
+                                // const std::string bwd_v3_name = "bwd_hd128_fp16_a32_psskddv";
+                                r = fmha_bwd_v3_genl_gfx950<dot_do_o_trait_, dq_dk_dv_v3_traits_, convert_dq_trait_>(s, a);
                                 return r;
                             }}
                             else if((a.seqlen_q % 64 != 0) && (a.hdim_q == 128)){{
                                 using dot_do_o_trait_ = fmha_bwd_dot_do_o_traits_<128, FmhaBwdFp16, false, true, false>;
                                 using dq_dk_dv_v3_traits_ = fmha_bwd_dq_dk_dv_v3_traits_<128, FmhaBwdFp16, false, true, 0, true, true, GPUArch::gfx950>;
                                 using convert_dq_trait_ = fmha_bwd_convert_dq_traits_<128, FmhaBwdFp16, false, true, false, false>;
-                                // const std::string bwd_v3_name = "bwd_v3_hd128_fp16_a32_psskddv";
-                                r = fmha_bwd_v3_genl_<dot_do_o_trait_, dq_dk_dv_v3_traits_, convert_dq_trait_>(s, a);
+                                // const std::string bwd_v3_name = "bwd_hd128_fp16_a32_psskddv";
+                                r = fmha_bwd_v3_genl_gfx950<dot_do_o_trait_, dq_dk_dv_v3_traits_, convert_dq_trait_>(s, a);
                                 return r;
                             }}
                             else if((a.seqlen_q % 64 == 0) && (a.hdim_q != 128)){{
@@ -1189,6 +1416,7 @@ float fmha_bwd_v3(mha_bwd_traits t, fmha_bwd_args a, const ck_tile::stream_confi
                             }}
                         }}
                     }}
+                    // TODO: recompiled swa kernel has random Nan issue.
                     else if((t.is_group_mode == false) && ((t.mask_type == mask_enum::mask_top_left || t.mask_type == mask_enum::mask_bottom_right) && ((a.window_size_left > 0) || (a.window_size_right > 0))) || (t.mask_type == mask_enum::window_generic)){{
                         if((t.is_v3_atomic_fp32 == true) && (a.nhead_stride_dq_acc >= a.stride_dq_acc /*dq_acc only support BHSD*/)){{
                             if((a.seqlen_q % 64 == 0) && (a.hdim_q == 128)){{
