@@ -66,7 +66,6 @@ def run_benchmark(args):
     @triton.testing.perf_report([benchmark])
     def bench_moe_gemm(M, N, K, E, top_k, metric, a_dtype, swizzle_mx, model=None):
 
-                
         (
             a_tri,
             b_tri,
@@ -95,18 +94,17 @@ def run_benchmark(args):
             a_tri.numel() * a_tri.element_size() + b_tri.numel() * b_tri.element_size()
         )
         mem_write = c_tri.numel() * c_tri.element_size()
-        
+
         if silu_fused:
             mem = mem_read + (mem_write // 2)
             flops += M * top_k * N
         else:
             mem = mem_read + mem_write
-        
+
         mem = mem_read + mem_write
 
         fused_moe = fused_moe_mxfp4_silu if silu_fused else fused_moe_mxfp4
         output_tensor = c_tri_silu if silu_fused else c_tri
-
 
         fn = lambda: fused_moe(  # noqa: E731
             a_tri,
