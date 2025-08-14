@@ -10,6 +10,8 @@ from op_tests.triton_tests.test_moe_mx import input_helper
 from op_tests.op_benchmarks.triton.utils.benchmark_utils import (
     get_available_models,
     get_model_configs,
+    get_caller_name_no_ext,
+    print_vgpr,
 )
 
 
@@ -44,11 +46,12 @@ def run_benchmark(args):
     b_dtype_str = "mxfp4_e2m1"
     swizzle_mx = args.swizzle_mx
     silu_fused = args.silu_fused
+    print(f"MoE Benchmark {a_dtype_str} x {b_dtype_str}")
 
     x_vals_list = model_benchmark_configs(args)
     x_names = ["model", "M", "N", "K", "E", "top_k"]
 
-    line_names = ["Time (ms)", "TFLOPS", "Bandwidth (GB/s)"]
+    line_names = ["Time_(ms)", "TFLOPS", "Bandwidth_(GB/s)"]
     line_vals = ["time", "tflops", "bandwidth"]
 
     benchmark = triton.testing.Benchmark(
@@ -59,7 +62,7 @@ def run_benchmark(args):
         line_names=line_names,
         styles=[("red", "-"), ("blue", "-"), ("yellow", "-")],
         ylabel="ms / TFLOPS / GB/s",
-        plot_name=f"MoE Benchmark {a_dtype_str} x {b_dtype_str}",
+        plot_name=get_caller_name_no_ext(),
         args={"a_dtype": a_dtype_str, "swizzle_mx": swizzle_mx},
     )
 
@@ -167,6 +170,7 @@ def parse_args():
     parser.add_argument("--routed-weight", action="store_true")
     parser.add_argument("--swizzle-mx", action="store_true")
     parser.add_argument("-silu_fused", action="store_true", default=False)
+    parser.add_argument("-print_vgpr", action="store_true", default=False)
     parser.add_argument(
         "-A",
         "--a-dtype",
@@ -187,6 +191,11 @@ def main():
         sys.exit(0)
 
     args = parse_args()
+    if args.print_vgpr:
+        print("Retrieving VGPR usage for Triton kernels...")
+        fun = lambda: run_benchmark(args)  # noqa: E731
+        print_vgpr(fun, get_caller_name_no_ext())
+        return 0
     run_benchmark(args)
 
 
