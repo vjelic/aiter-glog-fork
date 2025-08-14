@@ -25,6 +25,7 @@ fmha_bwd_args get_ck_fmha_varlen_bwd_args(const mask_info &mask,
                                           const at::Tensor v,
                                           const at::Tensor seqlens_q,
                                           const at::Tensor seqlens_k,
+                                          const at::Tensor seqlens_dq_acc,
                                           std::optional<const at::Tensor> &alibi_slopes_,
                                           const at::Tensor out,
                                           const at::Tensor softmax_lse,
@@ -94,6 +95,10 @@ fmha_bwd_args get_ck_fmha_varlen_bwd_args(const mask_info &mask,
     ck_tile::index_t batch_stride_dq_acc = 0;
     ck_tile::index_t stride_dq_acc = dq_acc.stride(1);
     ck_tile::index_t nhead_stride_dq_acc = dq_acc.stride(2);
+    // dq_acc for atomic16: (split, batch_size, nheads, seqlen_q, hdim_q)
+    if (q.dtype() == dq_acc.dtype()) {
+        std::swap(stride_dq_acc, nhead_stride_dq_acc);
+    }
 
     float p_undrop = 1.0 - p_dropout;
 
@@ -127,6 +132,7 @@ fmha_bwd_args get_ck_fmha_varlen_bwd_args(const mask_info &mask,
                          seqlens_q.data_ptr(), // seqstart_q
                          seqlens_k.data_ptr(), // seqstart_k
                          nullptr, // seqlen_k_ptr
+                         seqlens_dq_acc.data_ptr()
                          total_q,
                          total_k,
                          b,
@@ -202,6 +208,7 @@ mha_varlen_bwd(const at::Tensor &dout,         // [total_q, hq, d_v]
                int window_size_left,
                int window_size_right,
                const bool deterministic,
+               const bool is_atomic_fp32,
                std::optional<at::Tensor> dq_,                 // [total_q, hq, d_q]
                std::optional<at::Tensor> dk_,                 // [total_k, hk, d_q]
                std::optional<at::Tensor> dv_,                 // [total_k, hk, d_v]
@@ -316,11 +323,45 @@ mha_varlen_bwd(const at::Tensor &dout,         // [total_q, hq, d_v]
     auto opts = q.options();
     auto softmax_d = torch::empty({batch_size, num_heads, max_seqlen_q}, opts.dtype(at::kFloat));
     at::Tensor dq_accum;
+    at::Tensor cu_seqlens_dq_acc;
 
-    if (!deterministic) {
-        dq_accum = torch::zeros({1, total_q, num_heads, head_size_v}, opts.dtype(at::kFloat));
-    } else {
-        const ck_tile::index_t kN0 = head_size_q <= 128 ? 128 : 64;
+    if(!deterministic)
+    {
+        if(is_atomic_fp32)
+        {
+            dq_accum = torch::zeros({1, total_q, num_heads, head_size_v}, opts.dtype(at::kFloat));
+        }
+        else
+        {
+            auto get_bit_ceil = []() {
+                unsigned un = static_cast<unsigned>(head_size_v);
+                un |= un >> 1;
+                un |= un >> 2;
+                un |= un >> 4;
+                un |= un >> 8;
+                un |= un >> 16;
+                un++;
+                return static_cast<int>(un);
+            };
+            const ck_tile::index_t head_size_v_pad = ck_tile::max(get_bit_ceil(), 32);
+            // seqlen_dq_acc needs to align to kernel tile size
+            constexpr ck_tile::index_t seqlen_dq_acc_tile_size = 16;
+            cu_seqlens_dq_acc                                  = torch::zeros_like(cu_seqlens_q);
+            for(int batch_id = 0; batch_id < batch_size; ++batch_id)
+            {
+                auto cur_seqlen_q = cu_seqlens_q[batch_id + 1] - cu_seqlens_q[batch_id];
+                auto cur_seqlen_dq_acc =
+                    ck_tile::integer_least_multiple(cur_seqlen_q, seqlen_dq_acc_tile_size);
+                cu_seqlens_dq_acc[batch_id + 1] = cu_seqlens_dq_acc[batch_id] + cur_seqlen_dq_acc;
+            }
+            auto total_dq_acc = cu_seqlens_dq_acc[batch_size];
+            dq_accum =
+                torch::zeros({1, batch_size, num_heads, total_dq_acc, head_size_v_pad}, opts);
+        }
+    }
+    else
+    {
+        const ck_tile::index_t kN0     = head_size_q <= 128 ? 128 : 64;
         const ck_tile::index_t nsplits = ck_tile::integer_divide_ceil(max_seqlen_k, kN0);
         dq_accum = torch::zeros({nsplits, total_q, num_heads, head_size_v}, opts.dtype(at::kFloat));
     }
@@ -383,6 +424,7 @@ mha_varlen_bwd(const at::Tensor &dout,         // [total_q, hq, d_v]
                 v,
                 cu_seqlens_q,
                 cu_seqlens_k,
+                cu_seqlens_dq_acc
                 alibi_slopes_,
                 out,
                 softmax_lse,
@@ -406,7 +448,7 @@ mha_varlen_bwd(const at::Tensor &dout,         // [total_q, hq, d_v]
                                  false,  // is_store_randval
                                  deterministic,
                                  false,  // use_ext_asm
-                                 false,  // is_v3_atomic_fp32
+                                 is_atomic_fp32,  // is_atomic_fp32
                                  0);     // how_v3_bf16_cvt
         TORCH_CHECK(t >= 0, "invalid argument for fmha_bwd");
     } else {

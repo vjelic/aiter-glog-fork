@@ -20,7 +20,7 @@ struct mha_bwd_traits : public fmha_bwd_traits
                    bool is_store_randval,
                    bool deterministic,
                    bool use_ext_asm,
-                   bool is_v3_atomic_fp32,
+                   bool is_atomic_fp32,
                    int how_v3_bf16_cvt)
         : fmha_bwd_traits{head_size_q,
                           head_size_v,
@@ -31,9 +31,10 @@ struct mha_bwd_traits : public fmha_bwd_traits
                           has_dbias,
                           has_dropout,
                           is_store_randval,
-                          deterministic},
+                          deterministic,
+                          is_atomic_fp32},
           use_ext_asm(use_ext_asm),
-          is_v3_atomic_fp32(is_v3_atomic_fp32),
+          is_v3_atomic_fp32(is_atomic_fp32),
           how_v3_bf16_cvt(how_v3_bf16_cvt)
     {
     }
@@ -55,7 +56,7 @@ float mha_bwd(mha_bwd_args args,
               bool is_store_randval,
               bool deterministic,
               bool use_ext_asm,
-              bool is_v3_atomic_fp32,
+              bool is_atomic_fp32,
               int how_v3_bf16_cvt);
 
 float fmha_bwd_v3(mha_bwd_traits t, mha_bwd_args a, const ck_tile::stream_config& s);
