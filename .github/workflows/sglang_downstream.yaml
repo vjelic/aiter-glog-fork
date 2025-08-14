@@ -11,6 +11,8 @@ jobs:
     name: sglang integration
     runs-on: mi300x-1gpu
     env:
+      SGL_BRANCH: v0.4.10
+      GPU_ARCH: gfx942
       HF_TOKEN: ${{ secrets.HF_TOKEN_TEST }}
 
     steps:
@@ -31,10 +33,10 @@ jobs:
           cd sglang
           sed -i 's/ENV AITER_COMMIT="v0.1.4"/ARG AITER_COMMIT="v0.1.4"/g' docker/Dockerfile.rocm
           docker build --no-cache \
-          --build-arg SGL_BRANCH=v0.4.10 \
-          --build-arg GPU_ARCH=gfx942 \
+          --build-arg SGL_BRANCH=${SGL_BRANCH} \
+          --build-arg GPU_ARCH=${GPU_ARCH} \
           --build-arg AITER_REPO=${GITHUB_REPO_URL} \
-          --build-arg AITER_COMMIT="${GITHUB_COMMIT_SHA}" \
+          --build-arg AITER_COMMIT=${GITHUB_COMMIT_SHA} \
           -t sglang_aiter_test -f docker/Dockerfile.rocm .
         env:
           GITHUB_REPO_URL: ${{ github.event.pull_request.head.repo.clone_url || 'https://github.com/ROCm/aiter.git' }}
@@ -63,6 +65,8 @@ jobs:
         run: |
           cd sglang
           sed -i 's/ci_sglang/sglang_aiter_test/g' scripts/ci/amd_ci_exec.sh
+          bash scripts/ci/amd_ci_exec.sh echo $AITER_COMMIT
+          bash scripts/ci/amd_ci_exec.sh pip show aiter
           bash scripts/ci/amd_ci_exec.sh -e SGLANG_USE_AITER=0 python3 test_eval_accuracy_large.py
           bash scripts/ci/amd_ci_exec.sh python3 test_eval_fp8_accuracy.py
           bash scripts/ci/amd_ci_exec.sh python3 models/test_qwen_models.py
