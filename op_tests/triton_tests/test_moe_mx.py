@@ -403,6 +403,8 @@ def test_fused_moe(
     )
     if silu_fused:
         c_ref = torch_silu_and_mul_ref(c_ref.view(-1, N))
-        torch.testing.assert_close(c_silu_tri.to(fp16_dtype), c_ref.to(fp16_dtype), atol=1e-1, rtol=1e-1)
+        torch.testing.assert_close(
+            c_silu_tri.to(fp16_dtype), c_ref.to(fp16_dtype), atol=1e-1, rtol=1e-1
+        )
     else:
         torch.testing.assert_close(c_tri.to(fp16_dtype), c_ref.to(fp16_dtype))
