@@ -1,0 +1,375 @@
+{
+  "version": "2.1.0",
+  "runs": [
+    {
+      "tool": {
+        "driver": {
+          "name": "Glog.AI",
+          "organization": "Glog.AI",
+          "fullName": "Glog, Making software more secure",
+          "version": "1.0.0",
+          "semanticVersion": "1.0.0",
+          "informationUri": "https://www.glog.ai",
+          "rules": [
+            {
+              "id": "glog-4408da44-39c6-41f9-a034-ec6aa516a142",
+              "help": {
+                "text": "",
+                "markdown": "## Description\n\n\"Shell Process Initiation: Potential Injection Vulnerability Detected\" is a security vulnerability that can occur in Python programming language when the `os.system()` function is used. This function executes a shell command from a Python script. If the command string includes unsanitized user input, it can lead to shell injection, where an attacker can execute arbitrary commands on the host system.\n\n## Mitigation Advice\n\nTo mitigate this vulnerability, avoid using `os.system()` to execute shell commands, especially when the command string includes user input. Instead, use functions from the `subprocess` module, which can take a list of arguments and do not involve a shell interpreter.\n\n## Source Code Fix Recommendation\n\nInstead of:\n\n```python\nimport os\nos.system(\"echo \" + user_input)\n```\n\nUse:\n\n```python\nimport subprocess\nsubprocess.run([\"echo\", user_input])\n```\n\n## Library Dependencies\n\nThe code example requires the `subprocess` module, which is included in the Python Standard Library.\n\n## References\n\n- [OWASP Python Security - Command Injection](https://cheatsheetseries.owasp.org/cheatsheets/OS_Command_Injection_Defense_Cheat_Sheet.html)\n- [CWE-78: Improper Neutralization of Special Elements used in an OS Command ('OS Command Injection')](https://cwe.mitre.org/data/definitions/78.html)"
+              },
+              "properties": {
+                "tags": [
+                  "B605"
+                ]
+              }
+            },
+            {
+              "id": "glog-b08f53d5-6326-4746-9ca6-acae3a444530",
+              "help": {
+                "text": "",
+                "markdown": "## Description\n\nThe vulnerability \"Shell Process Initiation: Potential Injection Vulnerability Detected\" in Python refers to the potential for an attacker to inject malicious code into the system command being executed by the Python script. In the provided code snippet, the `os.system()` function is used to execute a shell command with user-provided input. If an attacker can control the value of `md_name`, they could potentially execute arbitrary commands on the system.\n\n## Mitigation Advice\n\nTo mitigate this vulnerability, avoid using `os.system()` or similar functions that execute shell commands with user-provided input. If it's necessary to execute shell commands, use safer alternatives like `subprocess.run()` with the `shell=False` option, which doesn't invoke a shell and avoids shell injection vulnerabilities.\n\n## Source Code Fix Recommendation\n\nHere's a safer version of the code using `subprocess.run()`:\n\n```python\nimport subprocess\nimport shlex\n\n# Ensure md_name is safe to use in a shell command\nmd_name = shlex.quote(md_name)\n\n# Use subprocess.run() instead of os.system()\nsubprocess.run([\"rm\", \"-rf\", f\"{get_user_jit_dir()}/{md_name}.so\"], shell=False)\n```\n\n## Library Dependencies\n\nThe code example requires the following Python standard library modules:\n\n- `os`\n- `subprocess`\n- `shlex`\n\n## References\n\n- [OWASP: Command Injection](https://owasp.org/www-community/attacks/Command_Injection)\n- [CWE-78: Improper Neutralization of Special Elements used in an OS Command ('OS Command Injection')](https://cwe.mitre.org/data/definitions/78.html)"
+              },
+              "properties": {
+                "tags": [
+                  "B605"
+                ]
+              }
+            },
+            {
+              "id": "glog-b2e4709f-e2de-4ad3-876a-febabf028810",
+              "help": {
+                "text": "",
+                "markdown": "## Description\n\nThe \"Shell Process Initiation: Potential Injection Vulnerability Detected\" vulnerability in Python refers to the potential for an attacker to inject malicious code into a shell command that is being executed by the Python program. This is typically done by manipulating user input that is directly used in the shell command without proper sanitization or validation.\n\nIn the provided code example, the `os.system()` function is used to execute a shell command that deletes a directory. The directory name (`CK_DIR`) is inserted into the command using Python's f-string formatting, which can potentially allow an attacker to inject additional shell commands.\n\n## Mitigation Advice\n\nTo mitigate this vulnerability, it is recommended to avoid using shell commands whenever possible, especially when the command includes user input. If shell commands must be used, ensure that user input is properly sanitized and validated to prevent command injection.\n\nIn Python, the `subprocess` module provides a more secure way to manage subprocesses and can replace the use of `os.system()`. The `subprocess.run()` function, for example, takes a list of arguments and runs a command. By passing the command and its arguments as a list, you can prevent shell injection attacks because the command is not run in a shell environment and each argument is handled separately.\n\n## Source Code Fix Recommendation\n\nReplace the `os.system()` function with `subprocess.run()`. Here's how you can do it:\n\n```python\nimport subprocess\n\nsubprocess.run([\"rm\", \"-rf\", CK_DIR], check=True)\n```\n\n## Library Dependencies\n\nThe code example requires the following Python standard library:\n\n- `subprocess`\n\n## References\n\n- [OWASP Command Injection](https://owasp.org/www-community/attacks/Command_Injection)\n- [CWE-78: Improper Neutralization of Special Elements used in an OS Command ('OS Command Injection')](https://cwe.mitre.org/data/definitions/78.html)"
+              },
+              "properties": {
+                "tags": [
+                  "B605"
+                ]
+              }
+            },
+            {
+              "id": "glog-6e4fbfbf-a7a7-4a86-ac71-89e976b9860a",
+              "help": {
+                "text": "",
+                "markdown": "## Description\n\nThe vulnerability \"Shell Process Initiation: Potential Injection Vulnerability Detected\" in Python refers to the potential for an attacker to inject malicious code or commands into the shell process. This is due to the use of the `os.system()` function, which executes a command in a subshell. If the command string includes unsanitized user input, it can lead to command injection attacks.\n\nIn the provided code snippet, the `os.system()` function is used to execute a command that includes the `flag_hip` variable. If this variable is not properly sanitized and controlled, it could lead to a potential command injection vulnerability.\n\n## Mitigation Advice\n\nTo mitigate this vulnerability, avoid using `os.system()` whenever possible. Instead, use safer alternatives like `subprocess.run()` or `subprocess.Popen()`, which do not use a shell and are not susceptible to shell injection attacks.\n\nIf you must use `os.system()`, ensure that all variables included in the command string are properly sanitized and controlled. This can be done by validating, sanitizing, or escaping user input, or by using parameterized commands.\n\n## Source Code Fix Recommendation\n\nHere is a recommended fix for the provided code snippet using `subprocess.run()`:\n\n```python\nimport subprocess\n\nsubprocess.run(['hipcc', flag_hip, '-x', 'hip', '-c', '/dev/null', '-o', '/dev/null'], check=True)\n```\n\n## Library Dependencies\n\nThe code example requires the following Python library:\n\n- `os` or `subprocess` (after the recommended fix)\n\n## References\n\n- [OWASP Command Injection](https://owasp.org/www-community/attacks/Command_Injection)\n- [CWE-78: Improper Neutralization of Special Elements used in an OS Command ('OS Command Injection')](https://cwe.mitre.org/data/definitions/78.html)"
+              },
+              "properties": {
+                "tags": [
+                  "B605"
+                ]
+              }
+            },
+            {
+              "id": "glog-bc499a43-faa8-411e-8c2e-9617413eb562",
+              "help": {
+                "text": "",
+                "markdown": "## Description\n\nThe \"Potential Insecure Function Use - Consider Safer ast.literal_eval\" vulnerability in Python refers to the potential security risks associated with the use of the `eval()` function. The `eval()` function takes a string and evaluates it as a Python expression. This can be dangerous if the string being evaluated is derived from user input or other untrusted sources, as it can lead to arbitrary code execution.\n\n## Mitigation Advice\n\nTo mitigate this vulnerability, consider using `ast.literal_eval()` instead of `eval()`. The `ast.literal_eval()` function safely parses and evaluates an expression node or a string containing a Python literal or container display. It is safer than `eval()` because it only evaluates Python literals and does not evaluate complex expressions or function calls that could lead to arbitrary code execution.\n\n## Source Code Fix Recommendation\n\nReplace the use of `eval()` with `ast.literal_eval()`:\n\n```python\nimport ast\n\nd_ops[k] = ast.literal_eval(val)\n```\n\n## Library Dependencies\n\nThe code example requires the `ast` library, which is a built-in Python library and does not need to be installed separately.\n\n## References\n\n- [CWE-94: Improper Control of Generation of Code ('Code Injection')](https://cwe.mitre.org/data/definitions/94.html)\n\nPlease note that the links provided are active and accessible to anonymous users at the time of writing this report."
+              },
+              "properties": {
+                "tags": [
+                  "B307"
+                ]
+              }
+            },
+            {
+              "id": "glog-2d511095-19a1-48e2-84e6-594784910d72",
+              "help": {
+                "text": "",
+                "markdown": "## Description\n\n\"Shell Process Initiation: Potential Injection Vulnerability Detected\" is a security vulnerability that occurs when an application provides an attacker the ability to control the argument to certain system calls or shell commands. In Python, this vulnerability can occur when using functions such as `os.system()`, `os.popen()`, `subprocess.Popen()`, `subprocess.run()`, etc. \n\nIn the provided code snippet, the vulnerability arises from the use of `os.system()` function with a formatted string that includes variables (`bd_dir` and `md_name`). If an attacker can control the value of these variables, they can inject arbitrary commands that will be executed by the system shell.\n\n## Mitigation Advice\n\nTo mitigate this vulnerability, avoid using `os.system()` or similar functions that pass their arguments to the shell. Instead, use functions that take a list of arguments and execute the command directly, such as `subprocess.run()`, `subprocess.Popen()`, etc. These functions do not use the shell, so they are not vulnerable to shell injection attacks.\n\n## Source Code Fix Recommendation\n\nReplace the `os.system()` call with a `subprocess.run()` call, and pass the command and its arguments as a list:\n\n```python\nimport subprocess\n\nsubprocess.run([\"rm\", \"-rf\", f\"{bd_dir}/{md_name}\"], check=True)\n```\n\n## Library Dependencies\n\nThe code example requires the `subprocess` module from the Python Standard Library.\n\n## References\n\n- [OWASP Command Injection](https://owasp.org/www-community/attacks/Command_Injection)\n- [CWE-78: Improper Neutralization of Special Elements used in an OS Command ('OS Command Injection')](https://cwe.mitre.org/data/definitions/78.html)"
+              },
+              "properties": {
+                "tags": [
+                  "B605"
+                ]
+              }
+            },
+            {
+              "id": "glog-4ea53c79-c214-4b4c-b777-b512686ff6ba",
+              "help": {
+                "text": "",
+                "markdown": "## Description\n\n\"Shell Process Initiation: Potential Injection Vulnerability Detected\" is a security vulnerability that occurs when an application provides an attacker the ability to control the argument to certain Python functions that execute shell commands. This can allow an attacker to execute arbitrary commands in the system shell with the privileges of the vulnerable application.\n\nIn the provided code snippet, the `os.system()` function is used to execute a shell command that is constructed using a formatted string. If an attacker can control the value of `blob_dir`, they could potentially inject additional shell commands.\n\n## Mitigation Advice\n\nTo mitigate this vulnerability, avoid using `os.system()` or other similar functions that execute shell commands. If it is necessary to execute a shell command, use functions that allow you to provide the command and its arguments as separate strings, such as `subprocess.run()`. This will prevent shell injection attacks because the command and each argument are passed to the system shell as separate arguments, and none of them are interpreted as shell commands.\n\n## Source Code Fix Recommendation\n\nReplace the `os.system()` function with `subprocess.run()`. Here is how you can modify the provided code snippet:\n\n```python\nimport subprocess\n\nsubprocess.run([PY, blob_gen_cmd.format(blob_dir)], check=True)\n```\n\n## Library Dependencies\n\nThe code example requires the following Python standard library:\n\n- `subprocess`\n\n## References\n\n- [CWE-78: Improper Neutralization of Special Elements used in an OS Command ('OS Command Injection')](https://cwe.mitre.org/data/definitions/78.html)"
+              },
+              "properties": {
+                "tags": [
+                  "B605"
+                ]
+              }
+            }
+          ],
+          "language": "en-US",
+          "contents": [
+            "localizedData",
+            "nonLocalizedData"
+          ],
+          "isComprehensive": false
+        }
+      },
+      "language": "en-US",
+      "results": [
+        {
+          "ruleId": "glog-4408da44-39c6-41f9-a034-ec6aa516a142",
+          "kind": "fail",
+          "level": "error",
+          "message": {
+            "text": "\"Shell Process Initiation: Potential Injection Vulnerability Detected\""
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "aiter/fused_moe.py"
+                },
+                "region": {
+                  "startLine": 423,
+                  "startColumn": 9,
+                  "endLine": 424,
+                  "endColumn": 10,
+                  "snippet": {
+                    "text": "        os.system(\n"
+                  }
+                },
+                "contextRegion": {
+                  "startLine": 422,
+                  "endLine": 426,
+                  "snippet": {
+                    "text": "        logger.info(\"\\033[34m Start tuning fmoe\")\n        os.system(\n            f\"{PY} {get_asm_dir()}/fmoe_2stages/tune.py -i {untune_file} -o {tune_file} -o2 {profile_file} --last\"\n        )\n\n"
+                  }
+                }
+              }
+            }
+          ],
+          "properties": {
+            "issue_severity": "HIGH",
+            "issue_confidence": "HIGH"
+          }
+        },
+        {
+          "ruleId": "glog-b08f53d5-6326-4746-9ca6-acae3a444530",
+          "kind": "fail",
+          "level": "error",
+          "message": {
+            "text": "\"Shell Process Initiation: Potential Injection Vulnerability Detected\""
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "aiter/jit/core.py"
+                },
+                "region": {
+                  "startLine": 243,
+                  "startColumn": 5,
+                  "endLine": 243,
+                  "endColumn": 59,
+                  "snippet": {
+                    "text": "    os.system(f\"rm -rf {get_user_jit_dir()}/{md_name}.so\")\n"
+                  }
+                },
+                "contextRegion": {
+                  "startLine": 242,
+                  "endLine": 244,
+                  "snippet": {
+                    "text": "def rm_module(md_name):\n    os.system(f\"rm -rf {get_user_jit_dir()}/{md_name}.so\")\n\n"
+                  }
+                }
+              }
+            }
+          ],
+          "properties": {
+            "issue_severity": "HIGH",
+            "issue_confidence": "HIGH"
+          }
+        },
+        {
+          "ruleId": "glog-b2e4709f-e2de-4ad3-876a-febabf028810",
+          "kind": "fail",
+          "level": "error",
+          "message": {
+            "text": "\"Shell Process Initiation: Potential Injection Vulnerability Detected\""
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "aiter/jit/core.py"
+                },
+                "region": {
+                  "startLine": 249,
+                  "startColumn": 9,
+                  "endLine": 249,
+                  "endColumn": 38,
+                  "snippet": {
+                    "text": "        os.system(f\"rm -rf {CK_DIR}\")\n"
+                  }
+                },
+                "contextRegion": {
+                  "startLine": 248,
+                  "endLine": 250,
+                  "snippet": {
+                    "text": "    if os.path.exists(CK_DIR):\n        os.system(f\"rm -rf {CK_DIR}\")\n    shutil.copytree(CK_3RDPARTY_DIR, CK_DIR, dirs_exist_ok=True)\n"
+                  }
+                }
+              }
+            }
+          ],
+          "properties": {
+            "issue_severity": "HIGH",
+            "issue_confidence": "HIGH"
+          }
+        },
+        {
+          "ruleId": "glog-6e4fbfbf-a7a7-4a86-ac71-89e976b9860a",
+          "kind": "fail",
+          "level": "error",
+          "message": {
+            "text": "\"Shell Process Initiation: Potential Injection Vulnerability Detected\""
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "aiter/jit/core.py"
+                },
+                "region": {
+                  "startLine": 155,
+                  "startColumn": 11,
+                  "endLine": 155,
+                  "endColumn": 74,
+                  "snippet": {
+                    "text": "    ret = os.system(f\"hipcc {flag_hip} -x hip -c /dev/null -o /dev/null\")\n"
+                  }
+                },
+                "contextRegion": {
+                  "startLine": 154,
+                  "endLine": 156,
+                  "snippet": {
+                    "text": "def hip_flag_checker(flag_hip: str):\n    ret = os.system(f\"hipcc {flag_hip} -x hip -c /dev/null -o /dev/null\")\n    if ret == 0:\n"
+                  }
+                }
+              }
+            }
+          ],
+          "properties": {
+            "issue_severity": "HIGH",
+            "issue_confidence": "HIGH"
+          }
+        },
+        {
+          "ruleId": "glog-bc499a43-faa8-411e-8c2e-9617413eb562",
+          "kind": "fail",
+          "level": "warning",
+          "message": {
+            "text": "Potential Insecure Function Use - Consider Safer ast.literal_eval."
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "aiter/jit/core.py"
+                },
+                "region": {
+                  "startLine": 446,
+                  "startColumn": 28,
+                  "endLine": 446,
+                  "endColumn": 37,
+                  "snippet": {
+                    "text": "                d_ops[k] = eval(val)\n"
+                  }
+                },
+                "contextRegion": {
+                  "startLine": 445,
+                  "endLine": 447,
+                  "snippet": {
+                    "text": "            elif isinstance(val, str):\n                d_ops[k] = eval(val)\n            else:\n"
+                  }
+                }
+              }
+            }
+          ],
+          "properties": {
+            "issue_severity": "MEDIUM",
+            "issue_confidence": "HIGH"
+          }
+        },
+        {
+          "ruleId": "glog-2d511095-19a1-48e2-84e6-594784910d72",
+          "kind": "fail",
+          "level": "error",
+          "message": {
+            "text": "\"Shell Process Initiation: Potential Injection Vulnerability Detected\""
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "aiter/jit/core.py"
+                },
+                "region": {
+                  "startLine": 255,
+                  "startColumn": 5,
+                  "endLine": 255,
+                  "endColumn": 44,
+                  "snippet": {
+                    "text": "    os.system(f\"rm -rf {bd_dir}/{md_name}\")\n"
+                  }
+                },
+                "contextRegion": {
+                  "startLine": 254,
+                  "endLine": 256,
+                  "snippet": {
+                    "text": "def clear_build(md_name):\n    os.system(f\"rm -rf {bd_dir}/{md_name}\")\n\n"
+                  }
+                }
+              }
+            }
+          ],
+          "properties": {
+            "issue_severity": "HIGH",
+            "issue_confidence": "HIGH"
+          }
+        },
+        {
+          "ruleId": "glog-4ea53c79-c214-4b4c-b777-b512686ff6ba",
+          "kind": "fail",
+          "level": "error",
+          "message": {
+            "text": "\"Shell Process Initiation: Potential Injection Vulnerability Detected\""
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "aiter/jit/core.py"
+                },
+                "region": {
+                  "startLine": 346,
+                  "startColumn": 17,
+                  "endLine": 346,
+                  "endColumn": 67,
+                  "snippet": {
+                    "text": "                os.system(f\"{PY} {blob_gen_cmd.format(blob_dir)}\")\n"
+                  }
+                },
+                "contextRegion": {
+                  "startLine": 345,
+                  "endLine": 347,
+                  "snippet": {
+                    "text": "                    logger.info(f\"exec_blob ---> {PY} {blob_gen_cmd.format(blob_dir)}\")\n                os.system(f\"{PY} {blob_gen_cmd.format(blob_dir)}\")\n                sources += rename_cpp_to_cu([blob_dir], src_dir, recurisve=True)\n"
+                  }
+                }
+              }
+            }
+          ],
+          "properties": {
+            "issue_severity": "HIGH",
+            "issue_confidence": "HIGH"
+          }
+        }
+      ],
+      "newlineSequences": [
+        "\r\n",
+        "\n"
+      ]
+    }
+  ]
+}
