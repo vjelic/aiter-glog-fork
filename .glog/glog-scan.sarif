@@ -12,7 +12,7 @@
           "informationUri": "https://www.glog.ai",
           "rules": [
             {
-              "id": "5d7f5253-d0ca-383f-9aef-57c08f8e1a6e",
+              "id": "a4952bd1-2225-3c01-878a-2740dffb3c54",
               "name": "resources.rules.insecure-compile-use",
               "shortDescription": {
                 "text": "Opengrep Finding: resources.rules.insecure-compile-use"
@@ -60,6 +60,30 @@
               }
             },
             {
+              "id": "5d7f5253-d0ca-383f-9aef-57c08f8e1a6e",
+              "name": "resources.rules.insecure-compile-use",
+              "shortDescription": {
+                "text": "Opengrep Finding: resources.rules.insecure-compile-use"
+              },
+              "fullDescription": {
+                "text": "The Python 'compile' function is not secure against maliciously constructed input"
+              },
+              "defaultConfiguration": {
+                "enabled": true,
+                "level": "warning"
+              },
+              "help": {
+                "text": "The Python 'compile' function is not secure against maliciously constructed input\n💎 Enable cross-file analysis and Pro rules for free at sg.run/pro",
+                "markdown": "The Python 'compile' function is not secure against maliciously constructed input\n\n#### 💎 Enable cross-file analysis and Pro rules for free at <a href='https://sg.run/pro'>sg.run/pro</a>"
+              },
+              "properties": {
+                "precision": "very-high",
+                "tags": [
+                  "resources.rules.insecure-compile-use"
+                ]
+              }
+            },
+            {
               "id": "91bda62e-d048-38ae-8541-708640cbe6e8",
               "name": "resources.rules.insecure-compile-use",
               "shortDescription": {
@@ -84,80 +108,7 @@
               }
             },
             {
-              "id": "a4952bd1-2225-3c01-878a-2740dffb3c54",
-              "name": "resources.rules.insecure-compile-use",
-              "shortDescription": {
-                "text": "Opengrep Finding: resources.rules.insecure-compile-use"
-              },
-              "fullDescription": {
-                "text": "The Python 'compile' function is not secure against maliciously constructed input"
-              },
-              "defaultConfiguration": {
-                "enabled": true,
-                "level": "warning"
-              },
-              "help": {
-                "text": "The Python 'compile' function is not secure against maliciously constructed input\n💎 Enable cross-file analysis and Pro rules for free at sg.run/pro",
-                "markdown": "The Python 'compile' function is not secure against maliciously constructed input\n\n#### 💎 Enable cross-file analysis and Pro rules for free at <a href='https://sg.run/pro'>sg.run/pro</a>"
-              },
-              "properties": {
-                "precision": "very-high",
-                "tags": [
-                  "resources.rules.insecure-compile-use"
-                ]
-              }
-            },
-            {
-              "id": "a598ee1e-a520-3ade-801a-644261f0453d",
-              "name": "resources.rules.dangerous-system-call",
-              "shortDescription": {
-                "text": "Opengrep Finding: resources.rules.dangerous-system-call"
-              },
-              "fullDescription": {
-                "text": "Found dynamic content used in a system call. This is dangerous if external data can reach this function call because it allows a malicious actor to execute commands. Use the 'subprocess' module instead, which is easier to use without accidentally exposing a command injection vulnerability."
-              },
-              "defaultConfiguration": {
-                "enabled": true,
-                "level": "warning"
-              },
-              "help": {
-                "text": "Found dynamic content used in a system call. This is dangerous if external data can reach this function call because it allows a malicious actor to execute commands. Use the 'subprocess' module instead, which is easier to use without accidentally exposing a command injection vulnerability.\n💎 Enable cross-file analysis and Pro rules for free at sg.run/pro",
-                "markdown": "Found dynamic content used in a system call. This is dangerous if external data can reach this function call because it allows a malicious actor to execute commands. Use the 'subprocess' module instead, which is easier to use without accidentally exposing a command injection vulnerability.\n\n#### 💎 Enable cross-file analysis and Pro rules for free at <a href='https://sg.run/pro'>sg.run/pro</a>"
-              },
-              "properties": {
-                "precision": "very-high",
-                "tags": [
-                  "resources.rules.dangerous-system-call"
-                ]
-              }
-            },
-            {
               "id": "50cb0d87-f7be-33fc-995f-ff887fb81b78",
-              "name": "python.lang.security.audit.non-literal-import.non-literal-import",
-              "shortDescription": {
-                "text": "Opengrep Finding: python.lang.security.audit.non-literal-import.non-literal-import"
-              },
-              "fullDescription": {
-                "text": "Untrusted user input in `importlib.import_module()` function allows an attacker to load arbitrary code. Avoid dynamic values in `importlib.import_module()` or use a whitelist to prevent running untrusted code."
-              },
-              "defaultConfiguration": {
-                "enabled": true,
-                "level": "warning"
-              },
-              "helpUri": "https://semgrep.dev/r/python.lang.security.audit.non-literal-import.non-literal-import",
-              "help": {
-                "text": "Untrusted user input in `importlib.import_module()` function allows an attacker to load arbitrary code. Avoid dynamic values in `importlib.import_module()` or use a whitelist to prevent running untrusted code.\n💎 Enable cross-file analysis and Pro rules for free at sg.run/pro",
-                "markdown": "Untrusted user input in `importlib.import_module()` function allows an attacker to load arbitrary code. Avoid dynamic values in `importlib.import_module()` or use a whitelist to prevent running untrusted code.\n\n#### 💎 Enable cross-file analysis and Pro rules for free at <a href='https://sg.run/pro'>sg.run/pro</a>\n\n<b>References:</b>\n - [Semgrep Rule](https://semgrep.dev/r/python.lang.security.audit.non-literal-import.non-literal-import)\n - [https://owasp.org/Top10/A01_2021-Broken_Access_Control](https://owasp.org/Top10/A01_2021-Broken_Access_Control)\n"
-              },
-              "properties": {
-                "precision": "very-high",
-                "tags": [
-                  "python.lang.security.audit.non-literal-import.non-literal-import"
-                ]
-              }
-            },
-            {
-              "id": "6d8dbeb7-606e-3766-ae9b-8991e0ff86f1",
               "name": "python.lang.security.audit.non-literal-import.non-literal-import",
               "shortDescription": {
                 "text": "Opengrep Finding: python.lang.security.audit.non-literal-import.non-literal-import"
@@ -206,7 +157,7 @@
               }
             },
             {
-              "id": "9ced4e79-d155-3489-b847-5ffd4221d8b5",
+              "id": "a598ee1e-a520-3ade-801a-644261f0453d",
               "name": "resources.rules.dangerous-system-call",
               "shortDescription": {
                 "text": "Opengrep Finding: resources.rules.dangerous-system-call"
@@ -226,6 +177,30 @@
                 "precision": "very-high",
                 "tags": [
                   "resources.rules.dangerous-system-call"
+                ]
+              }
+            },
+            {
+              "id": "71ab11aa-18fc-3e43-b581-fe5f000e2403",
+              "name": "resources.rules.dlint-catastrophic-redos",
+              "shortDescription": {
+                "text": "Opengrep Finding: resources.rules.dlint-catastrophic-redos"
+              },
+              "fullDescription": {
+                "text": "Regex `$X` may be vulnerable to catastrophic backtracking, which may lead to denial of service attacks. (This rule only matches regex usage, not actual REDoS patterns. For full detection, use Semgrep Pro Engine.)"
+              },
+              "defaultConfiguration": {
+                "enabled": true,
+                "level": "error"
+              },
+              "help": {
+                "text": "Regex `$X` may be vulnerable to catastrophic backtracking, which may lead to denial of service attacks. (This rule only matches regex usage, not actual REDoS patterns. For full detection, use Semgrep Pro Engine.)\n💎 Enable cross-file analysis and Pro rules for free at sg.run/pro",
+                "markdown": "Regex `$X` may be vulnerable to catastrophic backtracking, which may lead to denial of service attacks. (This rule only matches regex usage, not actual REDoS patterns. For full detection, use Semgrep Pro Engine.)\n\n#### 💎 Enable cross-file analysis and Pro rules for free at <a href='https://sg.run/pro'>sg.run/pro</a>\n\n<b>References:</b>\n - [https://r2c.dev/blog/2020/finding-python-redos-bugs-at-scale-using-dlint-and-r2c/](https://r2c.dev/blog/2020/finding-python-redos-bugs-at-scale-using-dlint-and-r2c/)\n - [https://r2c.dev/blog/2020/improving-redos-detection-with-dlint-and-r2c/](https://r2c.dev/blog/2020/improving-redos-detection-with-dlint-and-r2c/)\n"
+              },
+              "properties": {
+                "precision": "very-high",
+                "tags": [
+                  "resources.rules.dlint-catastrophic-redos"
                 ]
               }
             },
@@ -278,26 +253,26 @@
               }
             },
             {
-              "id": "71ab11aa-18fc-3e43-b581-fe5f000e2403",
-              "name": "resources.rules.dlint-catastrophic-redos",
+              "id": "9ced4e79-d155-3489-b847-5ffd4221d8b5",
+              "name": "resources.rules.dangerous-system-call",
               "shortDescription": {
-                "text": "Opengrep Finding: resources.rules.dlint-catastrophic-redos"
+                "text": "Opengrep Finding: resources.rules.dangerous-system-call"
               },
               "fullDescription": {
-                "text": "Regex `$X` may be vulnerable to catastrophic backtracking, which may lead to denial of service attacks. (This rule only matches regex usage, not actual REDoS patterns. For full detection, use Semgrep Pro Engine.)"
+                "text": "Found dynamic content used in a system call. This is dangerous if external data can reach this function call because it allows a malicious actor to execute commands. Use the 'subprocess' module instead, which is easier to use without accidentally exposing a command injection vulnerability."
               },
               "defaultConfiguration": {
                 "enabled": true,
-                "level": "error"
+                "level": "warning"
               },
               "help": {
-                "text": "Regex `$X` may be vulnerable to catastrophic backtracking, which may lead to denial of service attacks. (This rule only matches regex usage, not actual REDoS patterns. For full detection, use Semgrep Pro Engine.)\n💎 Enable cross-file analysis and Pro rules for free at sg.run/pro",
-                "markdown": "Regex `$X` may be vulnerable to catastrophic backtracking, which may lead to denial of service attacks. (This rule only matches regex usage, not actual REDoS patterns. For full detection, use Semgrep Pro Engine.)\n\n#### 💎 Enable cross-file analysis and Pro rules for free at <a href='https://sg.run/pro'>sg.run/pro</a>\n\n<b>References:</b>\n - [https://r2c.dev/blog/2020/finding-python-redos-bugs-at-scale-using-dlint-and-r2c/](https://r2c.dev/blog/2020/finding-python-redos-bugs-at-scale-using-dlint-and-r2c/)\n - [https://r2c.dev/blog/2020/improving-redos-detection-with-dlint-and-r2c/](https://r2c.dev/blog/2020/improving-redos-detection-with-dlint-and-r2c/)\n"
+                "text": "Found dynamic content used in a system call. This is dangerous if external data can reach this function call because it allows a malicious actor to execute commands. Use the 'subprocess' module instead, which is easier to use without accidentally exposing a command injection vulnerability.\n💎 Enable cross-file analysis and Pro rules for free at sg.run/pro",
+                "markdown": "Found dynamic content used in a system call. This is dangerous if external data can reach this function call because it allows a malicious actor to execute commands. Use the 'subprocess' module instead, which is easier to use without accidentally exposing a command injection vulnerability.\n\n#### 💎 Enable cross-file analysis and Pro rules for free at <a href='https://sg.run/pro'>sg.run/pro</a>"
               },
               "properties": {
                 "precision": "very-high",
                 "tags": [
-                  "resources.rules.dlint-catastrophic-redos"
+                  "resources.rules.dangerous-system-call"
                 ]
               }
             },
@@ -425,7 +400,7 @@
               }
             },
             {
-              "id": "f82f134b-f7d5-342d-a37b-2f769fef3925",
+              "id": "d315cf55-861a-344b-a218-d95bb93f1671",
               "name": "resources.rules.dangerous-subprocess-use",
               "shortDescription": {
                 "text": "Opengrep Finding: resources.rules.dangerous-subprocess-use"
@@ -449,7 +424,7 @@
               }
             },
             {
-              "id": "d315cf55-861a-344b-a218-d95bb93f1671",
+              "id": "f82f134b-f7d5-342d-a37b-2f769fef3925",
               "name": "resources.rules.dangerous-subprocess-use",
               "shortDescription": {
                 "text": "Opengrep Finding: resources.rules.dangerous-subprocess-use"
@@ -497,7 +472,7 @@
               }
             },
             {
-              "id": "dda4f31b-16a9-3a84-949d-27707446748c",
+              "id": "99007d33-b086-3664-9954-aa4670d09971",
               "name": "resources.rules.dlint-catastrophic-redos",
               "shortDescription": {
                 "text": "Opengrep Finding: resources.rules.dlint-catastrophic-redos"
@@ -521,7 +496,7 @@
               }
             },
             {
-              "id": "99007d33-b086-3664-9954-aa4670d09971",
+              "id": "dda4f31b-16a9-3a84-949d-27707446748c",
               "name": "resources.rules.dlint-catastrophic-redos",
               "shortDescription": {
                 "text": "Opengrep Finding: resources.rules.dlint-catastrophic-redos"
@@ -593,7 +568,7 @@
               }
             },
             {
-              "id": "6c841ee4-bb75-36ad-a50b-973de1f5cffd",
+              "id": "fa1fb2ed-7722-344a-9980-5355b02bcab9",
               "name": "resources.rules.dlint-catastrophic-redos",
               "shortDescription": {
                 "text": "Opengrep Finding: resources.rules.dlint-catastrophic-redos"
@@ -641,7 +616,7 @@
               }
             },
             {
-              "id": "fa1fb2ed-7722-344a-9980-5355b02bcab9",
+              "id": "6c841ee4-bb75-36ad-a50b-973de1f5cffd",
               "name": "resources.rules.dlint-catastrophic-redos",
               "shortDescription": {
                 "text": "Opengrep Finding: resources.rules.dlint-catastrophic-redos"
@@ -809,7 +784,7 @@
               }
             },
             {
-              "id": "0da796da-2264-3ab1-a39c-0567148b86e8",
+              "id": "608a25d1-c095-3790-af2c-faec37b12a79",
               "name": "resources.rules.dangerous-subprocess-use",
               "shortDescription": {
                 "text": "Opengrep Finding: resources.rules.dangerous-subprocess-use"
@@ -833,7 +808,7 @@
               }
             },
             {
-              "id": "608a25d1-c095-3790-af2c-faec37b12a79",
+              "id": "0da796da-2264-3ab1-a39c-0567148b86e8",
               "name": "resources.rules.dangerous-subprocess-use",
               "shortDescription": {
                 "text": "Opengrep Finding: resources.rules.dangerous-subprocess-use"
@@ -1001,7 +976,7 @@
               }
             },
             {
-              "id": "a6ab73ab-94c1-355b-a5e3-20d659435406",
+              "id": "1b2e3179-f77c-3c61-b8f4-84860b27fd95",
               "name": "resources.rules.dlint-catastrophic-redos",
               "shortDescription": {
                 "text": "Opengrep Finding: resources.rules.dlint-catastrophic-redos"
@@ -1025,7 +1000,7 @@
               }
             },
             {
-              "id": "1b2e3179-f77c-3c61-b8f4-84860b27fd95",
+              "id": "a6ab73ab-94c1-355b-a5e3-20d659435406",
               "name": "resources.rules.dlint-catastrophic-redos",
               "shortDescription": {
                 "text": "Opengrep Finding: resources.rules.dlint-catastrophic-redos"
@@ -1770,30 +1745,6 @@
               }
             },
             {
-              "id": "03bd8f4a-6845-34d6-aeee-cad198866f24",
-              "name": "resources.rules.raptor-interesting-api-calls",
-              "shortDescription": {
-                "text": "Opengrep Finding: resources.rules.raptor-interesting-api-calls"
-              },
-              "fullDescription": {
-                "text": "Locate all calls to interesting and potentially insecure API functions (candidate points). The auditor can backtrace from these candidate points to find pathways allowing access from untrusted input."
-              },
-              "defaultConfiguration": {
-                "enabled": true,
-                "level": "warning"
-              },
-              "help": {
-                "text": "Locate all calls to interesting and potentially insecure API functions (candidate points). The auditor can backtrace from these candidate points to find pathways allowing access from untrusted input.\n💎 Enable cross-file analysis and Pro rules for free at sg.run/pro",
-                "markdown": "Locate all calls to interesting and potentially insecure API functions (candidate points). The auditor can backtrace from these candidate points to find pathways allowing access from untrusted input.\n\n#### 💎 Enable cross-file analysis and Pro rules for free at <a href='https://sg.run/pro'>sg.run/pro</a>\n\n<b>References:</b>\n - [https://github.com/0xdea/ghidra-scripts/blob/main/Rhabdomancer.java](https://github.com/0xdea/ghidra-scripts/blob/main/Rhabdomancer.java)\n - [https://github.com/x509cert/banned/blob/master/banned.h](https://github.com/x509cert/banned/blob/master/banned.h)\n - [https://g.co/kgs/PCHQjJ](https://g.co/kgs/PCHQjJ)\n - [https://www.sei.cmu.edu/downloads/sei-cert-c-coding-standard-2016-v01.pdf](https://www.sei.cmu.edu/downloads/sei-cert-c-coding-standard-2016-v01.pdf)\n - [https://learn.microsoft.com/en-us/windows-hardware/drivers/devtest/28719-banned-api-usage-use-updated-function-replacement](https://learn.microsoft.com/en-us/windows-hardware/drivers/devtest/28719-banned-api-usage-use-updated-function-replacement)\n"
-              },
-              "properties": {
-                "precision": "very-high",
-                "tags": [
-                  "resources.rules.raptor-interesting-api-calls"
-                ]
-              }
-            },
-            {
               "id": "18c31573-6871-335e-bc7f-92a9804e8e53",
               "name": "resources.rules.raptor-signed-unsigned-conversion",
               "shortDescription": {
@@ -1814,6 +1765,30 @@
                 "precision": "very-high",
                 "tags": [
                   "resources.rules.raptor-signed-unsigned-conversion"
+                ]
+              }
+            },
+            {
+              "id": "03bd8f4a-6845-34d6-aeee-cad198866f24",
+              "name": "resources.rules.raptor-interesting-api-calls",
+              "shortDescription": {
+                "text": "Opengrep Finding: resources.rules.raptor-interesting-api-calls"
+              },
+              "fullDescription": {
+                "text": "Locate all calls to interesting and potentially insecure API functions (candidate points). The auditor can backtrace from these candidate points to find pathways allowing access from untrusted input."
+              },
+              "defaultConfiguration": {
+                "enabled": true,
+                "level": "warning"
+              },
+              "help": {
+                "text": "Locate all calls to interesting and potentially insecure API functions (candidate points). The auditor can backtrace from these candidate points to find pathways allowing access from untrusted input.\n💎 Enable cross-file analysis and Pro rules for free at sg.run/pro",
+                "markdown": "Locate all calls to interesting and potentially insecure API functions (candidate points). The auditor can backtrace from these candidate points to find pathways allowing access from untrusted input.\n\n#### 💎 Enable cross-file analysis and Pro rules for free at <a href='https://sg.run/pro'>sg.run/pro</a>\n\n<b>References:</b>\n - [https://github.com/0xdea/ghidra-scripts/blob/main/Rhabdomancer.java](https://github.com/0xdea/ghidra-scripts/blob/main/Rhabdomancer.java)\n - [https://github.com/x509cert/banned/blob/master/banned.h](https://github.com/x509cert/banned/blob/master/banned.h)\n - [https://g.co/kgs/PCHQjJ](https://g.co/kgs/PCHQjJ)\n - [https://www.sei.cmu.edu/downloads/sei-cert-c-coding-standard-2016-v01.pdf](https://www.sei.cmu.edu/downloads/sei-cert-c-coding-standard-2016-v01.pdf)\n - [https://learn.microsoft.com/en-us/windows-hardware/drivers/devtest/28719-banned-api-usage-use-updated-function-replacement](https://learn.microsoft.com/en-us/windows-hardware/drivers/devtest/28719-banned-api-usage-use-updated-function-replacement)\n"
+              },
+              "properties": {
+                "precision": "very-high",
+                "tags": [
+                  "resources.rules.raptor-interesting-api-calls"
                 ]
               }
             },
@@ -1866,7 +1841,7 @@
               }
             },
             {
-              "id": "b12f7d16-4718-3daa-a710-1674700bed46",
+              "id": "d9ea5204-33b8-314b-bb63-8a8ba54450d2",
               "name": "resources.rules.raptor-interesting-api-calls",
               "shortDescription": {
                 "text": "Opengrep Finding: resources.rules.raptor-interesting-api-calls"
@@ -1890,7 +1865,7 @@
               }
             },
             {
-              "id": "d9ea5204-33b8-314b-bb63-8a8ba54450d2",
+              "id": "b12f7d16-4718-3daa-a710-1674700bed46",
               "name": "resources.rules.raptor-interesting-api-calls",
               "shortDescription": {
                 "text": "Opengrep Finding: resources.rules.raptor-interesting-api-calls"
@@ -3042,7 +3017,7 @@
               }
             },
             {
-              "id": "3009fd4a-9e18-3ae0-a3f0-ffc5fffd40cc",
+              "id": "e9280495-f31a-3502-8869-79e45c8c0148",
               "name": "resources.rules.insecure-subprocess-use",
               "shortDescription": {
                 "text": "Opengrep Finding: resources.rules.insecure-subprocess-use"
@@ -3066,7 +3041,7 @@
               }
             },
             {
-              "id": "e9280495-f31a-3502-8869-79e45c8c0148",
+              "id": "3009fd4a-9e18-3ae0-a3f0-ffc5fffd40cc",
               "name": "resources.rules.insecure-subprocess-use",
               "shortDescription": {
                 "text": "Opengrep Finding: resources.rules.insecure-subprocess-use"
@@ -3115,30 +3090,6 @@
               }
             },
             {
-              "id": "6a7fa310-6fcd-3a5d-9910-c8bedab729aa",
-              "name": "resources.rules.use-sys-exit",
-              "shortDescription": {
-                "text": "Opengrep Finding: resources.rules.use-sys-exit"
-              },
-              "fullDescription": {
-                "text": "Use `sys.exit` over the python shell `exit` built-in. `exit` is a helper for the interactive shell and may not be available on all Python implementations. https://stackoverflow.com/questions/6501121/difference-between-exit-and-sys-exit-in-python"
-              },
-              "defaultConfiguration": {
-                "enabled": true,
-                "level": "warning"
-              },
-              "help": {
-                "text": "Use `sys.exit` over the python shell `exit` built-in. `exit` is a helper for the interactive shell and may not be available on all Python implementations. https://stackoverflow.com/questions/6501121/difference-between-exit-and-sys-exit-in-python\n💎 Enable cross-file analysis and Pro rules for free at sg.run/pro",
-                "markdown": "Use `sys.exit` over the python shell `exit` built-in. `exit` is a helper for the interactive shell and may not be available on all Python implementations. https://stackoverflow.com/questions/6501121/difference-between-exit-and-sys-exit-in-python\n\n#### 💎 Enable cross-file analysis and Pro rules for free at <a href='https://sg.run/pro'>sg.run/pro</a>"
-              },
-              "properties": {
-                "precision": "very-high",
-                "tags": [
-                  "resources.rules.use-sys-exit"
-                ]
-              }
-            },
-            {
               "id": "fff74b80-4d4e-382c-bb5b-dd660500540f",
               "name": "resources.rules.insecure-hash-algorithm-md5",
               "shortDescription": {
@@ -3159,6 +3110,30 @@
                 "precision": "very-high",
                 "tags": [
                   "resources.rules.insecure-hash-algorithm-md5"
+                ]
+              }
+            },
+            {
+              "id": "6a7fa310-6fcd-3a5d-9910-c8bedab729aa",
+              "name": "resources.rules.use-sys-exit",
+              "shortDescription": {
+                "text": "Opengrep Finding: resources.rules.use-sys-exit"
+              },
+              "fullDescription": {
+                "text": "Use `sys.exit` over the python shell `exit` built-in. `exit` is a helper for the interactive shell and may not be available on all Python implementations. https://stackoverflow.com/questions/6501121/difference-between-exit-and-sys-exit-in-python"
+              },
+              "defaultConfiguration": {
+                "enabled": true,
+                "level": "warning"
+              },
+              "help": {
+                "text": "Use `sys.exit` over the python shell `exit` built-in. `exit` is a helper for the interactive shell and may not be available on all Python implementations. https://stackoverflow.com/questions/6501121/difference-between-exit-and-sys-exit-in-python\n💎 Enable cross-file analysis and Pro rules for free at sg.run/pro",
+                "markdown": "Use `sys.exit` over the python shell `exit` built-in. `exit` is a helper for the interactive shell and may not be available on all Python implementations. https://stackoverflow.com/questions/6501121/difference-between-exit-and-sys-exit-in-python\n\n#### 💎 Enable cross-file analysis and Pro rules for free at <a href='https://sg.run/pro'>sg.run/pro</a>"
+              },
+              "properties": {
+                "precision": "very-high",
+                "tags": [
+                  "resources.rules.use-sys-exit"
                 ]
               }
             },
@@ -3313,30 +3288,6 @@
               }
             },
             {
-              "id": "3901513a-b0ef-3be6-8b5c-7d5a48169c89",
-              "name": "resources.rules.dlint-catastrophic-redos",
-              "shortDescription": {
-                "text": "Opengrep Finding: resources.rules.dlint-catastrophic-redos"
-              },
-              "fullDescription": {
-                "text": "Regex `$X` may be vulnerable to catastrophic backtracking, which may lead to denial of service attacks. (This rule only matches regex usage, not actual REDoS patterns. For full detection, use Semgrep Pro Engine.)"
-              },
-              "defaultConfiguration": {
-                "enabled": true,
-                "level": "error"
-              },
-              "help": {
-                "text": "Regex `$X` may be vulnerable to catastrophic backtracking, which may lead to denial of service attacks. (This rule only matches regex usage, not actual REDoS patterns. For full detection, use Semgrep Pro Engine.)\n💎 Enable cross-file analysis and Pro rules for free at sg.run/pro",
-                "markdown": "Regex `$X` may be vulnerable to catastrophic backtracking, which may lead to denial of service attacks. (This rule only matches regex usage, not actual REDoS patterns. For full detection, use Semgrep Pro Engine.)\n\n#### 💎 Enable cross-file analysis and Pro rules for free at <a href='https://sg.run/pro'>sg.run/pro</a>\n\n<b>References:</b>\n - [https://r2c.dev/blog/2020/finding-python-redos-bugs-at-scale-using-dlint-and-r2c/](https://r2c.dev/blog/2020/finding-python-redos-bugs-at-scale-using-dlint-and-r2c/)\n - [https://r2c.dev/blog/2020/improving-redos-detection-with-dlint-and-r2c/](https://r2c.dev/blog/2020/improving-redos-detection-with-dlint-and-r2c/)\n"
-              },
-              "properties": {
-                "precision": "very-high",
-                "tags": [
-                  "resources.rules.dlint-catastrophic-redos"
-                ]
-              }
-            },
-            {
               "id": "617e498f-f8e1-3764-ade4-0f9362300105",
               "name": "resources.rules.dlint-catastrophic-redos",
               "shortDescription": {
@@ -3362,6 +3313,30 @@
             },
             {
               "id": "1402ef3a-9aca-30a9-9521-7bd1d2392392",
+              "name": "resources.rules.dlint-catastrophic-redos",
+              "shortDescription": {
+                "text": "Opengrep Finding: resources.rules.dlint-catastrophic-redos"
+              },
+              "fullDescription": {
+                "text": "Regex `$X` may be vulnerable to catastrophic backtracking, which may lead to denial of service attacks. (This rule only matches regex usage, not actual REDoS patterns. For full detection, use Semgrep Pro Engine.)"
+              },
+              "defaultConfiguration": {
+                "enabled": true,
+                "level": "error"
+              },
+              "help": {
+                "text": "Regex `$X` may be vulnerable to catastrophic backtracking, which may lead to denial of service attacks. (This rule only matches regex usage, not actual REDoS patterns. For full detection, use Semgrep Pro Engine.)\n💎 Enable cross-file analysis and Pro rules for free at sg.run/pro",
+                "markdown": "Regex `$X` may be vulnerable to catastrophic backtracking, which may lead to denial of service attacks. (This rule only matches regex usage, not actual REDoS patterns. For full detection, use Semgrep Pro Engine.)\n\n#### 💎 Enable cross-file analysis and Pro rules for free at <a href='https://sg.run/pro'>sg.run/pro</a>\n\n<b>References:</b>\n - [https://r2c.dev/blog/2020/finding-python-redos-bugs-at-scale-using-dlint-and-r2c/](https://r2c.dev/blog/2020/finding-python-redos-bugs-at-scale-using-dlint-and-r2c/)\n - [https://r2c.dev/blog/2020/improving-redos-detection-with-dlint-and-r2c/](https://r2c.dev/blog/2020/improving-redos-detection-with-dlint-and-r2c/)\n"
+              },
+              "properties": {
+                "precision": "very-high",
+                "tags": [
+                  "resources.rules.dlint-catastrophic-redos"
+                ]
+              }
+            },
+            {
+              "id": "3901513a-b0ef-3be6-8b5c-7d5a48169c89",
               "name": "resources.rules.dlint-catastrophic-redos",
               "shortDescription": {
                 "text": "Opengrep Finding: resources.rules.dlint-catastrophic-redos"
@@ -3564,7 +3539,7 @@
       "language": "en-US",
       "results": [
         {
-          "ruleId": "5d7f5253-d0ca-383f-9aef-57c08f8e1a6e",
+          "ruleId": "a4952bd1-2225-3c01-878a-2740dffb3c54",
           "kind": "fail",
           "level": "warning",
           "message": {
@@ -3574,23 +3549,23 @@
             {
               "physicalLocation": {
                 "artifactLocation": {
-                  "uri": "aiter/aot/asm_mla_decode_fwd.py",
+                  "uri": "aiter/aot/pa_ragged.py",
                   "uriBaseId": "%SRCROOT%"
                 },
                 "region": {
-                  "startLine": 21,
+                  "startLine": 23,
                   "startColumn": 12,
-                  "endLine": 28,
+                  "endLine": 33,
                   "endColumn": 6,
                   "snippet": {
-                    "text": "    return compile(\n        config.hsaco_path,\n        config.page_size,\n        config.q_itemsize,\n        config.kv_itemsize,\n        config.num_kv_splits,\n        config.v_head_dim,\n    )"
+                    "text": "    return compile(\n        config.gqa_ratio,\n        config.head_size,\n        config.npar_loops,\n        config.dtype,\n        config.kv_dtype,\n        config.fp8_kv_dtype,\n        config.out_dtype,\n        config.block_size,\n        config.alibi_enabled,\n    )"
                   }
                 }
               }
             }
           ],
           "fingerprints": {
-            "matchBasedId/v1": "36d986014342bfe3e002f808e5f89983818b1cf5c031b1b62af2ea37bc7d186403d5e252f17b47aad888bf1da6c2b0667f8a805233eceef00448e74540f42dec_0"
+            "matchBasedId/v1": "5a8aa3ca67c09477a516f5faf1e8785ac8ecb62ebae625aee3aecb05a066bbc77b73e49ffd6fe7e9971ec8027c4cc40d83a474195a7a7f93d6f0c2f4ac935bc3_0"
           },
           "properties": {}
         },
@@ -3626,6 +3601,37 @@
           "properties": {}
         },
         {
+          "ruleId": "5d7f5253-d0ca-383f-9aef-57c08f8e1a6e",
+          "kind": "fail",
+          "level": "warning",
+          "message": {
+            "text": "The Python 'compile' function is not secure against maliciously constructed input"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "aiter/aot/asm_mla_decode_fwd.py",
+                  "uriBaseId": "%SRCROOT%"
+                },
+                "region": {
+                  "startLine": 21,
+                  "startColumn": 12,
+                  "endLine": 28,
+                  "endColumn": 6,
+                  "snippet": {
+                    "text": "    return compile(\n        config.hsaco_path,\n        config.page_size,\n        config.q_itemsize,\n        config.kv_itemsize,\n        config.num_kv_splits,\n        config.v_head_dim,\n    )"
+                  }
+                }
+              }
+            }
+          ],
+          "fingerprints": {
+            "matchBasedId/v1": "36d986014342bfe3e002f808e5f89983818b1cf5c031b1b62af2ea37bc7d186403d5e252f17b47aad888bf1da6c2b0667f8a805233eceef00448e74540f42dec_0"
+          },
+          "properties": {}
+        },
+        {
           "ruleId": "91bda62e-d048-38ae-8541-708640cbe6e8",
           "kind": "fail",
           "level": "warning",
@@ -3653,68 +3659,6 @@
           ],
           "fingerprints": {
             "matchBasedId/v1": "a30e2a9e19b3b56ee33548c5a50d4f573b7b0f9c00deac6d3dbf2de16a85a17f913d43b5698f349c630cd1df2b5c3ac95418ba79582795d728088df0fce895a9_0"
-          },
-          "properties": {}
-        },
-        {
-          "ruleId": "a4952bd1-2225-3c01-878a-2740dffb3c54",
-          "kind": "fail",
-          "level": "warning",
-          "message": {
-            "text": "The Python 'compile' function is not secure against maliciously constructed input"
-          },
-          "locations": [
-            {
-              "physicalLocation": {
-                "artifactLocation": {
-                  "uri": "aiter/aot/pa_ragged.py",
-                  "uriBaseId": "%SRCROOT%"
-                },
-                "region": {
-                  "startLine": 23,
-                  "startColumn": 12,
-                  "endLine": 33,
-                  "endColumn": 6,
-                  "snippet": {
-                    "text": "    return compile(\n        config.gqa_ratio,\n        config.head_size,\n        config.npar_loops,\n        config.dtype,\n        config.kv_dtype,\n        config.fp8_kv_dtype,\n        config.out_dtype,\n        config.block_size,\n        config.alibi_enabled,\n    )"
-                  }
-                }
-              }
-            }
-          ],
-          "fingerprints": {
-            "matchBasedId/v1": "5a8aa3ca67c09477a516f5faf1e8785ac8ecb62ebae625aee3aecb05a066bbc77b73e49ffd6fe7e9971ec8027c4cc40d83a474195a7a7f93d6f0c2f4ac935bc3_0"
-          },
-          "properties": {}
-        },
-        {
-          "ruleId": "a598ee1e-a520-3ade-801a-644261f0453d",
-          "kind": "fail",
-          "level": "warning",
-          "message": {
-            "text": "Found dynamic content used in a system call. This is dangerous if external data can reach this function call because it allows a malicious actor to execute commands. Use the 'subprocess' module instead, which is easier to use without accidentally exposing a command injection vulnerability."
-          },
-          "locations": [
-            {
-              "physicalLocation": {
-                "artifactLocation": {
-                  "uri": "aiter/jit/core.py",
-                  "uriBaseId": "%SRCROOT%"
-                },
-                "region": {
-                  "startLine": 155,
-                  "startColumn": 11,
-                  "endLine": 155,
-                  "endColumn": 74,
-                  "snippet": {
-                    "text": "    ret = os.system(f\"hipcc {flag_hip} -x hip -c /dev/null -o /dev/null\")"
-                  }
-                }
-              }
-            }
-          ],
-          "fingerprints": {
-            "matchBasedId/v1": "b217c550ab6bce63c75aee491ddcd4d11520b143a7e6e81e399aa887caee795a6e46b5d04f2d3d88e8e0793e3b66b2c3232128164db2ae6cc5b248cf703576e4_0"
           },
           "properties": {}
         },
@@ -3750,37 +3694,6 @@
           "properties": {}
         },
         {
-          "ruleId": "6d8dbeb7-606e-3766-ae9b-8991e0ff86f1",
-          "kind": "fail",
-          "level": "warning",
-          "message": {
-            "text": "Untrusted user input in `importlib.import_module()` function allows an attacker to load arbitrary code. Avoid dynamic values in `importlib.import_module()` or use a whitelist to prevent running untrusted code."
-          },
-          "locations": [
-            {
-              "physicalLocation": {
-                "artifactLocation": {
-                  "uri": "aiter/jit/core.py",
-                  "uriBaseId": "%SRCROOT%"
-                },
-                "region": {
-                  "startLine": 58,
-                  "startColumn": 14,
-                  "endLine": 58,
-                  "endColumn": 62,
-                  "snippet": {
-                    "text": "    aiter_ = importlib.import_module(f\"{__package__}.aiter_\")"
-                  }
-                }
-              }
-            }
-          ],
-          "fingerprints": {
-            "matchBasedId/v1": "9556270060d56ae99c1458039d3e0f19cc66758e45e794f2692c273d0c3e20713caf8d1204e46ed456f5790d0ff26b3395ff8b505bb7843f87bfb9083b40593f_0"
-          },
-          "properties": {}
-        },
-        {
           "ruleId": "325fb03d-8cd4-3eb1-b5b2-8ec523706ef8",
           "kind": "fail",
           "level": "warning",
@@ -3812,7 +3725,7 @@
           "properties": {}
         },
         {
-          "ruleId": "9ced4e79-d155-3489-b847-5ffd4221d8b5",
+          "ruleId": "a598ee1e-a520-3ade-801a-644261f0453d",
           "kind": "fail",
           "level": "warning",
           "message": {
@@ -3826,19 +3739,50 @@
                   "uriBaseId": "%SRCROOT%"
                 },
                 "region": {
-                  "startLine": 346,
-                  "startColumn": 17,
-                  "endLine": 346,
-                  "endColumn": 67,
+                  "startLine": 155,
+                  "startColumn": 11,
+                  "endLine": 155,
+                  "endColumn": 74,
                   "snippet": {
-                    "text": "                os.system(f\"{PY} {blob_gen_cmd.format(blob_dir)}\")"
+                    "text": "    ret = os.system(f\"hipcc {flag_hip} -x hip -c /dev/null -o /dev/null\")"
                   }
                 }
               }
             }
           ],
           "fingerprints": {
-            "matchBasedId/v1": "b217c550ab6bce63c75aee491ddcd4d11520b143a7e6e81e399aa887caee795a6e46b5d04f2d3d88e8e0793e3b66b2c3232128164db2ae6cc5b248cf703576e4_4"
+            "matchBasedId/v1": "b217c550ab6bce63c75aee491ddcd4d11520b143a7e6e81e399aa887caee795a6e46b5d04f2d3d88e8e0793e3b66b2c3232128164db2ae6cc5b248cf703576e4_0"
+          },
+          "properties": {}
+        },
+        {
+          "ruleId": "71ab11aa-18fc-3e43-b581-fe5f000e2403",
+          "kind": "fail",
+          "level": "warning",
+          "message": {
+            "text": "Regex `\"error:\"` may be vulnerable to catastrophic backtracking, which may lead to denial of service attacks. (This rule only matches regex usage, not actual REDoS patterns. For full detection, use Semgrep Pro Engine.)"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "aiter/jit/core.py",
+                  "uriBaseId": "%SRCROOT%"
+                },
+                "region": {
+                  "startLine": 402,
+                  "startColumn": 21,
+                  "endLine": 407,
+                  "endColumn": 22,
+                  "snippet": {
+                    "text": "                    re.sub(\n                        \"error:\",\n                        \"\\033[31merror:\\033[0m\",\n                        \"-->\".join(traceback.format_exception(*sys.exc_info())),\n                        flags=re.I,\n                    ),"
+                  }
+                }
+              }
+            }
+          ],
+          "fingerprints": {
+            "matchBasedId/v1": "0de60eb9bc0d78d169f2e47546c1ea3ac8c269558208913dbfce81ba766f20fabf8e28a11c85784640ecb42eb8fc9d7e2e1fa985766a27ca26322aad88ed1c55_0"
           },
           "properties": {}
         },
@@ -3905,11 +3849,11 @@
           "properties": {}
         },
         {
-          "ruleId": "71ab11aa-18fc-3e43-b581-fe5f000e2403",
+          "ruleId": "9ced4e79-d155-3489-b847-5ffd4221d8b5",
           "kind": "fail",
           "level": "warning",
           "message": {
-            "text": "Regex `\"error:\"` may be vulnerable to catastrophic backtracking, which may lead to denial of service attacks. (This rule only matches regex usage, not actual REDoS patterns. For full detection, use Semgrep Pro Engine.)"
+            "text": "Found dynamic content used in a system call. This is dangerous if external data can reach this function call because it allows a malicious actor to execute commands. Use the 'subprocess' module instead, which is easier to use without accidentally exposing a command injection vulnerability."
           },
           "locations": [
             {
@@ -3919,19 +3863,19 @@
                   "uriBaseId": "%SRCROOT%"
                 },
                 "region": {
-                  "startLine": 402,
-                  "startColumn": 21,
-                  "endLine": 407,
-                  "endColumn": 22,
+                  "startLine": 346,
+                  "startColumn": 17,
+                  "endLine": 346,
+                  "endColumn": 67,
                   "snippet": {
-                    "text": "                    re.sub(\n                        \"error:\",\n                        \"\\033[31merror:\\033[0m\",\n                        \"-->\".join(traceback.format_exception(*sys.exc_info())),\n                        flags=re.I,\n                    ),"
+                    "text": "                os.system(f\"{PY} {blob_gen_cmd.format(blob_dir)}\")"
                   }
                 }
               }
             }
           ],
           "fingerprints": {
-            "matchBasedId/v1": "0de60eb9bc0d78d169f2e47546c1ea3ac8c269558208913dbfce81ba766f20fabf8e28a11c85784640ecb42eb8fc9d7e2e1fa985766a27ca26322aad88ed1c55_0"
+            "matchBasedId/v1": "b217c550ab6bce63c75aee491ddcd4d11520b143a7e6e81e399aa887caee795a6e46b5d04f2d3d88e8e0793e3b66b2c3232128164db2ae6cc5b248cf703576e4_4"
           },
           "properties": {}
         },
@@ -4091,37 +4035,6 @@
           "properties": {}
         },
         {
-          "ruleId": "f82f134b-f7d5-342d-a37b-2f769fef3925",
-          "kind": "fail",
-          "level": "warning",
-          "message": {
-            "text": "Detected subprocess function 'run' without a static string. If this data can be\ncontrolled by a malicious actor, it may be an instance of command injection.\nAudit the use of this call to ensure it is not controllable by an external resource.\nYou may consider using 'shlex.escape()'.\n"
-          },
-          "locations": [
-            {
-              "physicalLocation": {
-                "artifactLocation": {
-                  "uri": "aiter/jit/utils/chip_info.py",
-                  "uriBaseId": "%SRCROOT%"
-                },
-                "region": {
-                  "startLine": 99,
-                  "startColumn": 22,
-                  "endLine": 101,
-                  "endColumn": 14,
-                  "snippet": {
-                    "text": "            result = subprocess.run(\n                [rocminfo], stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True\n            )"
-                  }
-                }
-              }
-            }
-          ],
-          "fingerprints": {
-            "matchBasedId/v1": "a1b9eb488036b4782a76c211ecd6a7f5a386a370b88ea3a1908bf8262c4ec99c1698ea112df15d1321b601712ae92e6cba4a119e40abb2600c60ce9dab73c0f7_2"
-          },
-          "properties": {}
-        },
-        {
           "ruleId": "d315cf55-861a-344b-a218-d95bb93f1671",
           "kind": "fail",
           "level": "warning",
@@ -4149,6 +4062,37 @@
           ],
           "fingerprints": {
             "matchBasedId/v1": "a1b9eb488036b4782a76c211ecd6a7f5a386a370b88ea3a1908bf8262c4ec99c1698ea112df15d1321b601712ae92e6cba4a119e40abb2600c60ce9dab73c0f7_1"
+          },
+          "properties": {}
+        },
+        {
+          "ruleId": "f82f134b-f7d5-342d-a37b-2f769fef3925",
+          "kind": "fail",
+          "level": "warning",
+          "message": {
+            "text": "Detected subprocess function 'run' without a static string. If this data can be\ncontrolled by a malicious actor, it may be an instance of command injection.\nAudit the use of this call to ensure it is not controllable by an external resource.\nYou may consider using 'shlex.escape()'.\n"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "aiter/jit/utils/chip_info.py",
+                  "uriBaseId": "%SRCROOT%"
+                },
+                "region": {
+                  "startLine": 99,
+                  "startColumn": 22,
+                  "endLine": 101,
+                  "endColumn": 14,
+                  "snippet": {
+                    "text": "            result = subprocess.run(\n                [rocminfo], stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True\n            )"
+                  }
+                }
+              }
+            }
+          ],
+          "fingerprints": {
+            "matchBasedId/v1": "a1b9eb488036b4782a76c211ecd6a7f5a386a370b88ea3a1908bf8262c4ec99c1698ea112df15d1321b601712ae92e6cba4a119e40abb2600c60ce9dab73c0f7_2"
           },
           "properties": {}
         },
@@ -4184,37 +4128,6 @@
           "properties": {}
         },
         {
-          "ruleId": "dda4f31b-16a9-3a84-949d-27707446748c",
-          "kind": "fail",
-          "level": "warning",
-          "message": {
-            "text": "Regex `r\"\\d+\\.\\d+\\.\\d+\\w+\\+\\w+\"` may be vulnerable to catastrophic backtracking, which may lead to denial of service attacks. (This rule only matches regex usage, not actual REDoS patterns. For full detection, use Semgrep Pro Engine.)"
-          },
-          "locations": [
-            {
-              "physicalLocation": {
-                "artifactLocation": {
-                  "uri": "aiter/jit/utils/cpp_extension.py",
-                  "uriBaseId": "%SRCROOT%"
-                },
-                "region": {
-                  "startLine": 185,
-                  "startColumn": 37,
-                  "endLine": 185,
-                  "endColumn": 73,
-                  "snippet": {
-                    "text": "BUILT_FROM_SOURCE_VERSION_PATTERN = re.compile(r\"\\d+\\.\\d+\\.\\d+\\w+\\+\\w+\")"
-                  }
-                }
-              }
-            }
-          ],
-          "fingerprints": {
-            "matchBasedId/v1": "9d3e3a77b1f2a88d21f5314cde21438e9fed829d40fd3b023c903b4ef5922815f3d0e40c3b3cfb6391da05515616b8ea1349ab2bf61f43f5b5183c7cc231885f_0"
-          },
-          "properties": {}
-        },
-        {
           "ruleId": "99007d33-b086-3664-9954-aa4670d09971",
           "kind": "fail",
           "level": "warning",
@@ -4242,6 +4155,37 @@
           ],
           "fingerprints": {
             "matchBasedId/v1": "0f2fd54784a0d3998d50ed0b081ec72e6c1f041f39a7f192eaa081ac38e2fd6a40aba91a2a888680f2ee9a277913abc0ab6047f3d69b16158ed48520693b45aa_0"
+          },
+          "properties": {}
+        },
+        {
+          "ruleId": "dda4f31b-16a9-3a84-949d-27707446748c",
+          "kind": "fail",
+          "level": "warning",
+          "message": {
+            "text": "Regex `r\"\\d+\\.\\d+\\.\\d+\\w+\\+\\w+\"` may be vulnerable to catastrophic backtracking, which may lead to denial of service attacks. (This rule only matches regex usage, not actual REDoS patterns. For full detection, use Semgrep Pro Engine.)"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "aiter/jit/utils/cpp_extension.py",
+                  "uriBaseId": "%SRCROOT%"
+                },
+                "region": {
+                  "startLine": 185,
+                  "startColumn": 37,
+                  "endLine": 185,
+                  "endColumn": 73,
+                  "snippet": {
+                    "text": "BUILT_FROM_SOURCE_VERSION_PATTERN = re.compile(r\"\\d+\\.\\d+\\.\\d+\\w+\\+\\w+\")"
+                  }
+                }
+              }
+            }
+          ],
+          "fingerprints": {
+            "matchBasedId/v1": "9d3e3a77b1f2a88d21f5314cde21438e9fed829d40fd3b023c903b4ef5922815f3d0e40c3b3cfb6391da05515616b8ea1349ab2bf61f43f5b5183c7cc231885f_0"
           },
           "properties": {}
         },
@@ -4308,11 +4252,11 @@
           "properties": {}
         },
         {
-          "ruleId": "6c841ee4-bb75-36ad-a50b-973de1f5cffd",
+          "ruleId": "fa1fb2ed-7722-344a-9980-5355b02bcab9",
           "kind": "fail",
           "level": "warning",
           "message": {
-            "text": "Regex `pattern` may be vulnerable to catastrophic backtracking, which may lead to denial of service attacks. (This rule only matches regex usage, not actual REDoS patterns. For full detection, use Semgrep Pro Engine.)"
+            "text": "Regex `\"^COLLECT_GCC=(.*)$\"` may be vulnerable to catastrophic backtracking, which may lead to denial of service attacks. (This rule only matches regex usage, not actual REDoS patterns. For full detection, use Semgrep Pro Engine.)"
           },
           "locations": [
             {
@@ -4322,19 +4266,19 @@
                   "uriBaseId": "%SRCROOT%"
                 },
                 "region": {
-                  "startLine": 303,
+                  "startLine": 302,
                   "startColumn": 19,
-                  "endLine": 303,
-                  "endColumn": 54,
+                  "endLine": 302,
+                  "endColumn": 65,
                   "snippet": {
-                    "text": "        results = re.findall(pattern, version_string)"
+                    "text": "        pattern = re.compile(\"^COLLECT_GCC=(.*)$\", re.MULTILINE)"
                   }
                 }
               }
             }
           ],
           "fingerprints": {
-            "matchBasedId/v1": "bbcc1d57de40b317dd272b1d4830c1cbdfabd6f0db5575f0f30baa7ef671866454078586b31e8e117b166112cdc148f0020fa9c87005713f0dd7ac86ac8e01ce_0"
+            "matchBasedId/v1": "95c91d83c1fc455863b1d882ca633e9b53b41789209e9e070780a7624511b233718ae304c936eb75918bfa3a0f151657a19f6ff5fa0fd2a39f4d73719157aee8_0"
           },
           "properties": {}
         },
@@ -4370,11 +4314,11 @@
           "properties": {}
         },
         {
-          "ruleId": "fa1fb2ed-7722-344a-9980-5355b02bcab9",
+          "ruleId": "6c841ee4-bb75-36ad-a50b-973de1f5cffd",
           "kind": "fail",
           "level": "warning",
           "message": {
-            "text": "Regex `\"^COLLECT_GCC=(.*)$\"` may be vulnerable to catastrophic backtracking, which may lead to denial of service attacks. (This rule only matches regex usage, not actual REDoS patterns. For full detection, use Semgrep Pro Engine.)"
+            "text": "Regex `pattern` may be vulnerable to catastrophic backtracking, which may lead to denial of service attacks. (This rule only matches regex usage, not actual REDoS patterns. For full detection, use Semgrep Pro Engine.)"
           },
           "locations": [
             {
@@ -4384,19 +4328,19 @@
                   "uriBaseId": "%SRCROOT%"
                 },
                 "region": {
-                  "startLine": 302,
+                  "startLine": 303,
                   "startColumn": 19,
-                  "endLine": 302,
-                  "endColumn": 65,
+                  "endLine": 303,
+                  "endColumn": 54,
                   "snippet": {
-                    "text": "        pattern = re.compile(\"^COLLECT_GCC=(.*)$\", re.MULTILINE)"
+                    "text": "        results = re.findall(pattern, version_string)"
                   }
                 }
               }
             }
           ],
           "fingerprints": {
-            "matchBasedId/v1": "95c91d83c1fc455863b1d882ca633e9b53b41789209e9e070780a7624511b233718ae304c936eb75918bfa3a0f151657a19f6ff5fa0fd2a39f4d73719157aee8_0"
+            "matchBasedId/v1": "bbcc1d57de40b317dd272b1d4830c1cbdfabd6f0db5575f0f30baa7ef671866454078586b31e8e117b166112cdc148f0020fa9c87005713f0dd7ac86ac8e01ce_0"
           },
           "properties": {}
         },
@@ -4587,37 +4531,6 @@
           "properties": {}
         },
         {
-          "ruleId": "0da796da-2264-3ab1-a39c-0567148b86e8",
-          "kind": "fail",
-          "level": "warning",
-          "message": {
-            "text": "Detected subprocess function 'run' without a static string. If this data can be\ncontrolled by a malicious actor, it may be an instance of command injection.\nAudit the use of this call to ensure it is not controllable by an external resource.\nYou may consider using 'shlex.escape()'.\n"
-          },
-          "locations": [
-            {
-              "physicalLocation": {
-                "artifactLocation": {
-                  "uri": "aiter/jit/utils/cpp_extension.py",
-                  "uriBaseId": "%SRCROOT%"
-                },
-                "region": {
-                  "startLine": 1478,
-                  "startColumn": 9,
-                  "endLine": 1485,
-                  "endColumn": 10,
-                  "snippet": {
-                    "text": "        subprocess.run(\n            command,\n            stdout=stdout_fileno if verbose else subprocess.PIPE,\n            stderr=subprocess.STDOUT,\n            cwd=build_directory,\n            check=True,\n            env=env,\n        )"
-                  }
-                }
-              }
-            }
-          ],
-          "fingerprints": {
-            "matchBasedId/v1": "d36bc47c27f903a93f8d74c653327fff42b38fe6978cee8e7d04b461ddbad1248e19bfca26aeb37346e2a0750c44605897b549477f169c54535eb2108c981a9d_0"
-          },
-          "properties": {}
-        },
-        {
           "ruleId": "608a25d1-c095-3790-af2c-faec37b12a79",
           "kind": "fail",
           "level": "warning",
@@ -4645,6 +4558,37 @@
           ],
           "fingerprints": {
             "matchBasedId/v1": "9f0059ed3f9fe324319aead28598888b5fcaff2b5f972343345ff87480d1fd620b6556c49dc6f34334195c8a92ab019b8f8dc5e88de8c6f7261462e79e071dd1_5"
+          },
+          "properties": {}
+        },
+        {
+          "ruleId": "0da796da-2264-3ab1-a39c-0567148b86e8",
+          "kind": "fail",
+          "level": "warning",
+          "message": {
+            "text": "Detected subprocess function 'run' without a static string. If this data can be\ncontrolled by a malicious actor, it may be an instance of command injection.\nAudit the use of this call to ensure it is not controllable by an external resource.\nYou may consider using 'shlex.escape()'.\n"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "aiter/jit/utils/cpp_extension.py",
+                  "uriBaseId": "%SRCROOT%"
+                },
+                "region": {
+                  "startLine": 1478,
+                  "startColumn": 9,
+                  "endLine": 1485,
+                  "endColumn": 10,
+                  "snippet": {
+                    "text": "        subprocess.run(\n            command,\n            stdout=stdout_fileno if verbose else subprocess.PIPE,\n            stderr=subprocess.STDOUT,\n            cwd=build_directory,\n            check=True,\n            env=env,\n        )"
+                  }
+                }
+              }
+            }
+          ],
+          "fingerprints": {
+            "matchBasedId/v1": "d36bc47c27f903a93f8d74c653327fff42b38fe6978cee8e7d04b461ddbad1248e19bfca26aeb37346e2a0750c44605897b549477f169c54535eb2108c981a9d_0"
           },
           "properties": {}
         },
@@ -4835,37 +4779,6 @@
           "properties": {}
         },
         {
-          "ruleId": "a6ab73ab-94c1-355b-a5e3-20d659435406",
-          "kind": "fail",
-          "level": "warning",
-          "message": {
-            "text": "Regex `rf\"(?<=\\W)({PYTORCH_TRIE.export_to_regex()})(?=\\W)\"` may be vulnerable to catastrophic backtracking, which may lead to denial of service attacks. (This rule only matches regex usage, not actual REDoS patterns. For full detection, use Semgrep Pro Engine.)"
-          },
-          "locations": [
-            {
-              "physicalLocation": {
-                "artifactLocation": {
-                  "uri": "aiter/jit/utils/hipify/hipify_python.py",
-                  "uriBaseId": "%SRCROOT%"
-                },
-                "region": {
-                  "startLine": 894,
-                  "startColumn": 27,
-                  "endLine": 896,
-                  "endColumn": 2,
-                  "snippet": {
-                    "text": "RE_PYTORCH_PREPROCESSOR = re.compile(\n    rf\"(?<=\\W)({PYTORCH_TRIE.export_to_regex()})(?=\\W)\"\n)"
-                  }
-                }
-              }
-            }
-          ],
-          "fingerprints": {
-            "matchBasedId/v1": "32069f989c30b0b33d24925435a8d9fdbb7c2329d0cc2efa173dfd36d67e340660d17197cafdc29aebd6c5e3e08e7d36d15a2c7633b7c5db81ca14af2bc735b4_0"
-          },
-          "properties": {}
-        },
-        {
           "ruleId": "1b2e3179-f77c-3c61-b8f4-84860b27fd95",
           "kind": "fail",
           "level": "warning",
@@ -4893,6 +4806,37 @@
           ],
           "fingerprints": {
             "matchBasedId/v1": "26339561584c4893ce5e2829407277c5fee67b958bf2115522be3262a8c19e488fd84773662d92ece3e60c4b0634ce7f5ad5342c4b1dbf2d7323c289a6e4f289_0"
+          },
+          "properties": {}
+        },
+        {
+          "ruleId": "a6ab73ab-94c1-355b-a5e3-20d659435406",
+          "kind": "fail",
+          "level": "warning",
+          "message": {
+            "text": "Regex `rf\"(?<=\\W)({PYTORCH_TRIE.export_to_regex()})(?=\\W)\"` may be vulnerable to catastrophic backtracking, which may lead to denial of service attacks. (This rule only matches regex usage, not actual REDoS patterns. For full detection, use Semgrep Pro Engine.)"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "aiter/jit/utils/hipify/hipify_python.py",
+                  "uriBaseId": "%SRCROOT%"
+                },
+                "region": {
+                  "startLine": 894,
+                  "startColumn": 27,
+                  "endLine": 896,
+                  "endColumn": 2,
+                  "snippet": {
+                    "text": "RE_PYTORCH_PREPROCESSOR = re.compile(\n    rf\"(?<=\\W)({PYTORCH_TRIE.export_to_regex()})(?=\\W)\"\n)"
+                  }
+                }
+              }
+            }
+          ],
+          "fingerprints": {
+            "matchBasedId/v1": "32069f989c30b0b33d24925435a8d9fdbb7c2329d0cc2efa173dfd36d67e340660d17197cafdc29aebd6c5e3e08e7d36d15a2c7633b7c5db81ca14af2bc735b4_0"
           },
           "properties": {}
         },
@@ -5827,37 +5771,6 @@
           "properties": {}
         },
         {
-          "ruleId": "03bd8f4a-6845-34d6-aeee-cad198866f24",
-          "kind": "fail",
-          "level": "warning",
-          "message": {
-            "text": "Locate all calls to interesting and potentially insecure API functions (candidate points). The auditor can backtrace from these candidate points to find pathways allowing access from untrusted input."
-          },
-          "locations": [
-            {
-              "physicalLocation": {
-                "artifactLocation": {
-                  "uri": "csrc/cpp_itfs/mla/asm_mla_decode_fwd_test.cpp",
-                  "uriBaseId": "%SRCROOT%"
-                },
-                "region": {
-                  "startLine": 53,
-                  "startColumn": 19,
-                  "endLine": 53,
-                  "endColumn": 44,
-                  "snippet": {
-                    "text": "        HIP_CHECK(hipMalloc(&q_ptr, q_size));"
-                  }
-                }
-              }
-            }
-          ],
-          "fingerprints": {
-            "matchBasedId/v1": "c2a3bcc31e807c98bf397b5fda73135148eb15026f2877151749acb0e1362474c3a25424f474ead6ac426fa869cd9a2b0b1c058721cde4eed49584344e8d6220_0"
-          },
-          "properties": {}
-        },
-        {
           "ruleId": "18c31573-6871-335e-bc7f-92a9804e8e53",
           "kind": "fail",
           "level": "warning",
@@ -5885,6 +5798,37 @@
           ],
           "fingerprints": {
             "matchBasedId/v1": "4ab6a133333b67fa37f86f91972e5f573b180fab1c16be2970d2a04cb85db5f49f9757d416af1ae601bdb5d8b9c9cef89bb8b277ae522f1b07714c42ee719257_0"
+          },
+          "properties": {}
+        },
+        {
+          "ruleId": "03bd8f4a-6845-34d6-aeee-cad198866f24",
+          "kind": "fail",
+          "level": "warning",
+          "message": {
+            "text": "Locate all calls to interesting and potentially insecure API functions (candidate points). The auditor can backtrace from these candidate points to find pathways allowing access from untrusted input."
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "csrc/cpp_itfs/mla/asm_mla_decode_fwd_test.cpp",
+                  "uriBaseId": "%SRCROOT%"
+                },
+                "region": {
+                  "startLine": 53,
+                  "startColumn": 19,
+                  "endLine": 53,
+                  "endColumn": 44,
+                  "snippet": {
+                    "text": "        HIP_CHECK(hipMalloc(&q_ptr, q_size));"
+                  }
+                }
+              }
+            }
+          ],
+          "fingerprints": {
+            "matchBasedId/v1": "c2a3bcc31e807c98bf397b5fda73135148eb15026f2877151749acb0e1362474c3a25424f474ead6ac426fa869cd9a2b0b1c058721cde4eed49584344e8d6220_0"
           },
           "properties": {}
         },
@@ -5951,37 +5895,6 @@
           "properties": {}
         },
         {
-          "ruleId": "b12f7d16-4718-3daa-a710-1674700bed46",
-          "kind": "fail",
-          "level": "warning",
-          "message": {
-            "text": "Locate all calls to interesting and potentially insecure API functions (candidate points). The auditor can backtrace from these candidate points to find pathways allowing access from untrusted input."
-          },
-          "locations": [
-            {
-              "physicalLocation": {
-                "artifactLocation": {
-                  "uri": "csrc/cpp_itfs/mla/asm_mla_decode_fwd_test.cpp",
-                  "uriBaseId": "%SRCROOT%"
-                },
-                "region": {
-                  "startLine": 57,
-                  "startColumn": 19,
-                  "endLine": 57,
-                  "endColumn": 60,
-                  "snippet": {
-                    "text": "        HIP_CHECK(hipMalloc(&kv_indptr_ptr, kv_indptr_size));"
-                  }
-                }
-              }
-            }
-          ],
-          "fingerprints": {
-            "matchBasedId/v1": "c2a3bcc31e807c98bf397b5fda73135148eb15026f2877151749acb0e1362474c3a25424f474ead6ac426fa869cd9a2b0b1c058721cde4eed49584344e8d6220_4"
-          },
-          "properties": {}
-        },
-        {
           "ruleId": "d9ea5204-33b8-314b-bb63-8a8ba54450d2",
           "kind": "fail",
           "level": "warning",
@@ -6009,6 +5922,37 @@
           ],
           "fingerprints": {
             "matchBasedId/v1": "c2a3bcc31e807c98bf397b5fda73135148eb15026f2877151749acb0e1362474c3a25424f474ead6ac426fa869cd9a2b0b1c058721cde4eed49584344e8d6220_3"
+          },
+          "properties": {}
+        },
+        {
+          "ruleId": "b12f7d16-4718-3daa-a710-1674700bed46",
+          "kind": "fail",
+          "level": "warning",
+          "message": {
+            "text": "Locate all calls to interesting and potentially insecure API functions (candidate points). The auditor can backtrace from these candidate points to find pathways allowing access from untrusted input."
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "csrc/cpp_itfs/mla/asm_mla_decode_fwd_test.cpp",
+                  "uriBaseId": "%SRCROOT%"
+                },
+                "region": {
+                  "startLine": 57,
+                  "startColumn": 19,
+                  "endLine": 57,
+                  "endColumn": 60,
+                  "snippet": {
+                    "text": "        HIP_CHECK(hipMalloc(&kv_indptr_ptr, kv_indptr_size));"
+                  }
+                }
+              }
+            }
+          ],
+          "fingerprints": {
+            "matchBasedId/v1": "c2a3bcc31e807c98bf397b5fda73135148eb15026f2877151749acb0e1362474c3a25424f474ead6ac426fa869cd9a2b0b1c058721cde4eed49584344e8d6220_4"
           },
           "properties": {}
         },
@@ -7470,37 +7414,6 @@
           "properties": {}
         },
         {
-          "ruleId": "3009fd4a-9e18-3ae0-a3f0-ffc5fffd40cc",
-          "kind": "fail",
-          "level": "warning",
-          "message": {
-            "text": "The Python 'subprocess' module called with 'shell=True' may allow for shell injection"
-          },
-          "locations": [
-            {
-              "physicalLocation": {
-                "artifactLocation": {
-                  "uri": "csrc/cpp_itfs/utils.py",
-                  "uriBaseId": "%SRCROOT%"
-                },
-                "region": {
-                  "startLine": 94,
-                  "startColumn": 15,
-                  "endLine": 96,
-                  "endColumn": 6,
-                  "snippet": {
-                    "text": "    version = subprocess.run(\n        \"/opt/rocm/bin/hipconfig --version\", shell=True, capture_output=True, text=True\n    )"
-                  }
-                }
-              }
-            }
-          ],
-          "fingerprints": {
-            "matchBasedId/v1": "a2f5dea9ef31eb25972b7fc73fd9507296e00436ec5c042b1048867dfd3e52c22f90369ba060de3ab1795bd49f28089279bb396020530e5d6af39ddde3d82c44_1"
-          },
-          "properties": {}
-        },
-        {
           "ruleId": "e9280495-f31a-3502-8869-79e45c8c0148",
           "kind": "fail",
           "level": "warning",
@@ -7528,6 +7441,37 @@
           ],
           "fingerprints": {
             "matchBasedId/v1": "a2f5dea9ef31eb25972b7fc73fd9507296e00436ec5c042b1048867dfd3e52c22f90369ba060de3ab1795bd49f28089279bb396020530e5d6af39ddde3d82c44_0"
+          },
+          "properties": {}
+        },
+        {
+          "ruleId": "3009fd4a-9e18-3ae0-a3f0-ffc5fffd40cc",
+          "kind": "fail",
+          "level": "warning",
+          "message": {
+            "text": "The Python 'subprocess' module called with 'shell=True' may allow for shell injection"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "csrc/cpp_itfs/utils.py",
+                  "uriBaseId": "%SRCROOT%"
+                },
+                "region": {
+                  "startLine": 94,
+                  "startColumn": 15,
+                  "endLine": 96,
+                  "endColumn": 6,
+                  "snippet": {
+                    "text": "    version = subprocess.run(\n        \"/opt/rocm/bin/hipconfig --version\", shell=True, capture_output=True, text=True\n    )"
+                  }
+                }
+              }
+            }
+          ],
+          "fingerprints": {
+            "matchBasedId/v1": "a2f5dea9ef31eb25972b7fc73fd9507296e00436ec5c042b1048867dfd3e52c22f90369ba060de3ab1795bd49f28089279bb396020530e5d6af39ddde3d82c44_1"
           },
           "properties": {}
         },
@@ -7590,6 +7534,37 @@
           ],
           "fingerprints": {
             "matchBasedId/v1": "5d1b53158721530f1ddfa68ea6a4caceed15ea4f270c6fee067d4708844e537c3812b309db5b94a8162019b08122bcd93e95a7074ef387330ece7ab55041c49e_0"
+          },
+          "properties": {}
+        },
+        {
+          "ruleId": "6a7fa310-6fcd-3a5d-9910-c8bedab729aa",
+          "kind": "fail",
+          "level": "warning",
+          "message": {
+            "text": "Use `sys.exit` over the python shell `exit` built-in. `exit` is a helper for the interactive shell and may not be available on all Python implementations. https://stackoverflow.com/questions/6501121/difference-between-exit-and-sys-exit-in-python"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "gradlib/gradlib/gemm_tuner.py",
+                  "uriBaseId": "%SRCROOT%"
+                },
+                "region": {
+                  "startLine": 175,
+                  "startColumn": 13,
+                  "endLine": 175,
+                  "endColumn": 20,
+                  "snippet": {
+                    "text": "            exit(1)"
+                  }
+                }
+              }
+            }
+          ],
+          "fingerprints": {
+            "matchBasedId/v1": "c3a50f2bb7db14f729355eb6612f34c8a8090d0516142225c73d2d870bc145d8d61daa8009ea3a37bc260a67094376f6130de99653c46d33e5d9671eaf5a22de_0"
           },
           "properties": {}
         },
@@ -7780,37 +7755,6 @@
           "properties": {}
         },
         {
-          "ruleId": "3901513a-b0ef-3be6-8b5c-7d5a48169c89",
-          "kind": "fail",
-          "level": "warning",
-          "message": {
-            "text": "Regex `r\"\\.name:\"` may be vulnerable to catastrophic backtracking, which may lead to denial of service attacks. (This rule only matches regex usage, not actual REDoS patterns. For full detection, use Semgrep Pro Engine.)"
-          },
-          "locations": [
-            {
-              "physicalLocation": {
-                "artifactLocation": {
-                  "uri": "op_tests/op_benchmarks/triton/utils/benchmark_utils.py",
-                  "uriBaseId": "%SRCROOT%"
-                },
-                "region": {
-                  "startLine": 306,
-                  "startColumn": 12,
-                  "endLine": 306,
-                  "endColumn": 39,
-                  "snippet": {
-                    "text": "        if re.search(r\"\\.name:\", line):"
-                  }
-                }
-              }
-            }
-          ],
-          "fingerprints": {
-            "matchBasedId/v1": "a9f3b17a221dd69090b7d24b86357d38c951e575a43dcc38103711cd2928281a7469c61f0bf310c6bca75d7f11189730e71c291175bc7be6e35b4975c4452a93_0"
-          },
-          "properties": {}
-        },
-        {
           "ruleId": "617e498f-f8e1-3764-ade4-0f9362300105",
           "kind": "fail",
           "level": "warning",
@@ -7869,6 +7813,37 @@
           ],
           "fingerprints": {
             "matchBasedId/v1": "8db5413e1154bc131c5c517d6a71b674dcdd8eedbdbb8368c6bb9639768c75e30deb3a5640bc55293fc7f52099457d9a12811f6126ae9aeee87f97db0b4a1cd8_0"
+          },
+          "properties": {}
+        },
+        {
+          "ruleId": "3901513a-b0ef-3be6-8b5c-7d5a48169c89",
+          "kind": "fail",
+          "level": "warning",
+          "message": {
+            "text": "Regex `r\"\\.name:\"` may be vulnerable to catastrophic backtracking, which may lead to denial of service attacks. (This rule only matches regex usage, not actual REDoS patterns. For full detection, use Semgrep Pro Engine.)"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "op_tests/op_benchmarks/triton/utils/benchmark_utils.py",
+                  "uriBaseId": "%SRCROOT%"
+                },
+                "region": {
+                  "startLine": 306,
+                  "startColumn": 12,
+                  "endLine": 306,
+                  "endColumn": 39,
+                  "snippet": {
+                    "text": "        if re.search(r\"\\.name:\", line):"
+                  }
+                }
+              }
+            }
+          ],
+          "fingerprints": {
+            "matchBasedId/v1": "a9f3b17a221dd69090b7d24b86357d38c951e575a43dcc38103711cd2928281a7469c61f0bf310c6bca75d7f11189730e71c291175bc7be6e35b4975c4452a93_0"
           },
           "properties": {}
         },
