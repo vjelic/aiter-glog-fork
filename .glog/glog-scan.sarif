@@ -12,30 +12,6 @@
           "informationUri": "https://www.glog.ai",
           "rules": [
             {
-              "id": "a4952bd1-2225-3c01-878a-2740dffb3c54",
-              "name": "resources.rules.insecure-compile-use",
-              "shortDescription": {
-                "text": "Opengrep Finding: resources.rules.insecure-compile-use"
-              },
-              "fullDescription": {
-                "text": "The Python 'compile' function is not secure against maliciously constructed input"
-              },
-              "defaultConfiguration": {
-                "enabled": true,
-                "level": "warning"
-              },
-              "help": {
-                "text": "The Python 'compile' function is not secure against maliciously constructed input\n💎 Enable cross-file analysis and Pro rules for free at sg.run/pro",
-                "markdown": "The Python 'compile' function is not secure against maliciously constructed input\n\n#### 💎 Enable cross-file analysis and Pro rules for free at <a href='https://sg.run/pro'>sg.run/pro</a>"
-              },
-              "properties": {
-                "precision": "very-high",
-                "tags": [
-                  "resources.rules.insecure-compile-use"
-                ]
-              }
-            },
-            {
               "id": "f5c59051-729e-3831-9547-730d4e28c58c",
               "name": "resources.rules.dangerous-system-call",
               "shortDescription": {
@@ -56,6 +32,30 @@
                 "precision": "very-high",
                 "tags": [
                   "resources.rules.dangerous-system-call"
+                ]
+              }
+            },
+            {
+              "id": "91bda62e-d048-38ae-8541-708640cbe6e8",
+              "name": "resources.rules.insecure-compile-use",
+              "shortDescription": {
+                "text": "Opengrep Finding: resources.rules.insecure-compile-use"
+              },
+              "fullDescription": {
+                "text": "The Python 'compile' function is not secure against maliciously constructed input"
+              },
+              "defaultConfiguration": {
+                "enabled": true,
+                "level": "warning"
+              },
+              "help": {
+                "text": "The Python 'compile' function is not secure against maliciously constructed input\n💎 Enable cross-file analysis and Pro rules for free at sg.run/pro",
+                "markdown": "The Python 'compile' function is not secure against maliciously constructed input\n\n#### 💎 Enable cross-file analysis and Pro rules for free at <a href='https://sg.run/pro'>sg.run/pro</a>"
+              },
+              "properties": {
+                "precision": "very-high",
+                "tags": [
+                  "resources.rules.insecure-compile-use"
                 ]
               }
             },
@@ -84,7 +84,7 @@
               }
             },
             {
-              "id": "91bda62e-d048-38ae-8541-708640cbe6e8",
+              "id": "a4952bd1-2225-3c01-878a-2740dffb3c54",
               "name": "resources.rules.insecure-compile-use",
               "shortDescription": {
                 "text": "Opengrep Finding: resources.rules.insecure-compile-use"
@@ -104,6 +104,54 @@
                 "precision": "very-high",
                 "tags": [
                   "resources.rules.insecure-compile-use"
+                ]
+              }
+            },
+            {
+              "id": "a598ee1e-a520-3ade-801a-644261f0453d",
+              "name": "resources.rules.dangerous-system-call",
+              "shortDescription": {
+                "text": "Opengrep Finding: resources.rules.dangerous-system-call"
+              },
+              "fullDescription": {
+                "text": "Found dynamic content used in a system call. This is dangerous if external data can reach this function call because it allows a malicious actor to execute commands. Use the 'subprocess' module instead, which is easier to use without accidentally exposing a command injection vulnerability."
+              },
+              "defaultConfiguration": {
+                "enabled": true,
+                "level": "warning"
+              },
+              "help": {
+                "text": "Found dynamic content used in a system call. This is dangerous if external data can reach this function call because it allows a malicious actor to execute commands. Use the 'subprocess' module instead, which is easier to use without accidentally exposing a command injection vulnerability.\n💎 Enable cross-file analysis and Pro rules for free at sg.run/pro",
+                "markdown": "Found dynamic content used in a system call. This is dangerous if external data can reach this function call because it allows a malicious actor to execute commands. Use the 'subprocess' module instead, which is easier to use without accidentally exposing a command injection vulnerability.\n\n#### 💎 Enable cross-file analysis and Pro rules for free at <a href='https://sg.run/pro'>sg.run/pro</a>"
+              },
+              "properties": {
+                "precision": "very-high",
+                "tags": [
+                  "resources.rules.dangerous-system-call"
+                ]
+              }
+            },
+            {
+              "id": "325fb03d-8cd4-3eb1-b5b2-8ec523706ef8",
+              "name": "resources.rules.dangerous-system-call",
+              "shortDescription": {
+                "text": "Opengrep Finding: resources.rules.dangerous-system-call"
+              },
+              "fullDescription": {
+                "text": "Found dynamic content used in a system call. This is dangerous if external data can reach this function call because it allows a malicious actor to execute commands. Use the 'subprocess' module instead, which is easier to use without accidentally exposing a command injection vulnerability."
+              },
+              "defaultConfiguration": {
+                "enabled": true,
+                "level": "warning"
+              },
+              "help": {
+                "text": "Found dynamic content used in a system call. This is dangerous if external data can reach this function call because it allows a malicious actor to execute commands. Use the 'subprocess' module instead, which is easier to use without accidentally exposing a command injection vulnerability.\n💎 Enable cross-file analysis and Pro rules for free at sg.run/pro",
+                "markdown": "Found dynamic content used in a system call. This is dangerous if external data can reach this function call because it allows a malicious actor to execute commands. Use the 'subprocess' module instead, which is easier to use without accidentally exposing a command injection vulnerability.\n\n#### 💎 Enable cross-file analysis and Pro rules for free at <a href='https://sg.run/pro'>sg.run/pro</a>"
+              },
+              "properties": {
+                "precision": "very-high",
+                "tags": [
+                  "resources.rules.dangerous-system-call"
                 ]
               }
             },
@@ -133,74 +181,27 @@
               }
             },
             {
-              "id": "325fb03d-8cd4-3eb1-b5b2-8ec523706ef8",
-              "name": "resources.rules.dangerous-system-call",
+              "id": "6d8dbeb7-606e-3766-ae9b-8991e0ff86f1",
+              "name": "python.lang.security.audit.non-literal-import.non-literal-import",
               "shortDescription": {
-                "text": "Opengrep Finding: resources.rules.dangerous-system-call"
+                "text": "Opengrep Finding: python.lang.security.audit.non-literal-import.non-literal-import"
               },
               "fullDescription": {
-                "text": "Found dynamic content used in a system call. This is dangerous if external data can reach this function call because it allows a malicious actor to execute commands. Use the 'subprocess' module instead, which is easier to use without accidentally exposing a command injection vulnerability."
+                "text": "Untrusted user input in `importlib.import_module()` function allows an attacker to load arbitrary code. Avoid dynamic values in `importlib.import_module()` or use a whitelist to prevent running untrusted code."
               },
               "defaultConfiguration": {
                 "enabled": true,
                 "level": "warning"
               },
+              "helpUri": "https://semgrep.dev/r/python.lang.security.audit.non-literal-import.non-literal-import",
               "help": {
-                "text": "Found dynamic content used in a system call. This is dangerous if external data can reach this function call because it allows a malicious actor to execute commands. Use the 'subprocess' module instead, which is easier to use without accidentally exposing a command injection vulnerability.\n💎 Enable cross-file analysis and Pro rules for free at sg.run/pro",
-                "markdown": "Found dynamic content used in a system call. This is dangerous if external data can reach this function call because it allows a malicious actor to execute commands. Use the 'subprocess' module instead, which is easier to use without accidentally exposing a command injection vulnerability.\n\n#### 💎 Enable cross-file analysis and Pro rules for free at <a href='https://sg.run/pro'>sg.run/pro</a>"
+                "text": "Untrusted user input in `importlib.import_module()` function allows an attacker to load arbitrary code. Avoid dynamic values in `importlib.import_module()` or use a whitelist to prevent running untrusted code.\n💎 Enable cross-file analysis and Pro rules for free at sg.run/pro",
+                "markdown": "Untrusted user input in `importlib.import_module()` function allows an attacker to load arbitrary code. Avoid dynamic values in `importlib.import_module()` or use a whitelist to prevent running untrusted code.\n\n#### 💎 Enable cross-file analysis and Pro rules for free at <a href='https://sg.run/pro'>sg.run/pro</a>\n\n<b>References:</b>\n - [Semgrep Rule](https://semgrep.dev/r/python.lang.security.audit.non-literal-import.non-literal-import)\n - [https://owasp.org/Top10/A01_2021-Broken_Access_Control](https://owasp.org/Top10/A01_2021-Broken_Access_Control)\n"
               },
               "properties": {
                 "precision": "very-high",
                 "tags": [
-                  "resources.rules.dangerous-system-call"
-                ]
-              }
-            },
-            {
-              "id": "a598ee1e-a520-3ade-801a-644261f0453d",
-              "name": "resources.rules.dangerous-system-call",
-              "shortDescription": {
-                "text": "Opengrep Finding: resources.rules.dangerous-system-call"
-              },
-              "fullDescription": {
-                "text": "Found dynamic content used in a system call. This is dangerous if external data can reach this function call because it allows a malicious actor to execute commands. Use the 'subprocess' module instead, which is easier to use without accidentally exposing a command injection vulnerability."
-              },
-              "defaultConfiguration": {
-                "enabled": true,
-                "level": "warning"
-              },
-              "help": {
-                "text": "Found dynamic content used in a system call. This is dangerous if external data can reach this function call because it allows a malicious actor to execute commands. Use the 'subprocess' module instead, which is easier to use without accidentally exposing a command injection vulnerability.\n💎 Enable cross-file analysis and Pro rules for free at sg.run/pro",
-                "markdown": "Found dynamic content used in a system call. This is dangerous if external data can reach this function call because it allows a malicious actor to execute commands. Use the 'subprocess' module instead, which is easier to use without accidentally exposing a command injection vulnerability.\n\n#### 💎 Enable cross-file analysis and Pro rules for free at <a href='https://sg.run/pro'>sg.run/pro</a>"
-              },
-              "properties": {
-                "precision": "very-high",
-                "tags": [
-                  "resources.rules.dangerous-system-call"
-                ]
-              }
-            },
-            {
-              "id": "71ab11aa-18fc-3e43-b581-fe5f000e2403",
-              "name": "resources.rules.dlint-catastrophic-redos",
-              "shortDescription": {
-                "text": "Opengrep Finding: resources.rules.dlint-catastrophic-redos"
-              },
-              "fullDescription": {
-                "text": "Regex `$X` may be vulnerable to catastrophic backtracking, which may lead to denial of service attacks. (This rule only matches regex usage, not actual REDoS patterns. For full detection, use Semgrep Pro Engine.)"
-              },
-              "defaultConfiguration": {
-                "enabled": true,
-                "level": "error"
-              },
-              "help": {
-                "text": "Regex `$X` may be vulnerable to catastrophic backtracking, which may lead to denial of service attacks. (This rule only matches regex usage, not actual REDoS patterns. For full detection, use Semgrep Pro Engine.)\n💎 Enable cross-file analysis and Pro rules for free at sg.run/pro",
-                "markdown": "Regex `$X` may be vulnerable to catastrophic backtracking, which may lead to denial of service attacks. (This rule only matches regex usage, not actual REDoS patterns. For full detection, use Semgrep Pro Engine.)\n\n#### 💎 Enable cross-file analysis and Pro rules for free at <a href='https://sg.run/pro'>sg.run/pro</a>\n\n<b>References:</b>\n - [https://r2c.dev/blog/2020/finding-python-redos-bugs-at-scale-using-dlint-and-r2c/](https://r2c.dev/blog/2020/finding-python-redos-bugs-at-scale-using-dlint-and-r2c/)\n - [https://r2c.dev/blog/2020/improving-redos-detection-with-dlint-and-r2c/](https://r2c.dev/blog/2020/improving-redos-detection-with-dlint-and-r2c/)\n"
-              },
-              "properties": {
-                "precision": "very-high",
-                "tags": [
-                  "resources.rules.dlint-catastrophic-redos"
+                  "python.lang.security.audit.non-literal-import.non-literal-import"
                 ]
               }
             },
@@ -273,6 +274,30 @@
                 "precision": "very-high",
                 "tags": [
                   "resources.rules.dangerous-system-call"
+                ]
+              }
+            },
+            {
+              "id": "71ab11aa-18fc-3e43-b581-fe5f000e2403",
+              "name": "resources.rules.dlint-catastrophic-redos",
+              "shortDescription": {
+                "text": "Opengrep Finding: resources.rules.dlint-catastrophic-redos"
+              },
+              "fullDescription": {
+                "text": "Regex `$X` may be vulnerable to catastrophic backtracking, which may lead to denial of service attacks. (This rule only matches regex usage, not actual REDoS patterns. For full detection, use Semgrep Pro Engine.)"
+              },
+              "defaultConfiguration": {
+                "enabled": true,
+                "level": "error"
+              },
+              "help": {
+                "text": "Regex `$X` may be vulnerable to catastrophic backtracking, which may lead to denial of service attacks. (This rule only matches regex usage, not actual REDoS patterns. For full detection, use Semgrep Pro Engine.)\n💎 Enable cross-file analysis and Pro rules for free at sg.run/pro",
+                "markdown": "Regex `$X` may be vulnerable to catastrophic backtracking, which may lead to denial of service attacks. (This rule only matches regex usage, not actual REDoS patterns. For full detection, use Semgrep Pro Engine.)\n\n#### 💎 Enable cross-file analysis and Pro rules for free at <a href='https://sg.run/pro'>sg.run/pro</a>\n\n<b>References:</b>\n - [https://r2c.dev/blog/2020/finding-python-redos-bugs-at-scale-using-dlint-and-r2c/](https://r2c.dev/blog/2020/finding-python-redos-bugs-at-scale-using-dlint-and-r2c/)\n - [https://r2c.dev/blog/2020/improving-redos-detection-with-dlint-and-r2c/](https://r2c.dev/blog/2020/improving-redos-detection-with-dlint-and-r2c/)\n"
+              },
+              "properties": {
+                "precision": "very-high",
+                "tags": [
+                  "resources.rules.dlint-catastrophic-redos"
                 ]
               }
             },
@@ -376,7 +401,7 @@
               }
             },
             {
-              "id": "d9992a27-0b63-3a4a-968e-7ebecb5b1cfa",
+              "id": "d315cf55-861a-344b-a218-d95bb93f1671",
               "name": "resources.rules.dangerous-subprocess-use",
               "shortDescription": {
                 "text": "Opengrep Finding: resources.rules.dangerous-subprocess-use"
@@ -400,7 +425,7 @@
               }
             },
             {
-              "id": "d315cf55-861a-344b-a218-d95bb93f1671",
+              "id": "d9992a27-0b63-3a4a-968e-7ebecb5b1cfa",
               "name": "resources.rules.dangerous-subprocess-use",
               "shortDescription": {
                 "text": "Opengrep Finding: resources.rules.dangerous-subprocess-use"
@@ -496,30 +521,6 @@
               }
             },
             {
-              "id": "dda4f31b-16a9-3a84-949d-27707446748c",
-              "name": "resources.rules.dlint-catastrophic-redos",
-              "shortDescription": {
-                "text": "Opengrep Finding: resources.rules.dlint-catastrophic-redos"
-              },
-              "fullDescription": {
-                "text": "Regex `$X` may be vulnerable to catastrophic backtracking, which may lead to denial of service attacks. (This rule only matches regex usage, not actual REDoS patterns. For full detection, use Semgrep Pro Engine.)"
-              },
-              "defaultConfiguration": {
-                "enabled": true,
-                "level": "error"
-              },
-              "help": {
-                "text": "Regex `$X` may be vulnerable to catastrophic backtracking, which may lead to denial of service attacks. (This rule only matches regex usage, not actual REDoS patterns. For full detection, use Semgrep Pro Engine.)\n💎 Enable cross-file analysis and Pro rules for free at sg.run/pro",
-                "markdown": "Regex `$X` may be vulnerable to catastrophic backtracking, which may lead to denial of service attacks. (This rule only matches regex usage, not actual REDoS patterns. For full detection, use Semgrep Pro Engine.)\n\n#### 💎 Enable cross-file analysis and Pro rules for free at <a href='https://sg.run/pro'>sg.run/pro</a>\n\n<b>References:</b>\n - [https://r2c.dev/blog/2020/finding-python-redos-bugs-at-scale-using-dlint-and-r2c/](https://r2c.dev/blog/2020/finding-python-redos-bugs-at-scale-using-dlint-and-r2c/)\n - [https://r2c.dev/blog/2020/improving-redos-detection-with-dlint-and-r2c/](https://r2c.dev/blog/2020/improving-redos-detection-with-dlint-and-r2c/)\n"
-              },
-              "properties": {
-                "precision": "very-high",
-                "tags": [
-                  "resources.rules.dlint-catastrophic-redos"
-                ]
-              }
-            },
-            {
               "id": "247b09e2-5186-30d5-9193-65265dcdcc8d",
               "name": "resources.rules.dangerous-subprocess-use",
               "shortDescription": {
@@ -568,7 +569,55 @@
               }
             },
             {
+              "id": "dda4f31b-16a9-3a84-949d-27707446748c",
+              "name": "resources.rules.dlint-catastrophic-redos",
+              "shortDescription": {
+                "text": "Opengrep Finding: resources.rules.dlint-catastrophic-redos"
+              },
+              "fullDescription": {
+                "text": "Regex `$X` may be vulnerable to catastrophic backtracking, which may lead to denial of service attacks. (This rule only matches regex usage, not actual REDoS patterns. For full detection, use Semgrep Pro Engine.)"
+              },
+              "defaultConfiguration": {
+                "enabled": true,
+                "level": "error"
+              },
+              "help": {
+                "text": "Regex `$X` may be vulnerable to catastrophic backtracking, which may lead to denial of service attacks. (This rule only matches regex usage, not actual REDoS patterns. For full detection, use Semgrep Pro Engine.)\n💎 Enable cross-file analysis and Pro rules for free at sg.run/pro",
+                "markdown": "Regex `$X` may be vulnerable to catastrophic backtracking, which may lead to denial of service attacks. (This rule only matches regex usage, not actual REDoS patterns. For full detection, use Semgrep Pro Engine.)\n\n#### 💎 Enable cross-file analysis and Pro rules for free at <a href='https://sg.run/pro'>sg.run/pro</a>\n\n<b>References:</b>\n - [https://r2c.dev/blog/2020/finding-python-redos-bugs-at-scale-using-dlint-and-r2c/](https://r2c.dev/blog/2020/finding-python-redos-bugs-at-scale-using-dlint-and-r2c/)\n - [https://r2c.dev/blog/2020/improving-redos-detection-with-dlint-and-r2c/](https://r2c.dev/blog/2020/improving-redos-detection-with-dlint-and-r2c/)\n"
+              },
+              "properties": {
+                "precision": "very-high",
+                "tags": [
+                  "resources.rules.dlint-catastrophic-redos"
+                ]
+              }
+            },
+            {
               "id": "fa1fb2ed-7722-344a-9980-5355b02bcab9",
+              "name": "resources.rules.dlint-catastrophic-redos",
+              "shortDescription": {
+                "text": "Opengrep Finding: resources.rules.dlint-catastrophic-redos"
+              },
+              "fullDescription": {
+                "text": "Regex `$X` may be vulnerable to catastrophic backtracking, which may lead to denial of service attacks. (This rule only matches regex usage, not actual REDoS patterns. For full detection, use Semgrep Pro Engine.)"
+              },
+              "defaultConfiguration": {
+                "enabled": true,
+                "level": "error"
+              },
+              "help": {
+                "text": "Regex `$X` may be vulnerable to catastrophic backtracking, which may lead to denial of service attacks. (This rule only matches regex usage, not actual REDoS patterns. For full detection, use Semgrep Pro Engine.)\n💎 Enable cross-file analysis and Pro rules for free at sg.run/pro",
+                "markdown": "Regex `$X` may be vulnerable to catastrophic backtracking, which may lead to denial of service attacks. (This rule only matches regex usage, not actual REDoS patterns. For full detection, use Semgrep Pro Engine.)\n\n#### 💎 Enable cross-file analysis and Pro rules for free at <a href='https://sg.run/pro'>sg.run/pro</a>\n\n<b>References:</b>\n - [https://r2c.dev/blog/2020/finding-python-redos-bugs-at-scale-using-dlint-and-r2c/](https://r2c.dev/blog/2020/finding-python-redos-bugs-at-scale-using-dlint-and-r2c/)\n - [https://r2c.dev/blog/2020/improving-redos-detection-with-dlint-and-r2c/](https://r2c.dev/blog/2020/improving-redos-detection-with-dlint-and-r2c/)\n"
+              },
+              "properties": {
+                "precision": "very-high",
+                "tags": [
+                  "resources.rules.dlint-catastrophic-redos"
+                ]
+              }
+            },
+            {
+              "id": "6c841ee4-bb75-36ad-a50b-973de1f5cffd",
               "name": "resources.rules.dlint-catastrophic-redos",
               "shortDescription": {
                 "text": "Opengrep Finding: resources.rules.dlint-catastrophic-redos"
@@ -612,30 +661,6 @@
                 "precision": "very-high",
                 "tags": [
                   "resources.rules.dangerous-subprocess-use"
-                ]
-              }
-            },
-            {
-              "id": "6c841ee4-bb75-36ad-a50b-973de1f5cffd",
-              "name": "resources.rules.dlint-catastrophic-redos",
-              "shortDescription": {
-                "text": "Opengrep Finding: resources.rules.dlint-catastrophic-redos"
-              },
-              "fullDescription": {
-                "text": "Regex `$X` may be vulnerable to catastrophic backtracking, which may lead to denial of service attacks. (This rule only matches regex usage, not actual REDoS patterns. For full detection, use Semgrep Pro Engine.)"
-              },
-              "defaultConfiguration": {
-                "enabled": true,
-                "level": "error"
-              },
-              "help": {
-                "text": "Regex `$X` may be vulnerable to catastrophic backtracking, which may lead to denial of service attacks. (This rule only matches regex usage, not actual REDoS patterns. For full detection, use Semgrep Pro Engine.)\n💎 Enable cross-file analysis and Pro rules for free at sg.run/pro",
-                "markdown": "Regex `$X` may be vulnerable to catastrophic backtracking, which may lead to denial of service attacks. (This rule only matches regex usage, not actual REDoS patterns. For full detection, use Semgrep Pro Engine.)\n\n#### 💎 Enable cross-file analysis and Pro rules for free at <a href='https://sg.run/pro'>sg.run/pro</a>\n\n<b>References:</b>\n - [https://r2c.dev/blog/2020/finding-python-redos-bugs-at-scale-using-dlint-and-r2c/](https://r2c.dev/blog/2020/finding-python-redos-bugs-at-scale-using-dlint-and-r2c/)\n - [https://r2c.dev/blog/2020/improving-redos-detection-with-dlint-and-r2c/](https://r2c.dev/blog/2020/improving-redos-detection-with-dlint-and-r2c/)\n"
-              },
-              "properties": {
-                "precision": "very-high",
-                "tags": [
-                  "resources.rules.dlint-catastrophic-redos"
                 ]
               }
             },
@@ -1169,30 +1194,6 @@
             },
             {
               "id": "0fa28af2-43a1-373f-a877-02fde9acd90c",
-              "name": "resources.rules.string-concat-in-list",
-              "shortDescription": {
-                "text": "Opengrep Finding: resources.rules.string-concat-in-list"
-              },
-              "fullDescription": {
-                "text": "Detected strings that are implicitly concatenated inside a list.\nPython will implicitly concatenate strings when not explicitly delimited.\nWas this supposed to be individual elements of the list?\n"
-              },
-              "defaultConfiguration": {
-                "enabled": true,
-                "level": "warning"
-              },
-              "help": {
-                "text": "Detected strings that are implicitly concatenated inside a list.\nPython will implicitly concatenate strings when not explicitly delimited.\nWas this supposed to be individual elements of the list?\n\n💎 Enable cross-file analysis and Pro rules for free at sg.run/pro",
-                "markdown": "Detected strings that are implicitly concatenated inside a list.\nPython will implicitly concatenate strings when not explicitly delimited.\nWas this supposed to be individual elements of the list?\n\n\n#### 💎 Enable cross-file analysis and Pro rules for free at <a href='https://sg.run/pro'>sg.run/pro</a>"
-              },
-              "properties": {
-                "precision": "very-high",
-                "tags": [
-                  "resources.rules.string-concat-in-list"
-                ]
-              }
-            },
-            {
-              "id": "ee5bb9b7-7e48-3666-83c7-c944a95d0a35",
               "name": "resources.rules.string-concat-in-list",
               "shortDescription": {
                 "text": "Opengrep Finding: resources.rules.string-concat-in-list"
@@ -2057,7 +2058,7 @@
               }
             },
             {
-              "id": "1c561c2f-1afe-35ec-adb8-c73b028d1b4c",
+              "id": "82a35583-5306-3a91-9748-fa6f1b0c5b6a",
               "name": "resources.rules.no-interpolation-in-tag",
               "shortDescription": {
                 "text": "Opengrep Finding: resources.rules.no-interpolation-in-tag"
@@ -2081,7 +2082,7 @@
               }
             },
             {
-              "id": "82a35583-5306-3a91-9748-fa6f1b0c5b6a",
+              "id": "1c561c2f-1afe-35ec-adb8-c73b028d1b4c",
               "name": "resources.rules.no-interpolation-in-tag",
               "shortDescription": {
                 "text": "Opengrep Finding: resources.rules.no-interpolation-in-tag"
@@ -2249,30 +2250,6 @@
               }
             },
             {
-              "id": "902cc97f-b182-3e62-8680-375774fa4d07",
-              "name": "resources.rules.insecure-compile-use",
-              "shortDescription": {
-                "text": "Opengrep Finding: resources.rules.insecure-compile-use"
-              },
-              "fullDescription": {
-                "text": "The Python 'compile' function is not secure against maliciously constructed input"
-              },
-              "defaultConfiguration": {
-                "enabled": true,
-                "level": "warning"
-              },
-              "help": {
-                "text": "The Python 'compile' function is not secure against maliciously constructed input\n💎 Enable cross-file analysis and Pro rules for free at sg.run/pro",
-                "markdown": "The Python 'compile' function is not secure against maliciously constructed input\n\n#### 💎 Enable cross-file analysis and Pro rules for free at <a href='https://sg.run/pro'>sg.run/pro</a>"
-              },
-              "properties": {
-                "precision": "very-high",
-                "tags": [
-                  "resources.rules.insecure-compile-use"
-                ]
-              }
-            },
-            {
               "id": "963b38f4-a05a-3c8a-b63e-12ea7e7f66f7",
               "name": "resources.rules.no-interpolation-in-tag",
               "shortDescription": {
@@ -2293,6 +2270,30 @@
                 "precision": "very-high",
                 "tags": [
                   "resources.rules.no-interpolation-in-tag"
+                ]
+              }
+            },
+            {
+              "id": "902cc97f-b182-3e62-8680-375774fa4d07",
+              "name": "resources.rules.insecure-compile-use",
+              "shortDescription": {
+                "text": "Opengrep Finding: resources.rules.insecure-compile-use"
+              },
+              "fullDescription": {
+                "text": "The Python 'compile' function is not secure against maliciously constructed input"
+              },
+              "defaultConfiguration": {
+                "enabled": true,
+                "level": "warning"
+              },
+              "help": {
+                "text": "The Python 'compile' function is not secure against maliciously constructed input\n💎 Enable cross-file analysis and Pro rules for free at sg.run/pro",
+                "markdown": "The Python 'compile' function is not secure against maliciously constructed input\n\n#### 💎 Enable cross-file analysis and Pro rules for free at <a href='https://sg.run/pro'>sg.run/pro</a>"
+              },
+              "properties": {
+                "precision": "very-high",
+                "tags": [
+                  "resources.rules.insecure-compile-use"
                 ]
               }
             },
@@ -2345,7 +2346,7 @@
               }
             },
             {
-              "id": "9f20f984-c979-3b78-93d4-6af774343cb7",
+              "id": "a9f46f1e-43c5-3223-9e07-c667af563899",
               "name": "resources.rules.no-interpolation-in-tag",
               "shortDescription": {
                 "text": "Opengrep Finding: resources.rules.no-interpolation-in-tag"
@@ -2369,7 +2370,7 @@
               }
             },
             {
-              "id": "a9f46f1e-43c5-3223-9e07-c667af563899",
+              "id": "9f20f984-c979-3b78-93d4-6af774343cb7",
               "name": "resources.rules.no-interpolation-in-tag",
               "shortDescription": {
                 "text": "Opengrep Finding: resources.rules.no-interpolation-in-tag"
@@ -2537,7 +2538,7 @@
               }
             },
             {
-              "id": "88713006-c762-382c-a6e8-5a0a4f01d8a9",
+              "id": "e5e2d78c-1a61-3670-8ba6-eb903c30ff8c",
               "name": "resources.rules.no-interpolation-in-tag",
               "shortDescription": {
                 "text": "Opengrep Finding: resources.rules.no-interpolation-in-tag"
@@ -2561,7 +2562,7 @@
               }
             },
             {
-              "id": "e5e2d78c-1a61-3670-8ba6-eb903c30ff8c",
+              "id": "88713006-c762-382c-a6e8-5a0a4f01d8a9",
               "name": "resources.rules.no-interpolation-in-tag",
               "shortDescription": {
                 "text": "Opengrep Finding: resources.rules.no-interpolation-in-tag"
@@ -2633,7 +2634,7 @@
               }
             },
             {
-              "id": "34d0ffe5-3cba-3afc-a266-b9444587120f",
+              "id": "d879694a-2125-312c-80e2-d2f8812ded4c",
               "name": "resources.rules.no-interpolation-in-tag",
               "shortDescription": {
                 "text": "Opengrep Finding: resources.rules.no-interpolation-in-tag"
@@ -2657,7 +2658,7 @@
               }
             },
             {
-              "id": "d879694a-2125-312c-80e2-d2f8812ded4c",
+              "id": "34d0ffe5-3cba-3afc-a266-b9444587120f",
               "name": "resources.rules.no-interpolation-in-tag",
               "shortDescription": {
                 "text": "Opengrep Finding: resources.rules.no-interpolation-in-tag"
@@ -2729,7 +2730,7 @@
               }
             },
             {
-              "id": "211e5678-f705-3959-a4ed-88a44377f80b",
+              "id": "04601aab-6cde-3797-ae1c-4337f64d13a6",
               "name": "resources.rules.insecure-compile-use",
               "shortDescription": {
                 "text": "Opengrep Finding: resources.rules.insecure-compile-use"
@@ -2753,7 +2754,7 @@
               }
             },
             {
-              "id": "04601aab-6cde-3797-ae1c-4337f64d13a6",
+              "id": "211e5678-f705-3959-a4ed-88a44377f80b",
               "name": "resources.rules.insecure-compile-use",
               "shortDescription": {
                 "text": "Opengrep Finding: resources.rules.insecure-compile-use"
@@ -3114,30 +3115,6 @@
               }
             },
             {
-              "id": "6a7fa310-6fcd-3a5d-9910-c8bedab729aa",
-              "name": "resources.rules.use-sys-exit",
-              "shortDescription": {
-                "text": "Opengrep Finding: resources.rules.use-sys-exit"
-              },
-              "fullDescription": {
-                "text": "Use `sys.exit` over the python shell `exit` built-in. `exit` is a helper for the interactive shell and may not be available on all Python implementations. https://stackoverflow.com/questions/6501121/difference-between-exit-and-sys-exit-in-python"
-              },
-              "defaultConfiguration": {
-                "enabled": true,
-                "level": "warning"
-              },
-              "help": {
-                "text": "Use `sys.exit` over the python shell `exit` built-in. `exit` is a helper for the interactive shell and may not be available on all Python implementations. https://stackoverflow.com/questions/6501121/difference-between-exit-and-sys-exit-in-python\n💎 Enable cross-file analysis and Pro rules for free at sg.run/pro",
-                "markdown": "Use `sys.exit` over the python shell `exit` built-in. `exit` is a helper for the interactive shell and may not be available on all Python implementations. https://stackoverflow.com/questions/6501121/difference-between-exit-and-sys-exit-in-python\n\n#### 💎 Enable cross-file analysis and Pro rules for free at <a href='https://sg.run/pro'>sg.run/pro</a>"
-              },
-              "properties": {
-                "precision": "very-high",
-                "tags": [
-                  "resources.rules.use-sys-exit"
-                ]
-              }
-            },
-            {
               "id": "4a5eeadd-acd8-3cac-9528-71d449350071",
               "name": "python.lang.security.audit.eval-detected.eval-detected",
               "shortDescription": {
@@ -3159,6 +3136,30 @@
                 "precision": "very-high",
                 "tags": [
                   "python.lang.security.audit.eval-detected.eval-detected"
+                ]
+              }
+            },
+            {
+              "id": "6a7fa310-6fcd-3a5d-9910-c8bedab729aa",
+              "name": "resources.rules.use-sys-exit",
+              "shortDescription": {
+                "text": "Opengrep Finding: resources.rules.use-sys-exit"
+              },
+              "fullDescription": {
+                "text": "Use `sys.exit` over the python shell `exit` built-in. `exit` is a helper for the interactive shell and may not be available on all Python implementations. https://stackoverflow.com/questions/6501121/difference-between-exit-and-sys-exit-in-python"
+              },
+              "defaultConfiguration": {
+                "enabled": true,
+                "level": "warning"
+              },
+              "help": {
+                "text": "Use `sys.exit` over the python shell `exit` built-in. `exit` is a helper for the interactive shell and may not be available on all Python implementations. https://stackoverflow.com/questions/6501121/difference-between-exit-and-sys-exit-in-python\n💎 Enable cross-file analysis and Pro rules for free at sg.run/pro",
+                "markdown": "Use `sys.exit` over the python shell `exit` built-in. `exit` is a helper for the interactive shell and may not be available on all Python implementations. https://stackoverflow.com/questions/6501121/difference-between-exit-and-sys-exit-in-python\n\n#### 💎 Enable cross-file analysis and Pro rules for free at <a href='https://sg.run/pro'>sg.run/pro</a>"
+              },
+              "properties": {
+                "precision": "very-high",
+                "tags": [
+                  "resources.rules.use-sys-exit"
                 ]
               }
             },
@@ -3432,26 +3433,26 @@
               }
             },
             {
-              "id": "a0d4e265-faac-39c9-a82d-835370fbbb69",
-              "name": "resources.rules.arbitrary-sleep",
+              "id": "6dfcb85c-03a8-3cd8-b9b5-9d4de93d9502",
+              "name": "resources.rules.default-mutable-dict",
               "shortDescription": {
-                "text": "Opengrep Finding: resources.rules.arbitrary-sleep"
+                "text": "Opengrep Finding: resources.rules.default-mutable-dict"
               },
               "fullDescription": {
-                "text": "time.sleep() call; did you mean to leave this in?"
+                "text": "Function $F mutates default dict $D. Python only instantiates default function arguments once and shares the instance across the function calls. If the default function argument is mutated, that will modify the instance used by all future function calls. This can cause unexpected results, or lead to security vulnerabilities whereby one function consumer can view or modify the data of another function consumer. Instead, use a default argument (like None) to indicate that no argument was provided and instantiate a new dictionary at that time. For example: `if $D is None: $D = {}`."
               },
               "defaultConfiguration": {
                 "enabled": true,
                 "level": "error"
               },
               "help": {
-                "text": "time.sleep() call; did you mean to leave this in?\n💎 Enable cross-file analysis and Pro rules for free at sg.run/pro",
-                "markdown": "time.sleep() call; did you mean to leave this in?\n\n#### 💎 Enable cross-file analysis and Pro rules for free at <a href='https://sg.run/pro'>sg.run/pro</a>"
+                "text": "Function $F mutates default dict $D. Python only instantiates default function arguments once and shares the instance across the function calls. If the default function argument is mutated, that will modify the instance used by all future function calls. This can cause unexpected results, or lead to security vulnerabilities whereby one function consumer can view or modify the data of another function consumer. Instead, use a default argument (like None) to indicate that no argument was provided and instantiate a new dictionary at that time. For example: `if $D is None: $D = {}`.\n💎 Enable cross-file analysis and Pro rules for free at sg.run/pro",
+                "markdown": "Function $F mutates default dict $D. Python only instantiates default function arguments once and shares the instance across the function calls. If the default function argument is mutated, that will modify the instance used by all future function calls. This can cause unexpected results, or lead to security vulnerabilities whereby one function consumer can view or modify the data of another function consumer. Instead, use a default argument (like None) to indicate that no argument was provided and instantiate a new dictionary at that time. For example: `if $D is None: $D = {}`.\n\n#### 💎 Enable cross-file analysis and Pro rules for free at <a href='https://sg.run/pro'>sg.run/pro</a>"
               },
               "properties": {
                 "precision": "very-high",
                 "tags": [
-                  "resources.rules.arbitrary-sleep"
+                  "resources.rules.default-mutable-dict"
                 ]
               }
             },
@@ -3476,30 +3477,6 @@
                 "precision": "very-high",
                 "tags": [
                   "resources.rules.missing-ratelimit"
-                ]
-              }
-            },
-            {
-              "id": "6dfcb85c-03a8-3cd8-b9b5-9d4de93d9502",
-              "name": "resources.rules.default-mutable-dict",
-              "shortDescription": {
-                "text": "Opengrep Finding: resources.rules.default-mutable-dict"
-              },
-              "fullDescription": {
-                "text": "Function $F mutates default dict $D. Python only instantiates default function arguments once and shares the instance across the function calls. If the default function argument is mutated, that will modify the instance used by all future function calls. This can cause unexpected results, or lead to security vulnerabilities whereby one function consumer can view or modify the data of another function consumer. Instead, use a default argument (like None) to indicate that no argument was provided and instantiate a new dictionary at that time. For example: `if $D is None: $D = {}`."
-              },
-              "defaultConfiguration": {
-                "enabled": true,
-                "level": "error"
-              },
-              "help": {
-                "text": "Function $F mutates default dict $D. Python only instantiates default function arguments once and shares the instance across the function calls. If the default function argument is mutated, that will modify the instance used by all future function calls. This can cause unexpected results, or lead to security vulnerabilities whereby one function consumer can view or modify the data of another function consumer. Instead, use a default argument (like None) to indicate that no argument was provided and instantiate a new dictionary at that time. For example: `if $D is None: $D = {}`.\n💎 Enable cross-file analysis and Pro rules for free at sg.run/pro",
-                "markdown": "Function $F mutates default dict $D. Python only instantiates default function arguments once and shares the instance across the function calls. If the default function argument is mutated, that will modify the instance used by all future function calls. This can cause unexpected results, or lead to security vulnerabilities whereby one function consumer can view or modify the data of another function consumer. Instead, use a default argument (like None) to indicate that no argument was provided and instantiate a new dictionary at that time. For example: `if $D is None: $D = {}`.\n\n#### 💎 Enable cross-file analysis and Pro rules for free at <a href='https://sg.run/pro'>sg.run/pro</a>"
-              },
-              "properties": {
-                "precision": "very-high",
-                "tags": [
-                  "resources.rules.default-mutable-dict"
                 ]
               }
             },
@@ -3539,37 +3516,6 @@
       "language": "en-US",
       "results": [
         {
-          "ruleId": "a4952bd1-2225-3c01-878a-2740dffb3c54",
-          "kind": "fail",
-          "level": "warning",
-          "message": {
-            "text": "The Python 'compile' function is not secure against maliciously constructed input"
-          },
-          "locations": [
-            {
-              "physicalLocation": {
-                "artifactLocation": {
-                  "uri": "aiter/aot/pa_ragged.py",
-                  "uriBaseId": "%SRCROOT%"
-                },
-                "region": {
-                  "startLine": 23,
-                  "startColumn": 12,
-                  "endLine": 33,
-                  "endColumn": 6,
-                  "snippet": {
-                    "text": "    return compile(\n        config.gqa_ratio,\n        config.head_size,\n        config.npar_loops,\n        config.dtype,\n        config.kv_dtype,\n        config.fp8_kv_dtype,\n        config.out_dtype,\n        config.block_size,\n        config.alibi_enabled,\n    )"
-                  }
-                }
-              }
-            }
-          ],
-          "fingerprints": {
-            "matchBasedId/v1": "5a8aa3ca67c09477a516f5faf1e8785ac8ecb62ebae625aee3aecb05a066bbc77b73e49ffd6fe7e9971ec8027c4cc40d83a474195a7a7f93d6f0c2f4ac935bc3_0"
-          },
-          "properties": {}
-        },
-        {
           "ruleId": "f5c59051-729e-3831-9547-730d4e28c58c",
           "kind": "fail",
           "level": "warning",
@@ -3597,37 +3543,6 @@
           ],
           "fingerprints": {
             "matchBasedId/v1": "879a215b00295980d3b59207febef2ab46a904a469129e50cd807b64ac099200ab2a5ffadfaea2eb7ea7ff5a84e48e763ce5782e12022c53aaf31699c817e98b_0"
-          },
-          "properties": {}
-        },
-        {
-          "ruleId": "5d7f5253-d0ca-383f-9aef-57c08f8e1a6e",
-          "kind": "fail",
-          "level": "warning",
-          "message": {
-            "text": "The Python 'compile' function is not secure against maliciously constructed input"
-          },
-          "locations": [
-            {
-              "physicalLocation": {
-                "artifactLocation": {
-                  "uri": "aiter/aot/asm_mla_decode_fwd.py",
-                  "uriBaseId": "%SRCROOT%"
-                },
-                "region": {
-                  "startLine": 21,
-                  "startColumn": 12,
-                  "endLine": 28,
-                  "endColumn": 6,
-                  "snippet": {
-                    "text": "    return compile(\n        config.hsaco_path,\n        config.page_size,\n        config.q_itemsize,\n        config.kv_itemsize,\n        config.num_kv_splits,\n        config.v_head_dim,\n    )"
-                  }
-                }
-              }
-            }
-          ],
-          "fingerprints": {
-            "matchBasedId/v1": "36d986014342bfe3e002f808e5f89983818b1cf5c031b1b62af2ea37bc7d186403d5e252f17b47aad888bf1da6c2b0667f8a805233eceef00448e74540f42dec_0"
           },
           "properties": {}
         },
@@ -3663,64 +3578,64 @@
           "properties": {}
         },
         {
-          "ruleId": "50cb0d87-f7be-33fc-995f-ff887fb81b78",
+          "ruleId": "5d7f5253-d0ca-383f-9aef-57c08f8e1a6e",
           "kind": "fail",
           "level": "warning",
           "message": {
-            "text": "Untrusted user input in `importlib.import_module()` function allows an attacker to load arbitrary code. Avoid dynamic values in `importlib.import_module()` or use a whitelist to prevent running untrusted code."
+            "text": "The Python 'compile' function is not secure against maliciously constructed input"
           },
           "locations": [
             {
               "physicalLocation": {
                 "artifactLocation": {
-                  "uri": "aiter/jit/core.py",
+                  "uri": "aiter/aot/asm_mla_decode_fwd.py",
                   "uriBaseId": "%SRCROOT%"
                 },
                 "region": {
-                  "startLine": 228,
-                  "startColumn": 26,
-                  "endLine": 228,
-                  "endColumn": 77,
+                  "startLine": 21,
+                  "startColumn": 12,
+                  "endLine": 28,
+                  "endColumn": 6,
                   "snippet": {
-                    "text": "        __mds[md_name] = importlib.import_module(f\"{__package__}.{md_name}\")"
+                    "text": "    return compile(\n        config.hsaco_path,\n        config.page_size,\n        config.q_itemsize,\n        config.kv_itemsize,\n        config.num_kv_splits,\n        config.v_head_dim,\n    )"
                   }
                 }
               }
             }
           ],
           "fingerprints": {
-            "matchBasedId/v1": "84791f8c7c59458230a05697357d97d08724ebc3b7f2769e455531773960b42aefafd70c52f8390f728198542c8661e6012d7b8b3d7d03e825450a62a77de45f_0"
+            "matchBasedId/v1": "36d986014342bfe3e002f808e5f89983818b1cf5c031b1b62af2ea37bc7d186403d5e252f17b47aad888bf1da6c2b0667f8a805233eceef00448e74540f42dec_0"
           },
           "properties": {}
         },
         {
-          "ruleId": "325fb03d-8cd4-3eb1-b5b2-8ec523706ef8",
+          "ruleId": "a4952bd1-2225-3c01-878a-2740dffb3c54",
           "kind": "fail",
           "level": "warning",
           "message": {
-            "text": "Found dynamic content used in a system call. This is dangerous if external data can reach this function call because it allows a malicious actor to execute commands. Use the 'subprocess' module instead, which is easier to use without accidentally exposing a command injection vulnerability."
+            "text": "The Python 'compile' function is not secure against maliciously constructed input"
           },
           "locations": [
             {
               "physicalLocation": {
                 "artifactLocation": {
-                  "uri": "aiter/jit/core.py",
+                  "uri": "aiter/aot/pa_ragged.py",
                   "uriBaseId": "%SRCROOT%"
                 },
                 "region": {
-                  "startLine": 243,
-                  "startColumn": 5,
-                  "endLine": 243,
-                  "endColumn": 59,
+                  "startLine": 23,
+                  "startColumn": 12,
+                  "endLine": 33,
+                  "endColumn": 6,
                   "snippet": {
-                    "text": "    os.system(f\"rm -rf {get_user_jit_dir()}/{md_name}.so\")"
+                    "text": "    return compile(\n        config.gqa_ratio,\n        config.head_size,\n        config.npar_loops,\n        config.dtype,\n        config.kv_dtype,\n        config.fp8_kv_dtype,\n        config.out_dtype,\n        config.block_size,\n        config.alibi_enabled,\n    )"
                   }
                 }
               }
             }
           ],
           "fingerprints": {
-            "matchBasedId/v1": "b217c550ab6bce63c75aee491ddcd4d11520b143a7e6e81e399aa887caee795a6e46b5d04f2d3d88e8e0793e3b66b2c3232128164db2ae6cc5b248cf703576e4_1"
+            "matchBasedId/v1": "5a8aa3ca67c09477a516f5faf1e8785ac8ecb62ebae625aee3aecb05a066bbc77b73e49ffd6fe7e9971ec8027c4cc40d83a474195a7a7f93d6f0c2f4ac935bc3_0"
           },
           "properties": {}
         },
@@ -3756,11 +3671,11 @@
           "properties": {}
         },
         {
-          "ruleId": "71ab11aa-18fc-3e43-b581-fe5f000e2403",
+          "ruleId": "325fb03d-8cd4-3eb1-b5b2-8ec523706ef8",
           "kind": "fail",
           "level": "warning",
           "message": {
-            "text": "Regex `\"error:\"` may be vulnerable to catastrophic backtracking, which may lead to denial of service attacks. (This rule only matches regex usage, not actual REDoS patterns. For full detection, use Semgrep Pro Engine.)"
+            "text": "Found dynamic content used in a system call. This is dangerous if external data can reach this function call because it allows a malicious actor to execute commands. Use the 'subprocess' module instead, which is easier to use without accidentally exposing a command injection vulnerability."
           },
           "locations": [
             {
@@ -3770,19 +3685,81 @@
                   "uriBaseId": "%SRCROOT%"
                 },
                 "region": {
-                  "startLine": 402,
-                  "startColumn": 21,
-                  "endLine": 407,
-                  "endColumn": 22,
+                  "startLine": 243,
+                  "startColumn": 5,
+                  "endLine": 243,
+                  "endColumn": 59,
                   "snippet": {
-                    "text": "                    re.sub(\n                        \"error:\",\n                        \"\\033[31merror:\\033[0m\",\n                        \"-->\".join(traceback.format_exception(*sys.exc_info())),\n                        flags=re.I,\n                    ),"
+                    "text": "    os.system(f\"rm -rf {get_user_jit_dir()}/{md_name}.so\")"
                   }
                 }
               }
             }
           ],
           "fingerprints": {
-            "matchBasedId/v1": "0de60eb9bc0d78d169f2e47546c1ea3ac8c269558208913dbfce81ba766f20fabf8e28a11c85784640ecb42eb8fc9d7e2e1fa985766a27ca26322aad88ed1c55_0"
+            "matchBasedId/v1": "b217c550ab6bce63c75aee491ddcd4d11520b143a7e6e81e399aa887caee795a6e46b5d04f2d3d88e8e0793e3b66b2c3232128164db2ae6cc5b248cf703576e4_1"
+          },
+          "properties": {}
+        },
+        {
+          "ruleId": "50cb0d87-f7be-33fc-995f-ff887fb81b78",
+          "kind": "fail",
+          "level": "warning",
+          "message": {
+            "text": "Untrusted user input in `importlib.import_module()` function allows an attacker to load arbitrary code. Avoid dynamic values in `importlib.import_module()` or use a whitelist to prevent running untrusted code."
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "aiter/jit/core.py",
+                  "uriBaseId": "%SRCROOT%"
+                },
+                "region": {
+                  "startLine": 228,
+                  "startColumn": 26,
+                  "endLine": 228,
+                  "endColumn": 77,
+                  "snippet": {
+                    "text": "        __mds[md_name] = importlib.import_module(f\"{__package__}.{md_name}\")"
+                  }
+                }
+              }
+            }
+          ],
+          "fingerprints": {
+            "matchBasedId/v1": "84791f8c7c59458230a05697357d97d08724ebc3b7f2769e455531773960b42aefafd70c52f8390f728198542c8661e6012d7b8b3d7d03e825450a62a77de45f_0"
+          },
+          "properties": {}
+        },
+        {
+          "ruleId": "6d8dbeb7-606e-3766-ae9b-8991e0ff86f1",
+          "kind": "fail",
+          "level": "warning",
+          "message": {
+            "text": "Untrusted user input in `importlib.import_module()` function allows an attacker to load arbitrary code. Avoid dynamic values in `importlib.import_module()` or use a whitelist to prevent running untrusted code."
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "aiter/jit/core.py",
+                  "uriBaseId": "%SRCROOT%"
+                },
+                "region": {
+                  "startLine": 58,
+                  "startColumn": 14,
+                  "endLine": 58,
+                  "endColumn": 62,
+                  "snippet": {
+                    "text": "    aiter_ = importlib.import_module(f\"{__package__}.aiter_\")"
+                  }
+                }
+              }
+            }
+          ],
+          "fingerprints": {
+            "matchBasedId/v1": "9556270060d56ae99c1458039d3e0f19cc66758e45e794f2692c273d0c3e20713caf8d1204e46ed456f5790d0ff26b3395ff8b505bb7843f87bfb9083b40593f_0"
           },
           "properties": {}
         },
@@ -3876,6 +3853,37 @@
           ],
           "fingerprints": {
             "matchBasedId/v1": "b217c550ab6bce63c75aee491ddcd4d11520b143a7e6e81e399aa887caee795a6e46b5d04f2d3d88e8e0793e3b66b2c3232128164db2ae6cc5b248cf703576e4_4"
+          },
+          "properties": {}
+        },
+        {
+          "ruleId": "71ab11aa-18fc-3e43-b581-fe5f000e2403",
+          "kind": "fail",
+          "level": "warning",
+          "message": {
+            "text": "Regex `\"error:\"` may be vulnerable to catastrophic backtracking, which may lead to denial of service attacks. (This rule only matches regex usage, not actual REDoS patterns. For full detection, use Semgrep Pro Engine.)"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "aiter/jit/core.py",
+                  "uriBaseId": "%SRCROOT%"
+                },
+                "region": {
+                  "startLine": 402,
+                  "startColumn": 21,
+                  "endLine": 407,
+                  "endColumn": 22,
+                  "snippet": {
+                    "text": "                    re.sub(\n                        \"error:\",\n                        \"\\033[31merror:\\033[0m\",\n                        \"-->\".join(traceback.format_exception(*sys.exc_info())),\n                        flags=re.I,\n                    ),"
+                  }
+                }
+              }
+            }
+          ],
+          "fingerprints": {
+            "matchBasedId/v1": "0de60eb9bc0d78d169f2e47546c1ea3ac8c269558208913dbfce81ba766f20fabf8e28a11c85784640ecb42eb8fc9d7e2e1fa985766a27ca26322aad88ed1c55_0"
           },
           "properties": {}
         },
@@ -4004,37 +4012,6 @@
           "properties": {}
         },
         {
-          "ruleId": "d9992a27-0b63-3a4a-968e-7ebecb5b1cfa",
-          "kind": "fail",
-          "level": "warning",
-          "message": {
-            "text": "Detected subprocess function 'run' without a static string. If this data can be\ncontrolled by a malicious actor, it may be an instance of command injection.\nAudit the use of this call to ensure it is not controllable by an external resource.\nYou may consider using 'shlex.escape()'.\n"
-          },
-          "locations": [
-            {
-              "physicalLocation": {
-                "artifactLocation": {
-                  "uri": "aiter/jit/utils/chip_info.py",
-                  "uriBaseId": "%SRCROOT%"
-                },
-                "region": {
-                  "startLine": 28,
-                  "startColumn": 18,
-                  "endLine": 34,
-                  "endColumn": 10,
-                  "snippet": {
-                    "text": "        result = subprocess.run(\n            [rocminfo],\n            stdout=subprocess.PIPE,\n            stderr=subprocess.PIPE,\n            text=True,\n            check=True,\n        )"
-                  }
-                }
-              }
-            }
-          ],
-          "fingerprints": {
-            "matchBasedId/v1": "a1b9eb488036b4782a76c211ecd6a7f5a386a370b88ea3a1908bf8262c4ec99c1698ea112df15d1321b601712ae92e6cba4a119e40abb2600c60ce9dab73c0f7_0"
-          },
-          "properties": {}
-        },
-        {
           "ruleId": "d315cf55-861a-344b-a218-d95bb93f1671",
           "kind": "fail",
           "level": "warning",
@@ -4062,6 +4039,37 @@
           ],
           "fingerprints": {
             "matchBasedId/v1": "a1b9eb488036b4782a76c211ecd6a7f5a386a370b88ea3a1908bf8262c4ec99c1698ea112df15d1321b601712ae92e6cba4a119e40abb2600c60ce9dab73c0f7_1"
+          },
+          "properties": {}
+        },
+        {
+          "ruleId": "d9992a27-0b63-3a4a-968e-7ebecb5b1cfa",
+          "kind": "fail",
+          "level": "warning",
+          "message": {
+            "text": "Detected subprocess function 'run' without a static string. If this data can be\ncontrolled by a malicious actor, it may be an instance of command injection.\nAudit the use of this call to ensure it is not controllable by an external resource.\nYou may consider using 'shlex.escape()'.\n"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "aiter/jit/utils/chip_info.py",
+                  "uriBaseId": "%SRCROOT%"
+                },
+                "region": {
+                  "startLine": 28,
+                  "startColumn": 18,
+                  "endLine": 34,
+                  "endColumn": 10,
+                  "snippet": {
+                    "text": "        result = subprocess.run(\n            [rocminfo],\n            stdout=subprocess.PIPE,\n            stderr=subprocess.PIPE,\n            text=True,\n            check=True,\n        )"
+                  }
+                }
+              }
+            }
+          ],
+          "fingerprints": {
+            "matchBasedId/v1": "a1b9eb488036b4782a76c211ecd6a7f5a386a370b88ea3a1908bf8262c4ec99c1698ea112df15d1321b601712ae92e6cba4a119e40abb2600c60ce9dab73c0f7_0"
           },
           "properties": {}
         },
@@ -4159,37 +4167,6 @@
           "properties": {}
         },
         {
-          "ruleId": "dda4f31b-16a9-3a84-949d-27707446748c",
-          "kind": "fail",
-          "level": "warning",
-          "message": {
-            "text": "Regex `r\"\\d+\\.\\d+\\.\\d+\\w+\\+\\w+\"` may be vulnerable to catastrophic backtracking, which may lead to denial of service attacks. (This rule only matches regex usage, not actual REDoS patterns. For full detection, use Semgrep Pro Engine.)"
-          },
-          "locations": [
-            {
-              "physicalLocation": {
-                "artifactLocation": {
-                  "uri": "aiter/jit/utils/cpp_extension.py",
-                  "uriBaseId": "%SRCROOT%"
-                },
-                "region": {
-                  "startLine": 185,
-                  "startColumn": 37,
-                  "endLine": 185,
-                  "endColumn": 73,
-                  "snippet": {
-                    "text": "BUILT_FROM_SOURCE_VERSION_PATTERN = re.compile(r\"\\d+\\.\\d+\\.\\d+\\w+\\+\\w+\")"
-                  }
-                }
-              }
-            }
-          ],
-          "fingerprints": {
-            "matchBasedId/v1": "9d3e3a77b1f2a88d21f5314cde21438e9fed829d40fd3b023c903b4ef5922815f3d0e40c3b3cfb6391da05515616b8ea1349ab2bf61f43f5b5183c7cc231885f_0"
-          },
-          "properties": {}
-        },
-        {
           "ruleId": "247b09e2-5186-30d5-9193-65265dcdcc8d",
           "kind": "fail",
           "level": "warning",
@@ -4252,6 +4229,37 @@
           "properties": {}
         },
         {
+          "ruleId": "dda4f31b-16a9-3a84-949d-27707446748c",
+          "kind": "fail",
+          "level": "warning",
+          "message": {
+            "text": "Regex `r\"\\d+\\.\\d+\\.\\d+\\w+\\+\\w+\"` may be vulnerable to catastrophic backtracking, which may lead to denial of service attacks. (This rule only matches regex usage, not actual REDoS patterns. For full detection, use Semgrep Pro Engine.)"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "aiter/jit/utils/cpp_extension.py",
+                  "uriBaseId": "%SRCROOT%"
+                },
+                "region": {
+                  "startLine": 185,
+                  "startColumn": 37,
+                  "endLine": 185,
+                  "endColumn": 73,
+                  "snippet": {
+                    "text": "BUILT_FROM_SOURCE_VERSION_PATTERN = re.compile(r\"\\d+\\.\\d+\\.\\d+\\w+\\+\\w+\")"
+                  }
+                }
+              }
+            }
+          ],
+          "fingerprints": {
+            "matchBasedId/v1": "9d3e3a77b1f2a88d21f5314cde21438e9fed829d40fd3b023c903b4ef5922815f3d0e40c3b3cfb6391da05515616b8ea1349ab2bf61f43f5b5183c7cc231885f_0"
+          },
+          "properties": {}
+        },
+        {
           "ruleId": "fa1fb2ed-7722-344a-9980-5355b02bcab9",
           "kind": "fail",
           "level": "warning",
@@ -4283,37 +4291,6 @@
           "properties": {}
         },
         {
-          "ruleId": "2d4ca271-dd78-3ca0-963b-1e1cf1a52666",
-          "kind": "fail",
-          "level": "warning",
-          "message": {
-            "text": "Detected subprocess function 'check_output' without a static string. If this data can be\ncontrolled by a malicious actor, it may be an instance of command injection.\nAudit the use of this call to ensure it is not controllable by an external resource.\nYou may consider using 'shlex.escape()'.\n"
-          },
-          "locations": [
-            {
-              "physicalLocation": {
-                "artifactLocation": {
-                  "uri": "aiter/jit/utils/cpp_extension.py",
-                  "uriBaseId": "%SRCROOT%"
-                },
-                "region": {
-                  "startLine": 356,
-                  "startColumn": 26,
-                  "endLine": 358,
-                  "endColumn": 14,
-                  "snippet": {
-                    "text": "            versionstr = subprocess.check_output(\n                [compiler, \"-dumpfullversion\", \"-dumpversion\"]\n            )"
-                  }
-                }
-              }
-            }
-          ],
-          "fingerprints": {
-            "matchBasedId/v1": "9f0059ed3f9fe324319aead28598888b5fcaff2b5f972343345ff87480d1fd620b6556c49dc6f34334195c8a92ab019b8f8dc5e88de8c6f7261462e79e071dd1_2"
-          },
-          "properties": {}
-        },
-        {
           "ruleId": "6c841ee4-bb75-36ad-a50b-973de1f5cffd",
           "kind": "fail",
           "level": "warning",
@@ -4341,6 +4318,37 @@
           ],
           "fingerprints": {
             "matchBasedId/v1": "bbcc1d57de40b317dd272b1d4830c1cbdfabd6f0db5575f0f30baa7ef671866454078586b31e8e117b166112cdc148f0020fa9c87005713f0dd7ac86ac8e01ce_0"
+          },
+          "properties": {}
+        },
+        {
+          "ruleId": "2d4ca271-dd78-3ca0-963b-1e1cf1a52666",
+          "kind": "fail",
+          "level": "warning",
+          "message": {
+            "text": "Detected subprocess function 'check_output' without a static string. If this data can be\ncontrolled by a malicious actor, it may be an instance of command injection.\nAudit the use of this call to ensure it is not controllable by an external resource.\nYou may consider using 'shlex.escape()'.\n"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "aiter/jit/utils/cpp_extension.py",
+                  "uriBaseId": "%SRCROOT%"
+                },
+                "region": {
+                  "startLine": 356,
+                  "startColumn": 26,
+                  "endLine": 358,
+                  "endColumn": 14,
+                  "snippet": {
+                    "text": "            versionstr = subprocess.check_output(\n                [compiler, \"-dumpfullversion\", \"-dumpversion\"]\n            )"
+                  }
+                }
+              }
+            }
+          ],
+          "fingerprints": {
+            "matchBasedId/v1": "9f0059ed3f9fe324319aead28598888b5fcaff2b5f972343345ff87480d1fd620b6556c49dc6f34334195c8a92ab019b8f8dc5e88de8c6f7261462e79e071dd1_2"
           },
           "properties": {}
         },
@@ -5054,37 +5062,6 @@
           ],
           "fingerprints": {
             "matchBasedId/v1": "ebd20524d8eef79d5d3ebafcf9ebe9ad72f6c46a346b627f92251c36a42bfa3dfa05e347874b4b00fa9e4702527d1f6e382bb95ac13f6d5cd17692e268a3d0e4_0"
-          },
-          "properties": {}
-        },
-        {
-          "ruleId": "ee5bb9b7-7e48-3666-83c7-c944a95d0a35",
-          "kind": "fail",
-          "level": "warning",
-          "message": {
-            "text": "Detected strings that are implicitly concatenated inside a list.\nPython will implicitly concatenate strings when not explicitly delimited.\nWas this supposed to be individual elements of the list?\n"
-          },
-          "locations": [
-            {
-              "physicalLocation": {
-                "artifactLocation": {
-                  "uri": "aiter/ops/mha.py",
-                  "uriBaseId": "%SRCROOT%"
-                },
-                "region": {
-                  "startLine": 301,
-                  "startColumn": 13,
-                  "endLine": 302,
-                  "endColumn": 58,
-                  "snippet": {
-                    "text": "            f\"{CK_DIR}/example/ck_tile/01_fmha/generate.py -d fwd \"\n            \"--receipt 200 --filter {} --output_dir {{}}\".format(filter_fwd)"
-                  }
-                }
-              }
-            }
-          ],
-          "fingerprints": {
-            "matchBasedId/v1": "ebd20524d8eef79d5d3ebafcf9ebe9ad72f6c46a346b627f92251c36a42bfa3dfa05e347874b4b00fa9e4702527d1f6e382bb95ac13f6d5cd17692e268a3d0e4_1"
           },
           "properties": {}
         },
@@ -6174,37 +6151,6 @@
           "properties": {}
         },
         {
-          "ruleId": "1c561c2f-1afe-35ec-adb8-c73b028d1b4c",
-          "kind": "fail",
-          "level": "warning",
-          "message": {
-            "text": "Detected template variable interpolation in an HTML tag.\nThis is potentially vulnerable to cross-site scripting (XSS)\nattacks because a malicious actor has control over HTML\nbut without the need to use escaped characters. Use explicit\ntags instead.\n"
-          },
-          "locations": [
-            {
-              "physicalLocation": {
-                "artifactLocation": {
-                  "uri": "csrc/cpp_itfs/pa/pa.cpp.jinja",
-                  "uriBaseId": "%SRCROOT%"
-                },
-                "region": {
-                  "startLine": 46,
-                  "startColumn": 25,
-                  "endLine": 46,
-                  "endColumn": 37,
-                  "snippet": {
-                    "text": "        reinterpret_cast<{{dtype}}*>(tmp_out_ptr_);"
-                  }
-                }
-              }
-            }
-          ],
-          "fingerprints": {
-            "matchBasedId/v1": "af03f52e4b1f5f09b037a83d37b686fc704817ce8345655dd4cae11d1ee4a5a836e5e46d52a4de642de559deda6394029bc3aa13e1a5d7981f0da93681c3a750_0"
-          },
-          "properties": {}
-        },
-        {
           "ruleId": "82a35583-5306-3a91-9748-fa6f1b0c5b6a",
           "kind": "fail",
           "level": "warning",
@@ -6232,6 +6178,37 @@
           ],
           "fingerprints": {
             "matchBasedId/v1": "af03f52e4b1f5f09b037a83d37b686fc704817ce8345655dd4cae11d1ee4a5a836e5e46d52a4de642de559deda6394029bc3aa13e1a5d7981f0da93681c3a750_1"
+          },
+          "properties": {}
+        },
+        {
+          "ruleId": "1c561c2f-1afe-35ec-adb8-c73b028d1b4c",
+          "kind": "fail",
+          "level": "warning",
+          "message": {
+            "text": "Detected template variable interpolation in an HTML tag.\nThis is potentially vulnerable to cross-site scripting (XSS)\nattacks because a malicious actor has control over HTML\nbut without the need to use escaped characters. Use explicit\ntags instead.\n"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "csrc/cpp_itfs/pa/pa.cpp.jinja",
+                  "uriBaseId": "%SRCROOT%"
+                },
+                "region": {
+                  "startLine": 46,
+                  "startColumn": 25,
+                  "endLine": 46,
+                  "endColumn": 37,
+                  "snippet": {
+                    "text": "        reinterpret_cast<{{dtype}}*>(tmp_out_ptr_);"
+                  }
+                }
+              }
+            }
+          ],
+          "fingerprints": {
+            "matchBasedId/v1": "af03f52e4b1f5f09b037a83d37b686fc704817ce8345655dd4cae11d1ee4a5a836e5e46d52a4de642de559deda6394029bc3aa13e1a5d7981f0da93681c3a750_0"
           },
           "properties": {}
         },
@@ -6422,37 +6399,6 @@
           "properties": {}
         },
         {
-          "ruleId": "902cc97f-b182-3e62-8680-375774fa4d07",
-          "kind": "fail",
-          "level": "warning",
-          "message": {
-            "text": "The Python 'compile' function is not secure against maliciously constructed input"
-          },
-          "locations": [
-            {
-              "physicalLocation": {
-                "artifactLocation": {
-                  "uri": "csrc/cpp_itfs/pa/pa.py",
-                  "uriBaseId": "%SRCROOT%"
-                },
-                "region": {
-                  "startLine": 229,
-                  "startColumn": 5,
-                  "endLine": 229,
-                  "endColumn": 26,
-                  "snippet": {
-                    "text": "    compile(**vars(args))"
-                  }
-                }
-              }
-            }
-          ],
-          "fingerprints": {
-            "matchBasedId/v1": "2168ea3b1999f83f50381a66f929e95ad19ea3fd81de86002af00ca5a42fcecf67b789670bc1527a64e3bd3371774c9739f518e5ba360a2713813d91b05cadf3_1"
-          },
-          "properties": {}
-        },
-        {
           "ruleId": "963b38f4-a05a-3c8a-b63e-12ea7e7f66f7",
           "kind": "fail",
           "level": "warning",
@@ -6480,6 +6426,37 @@
           ],
           "fingerprints": {
             "matchBasedId/v1": "5cce83797f193b9c9fbac0085806e8adb1ead36e473e627b9a6753ea1a9e6a6a16bbb2fa9d1067c7d4c62d76d1b4673ffe2c8b5c9f5741a8170e18f7f1de1264_0"
+          },
+          "properties": {}
+        },
+        {
+          "ruleId": "902cc97f-b182-3e62-8680-375774fa4d07",
+          "kind": "fail",
+          "level": "warning",
+          "message": {
+            "text": "The Python 'compile' function is not secure against maliciously constructed input"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "csrc/cpp_itfs/pa/pa.py",
+                  "uriBaseId": "%SRCROOT%"
+                },
+                "region": {
+                  "startLine": 229,
+                  "startColumn": 5,
+                  "endLine": 229,
+                  "endColumn": 26,
+                  "snippet": {
+                    "text": "    compile(**vars(args))"
+                  }
+                }
+              }
+            }
+          ],
+          "fingerprints": {
+            "matchBasedId/v1": "2168ea3b1999f83f50381a66f929e95ad19ea3fd81de86002af00ca5a42fcecf67b789670bc1527a64e3bd3371774c9739f518e5ba360a2713813d91b05cadf3_1"
           },
           "properties": {}
         },
@@ -6546,37 +6523,6 @@
           "properties": {}
         },
         {
-          "ruleId": "9f20f984-c979-3b78-93d4-6af774343cb7",
-          "kind": "fail",
-          "level": "warning",
-          "message": {
-            "text": "Detected template variable interpolation in an HTML tag.\nThis is potentially vulnerable to cross-site scripting (XSS)\nattacks because a malicious actor has control over HTML\nbut without the need to use escaped characters. Use explicit\ntags instead.\n"
-          },
-          "locations": [
-            {
-              "physicalLocation": {
-                "artifactLocation": {
-                  "uri": "csrc/cpp_itfs/pa/pa_ragged.cpp.jinja",
-                  "uriBaseId": "%SRCROOT%"
-                },
-                "region": {
-                  "startLine": 87,
-                  "startColumn": 53,
-                  "endLine": 87,
-                  "endColumn": 68,
-                  "snippet": {
-                    "text": "                                    reinterpret_cast<{{kv_dtype}}*>(key_cache_ptr),"
-                  }
-                }
-              }
-            }
-          ],
-          "fingerprints": {
-            "matchBasedId/v1": "5cce83797f193b9c9fbac0085806e8adb1ead36e473e627b9a6753ea1a9e6a6a16bbb2fa9d1067c7d4c62d76d1b4673ffe2c8b5c9f5741a8170e18f7f1de1264_3"
-          },
-          "properties": {}
-        },
-        {
           "ruleId": "a9f46f1e-43c5-3223-9e07-c667af563899",
           "kind": "fail",
           "level": "warning",
@@ -6604,6 +6550,37 @@
           ],
           "fingerprints": {
             "matchBasedId/v1": "5cce83797f193b9c9fbac0085806e8adb1ead36e473e627b9a6753ea1a9e6a6a16bbb2fa9d1067c7d4c62d76d1b4673ffe2c8b5c9f5741a8170e18f7f1de1264_4"
+          },
+          "properties": {}
+        },
+        {
+          "ruleId": "9f20f984-c979-3b78-93d4-6af774343cb7",
+          "kind": "fail",
+          "level": "warning",
+          "message": {
+            "text": "Detected template variable interpolation in an HTML tag.\nThis is potentially vulnerable to cross-site scripting (XSS)\nattacks because a malicious actor has control over HTML\nbut without the need to use escaped characters. Use explicit\ntags instead.\n"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "csrc/cpp_itfs/pa/pa_ragged.cpp.jinja",
+                  "uriBaseId": "%SRCROOT%"
+                },
+                "region": {
+                  "startLine": 87,
+                  "startColumn": 53,
+                  "endLine": 87,
+                  "endColumn": 68,
+                  "snippet": {
+                    "text": "                                    reinterpret_cast<{{kv_dtype}}*>(key_cache_ptr),"
+                  }
+                }
+              }
+            }
+          ],
+          "fingerprints": {
+            "matchBasedId/v1": "5cce83797f193b9c9fbac0085806e8adb1ead36e473e627b9a6753ea1a9e6a6a16bbb2fa9d1067c7d4c62d76d1b4673ffe2c8b5c9f5741a8170e18f7f1de1264_3"
           },
           "properties": {}
         },
@@ -6794,37 +6771,6 @@
           "properties": {}
         },
         {
-          "ruleId": "88713006-c762-382c-a6e8-5a0a4f01d8a9",
-          "kind": "fail",
-          "level": "warning",
-          "message": {
-            "text": "Detected template variable interpolation in an HTML tag.\nThis is potentially vulnerable to cross-site scripting (XSS)\nattacks because a malicious actor has control over HTML\nbut without the need to use escaped characters. Use explicit\ntags instead.\n"
-          },
-          "locations": [
-            {
-              "physicalLocation": {
-                "artifactLocation": {
-                  "uri": "csrc/cpp_itfs/pa/pa_v1.cpp.jinja",
-                  "uriBaseId": "%SRCROOT%"
-                },
-                "region": {
-                  "startLine": 72,
-                  "startColumn": 31,
-                  "endLine": 72,
-                  "endColumn": 110,
-                  "snippet": {
-                    "text": "    ck_tile::ComposedAttention<{{\"true\" if logits_soft_cap_enabled else \"false\"}} * ck_tile::LOGITS_SOFT_CAP> variant;"
-                  }
-                }
-              }
-            }
-          ],
-          "fingerprints": {
-            "matchBasedId/v1": "4e0fce404d1a36f1c335c76c62a25feb580fa9cc893dcb9c688e96a0ca34aadc04cbd3ffbbd1dc0f6358ed60047c24095faa86c69f01f698536954667cd6b8dc_1"
-          },
-          "properties": {}
-        },
-        {
           "ruleId": "e5e2d78c-1a61-3670-8ba6-eb903c30ff8c",
           "kind": "fail",
           "level": "warning",
@@ -6852,6 +6798,37 @@
           ],
           "fingerprints": {
             "matchBasedId/v1": "4e0fce404d1a36f1c335c76c62a25feb580fa9cc893dcb9c688e96a0ca34aadc04cbd3ffbbd1dc0f6358ed60047c24095faa86c69f01f698536954667cd6b8dc_2"
+          },
+          "properties": {}
+        },
+        {
+          "ruleId": "88713006-c762-382c-a6e8-5a0a4f01d8a9",
+          "kind": "fail",
+          "level": "warning",
+          "message": {
+            "text": "Detected template variable interpolation in an HTML tag.\nThis is potentially vulnerable to cross-site scripting (XSS)\nattacks because a malicious actor has control over HTML\nbut without the need to use escaped characters. Use explicit\ntags instead.\n"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "csrc/cpp_itfs/pa/pa_v1.cpp.jinja",
+                  "uriBaseId": "%SRCROOT%"
+                },
+                "region": {
+                  "startLine": 72,
+                  "startColumn": 31,
+                  "endLine": 72,
+                  "endColumn": 110,
+                  "snippet": {
+                    "text": "    ck_tile::ComposedAttention<{{\"true\" if logits_soft_cap_enabled else \"false\"}} * ck_tile::LOGITS_SOFT_CAP> variant;"
+                  }
+                }
+              }
+            }
+          ],
+          "fingerprints": {
+            "matchBasedId/v1": "4e0fce404d1a36f1c335c76c62a25feb580fa9cc893dcb9c688e96a0ca34aadc04cbd3ffbbd1dc0f6358ed60047c24095faa86c69f01f698536954667cd6b8dc_1"
           },
           "properties": {}
         },
@@ -6918,37 +6895,6 @@
           "properties": {}
         },
         {
-          "ruleId": "34d0ffe5-3cba-3afc-a266-b9444587120f",
-          "kind": "fail",
-          "level": "warning",
-          "message": {
-            "text": "Detected template variable interpolation in an HTML tag.\nThis is potentially vulnerable to cross-site scripting (XSS)\nattacks because a malicious actor has control over HTML\nbut without the need to use escaped characters. Use explicit\ntags instead.\n"
-          },
-          "locations": [
-            {
-              "physicalLocation": {
-                "artifactLocation": {
-                  "uri": "csrc/cpp_itfs/pa/pa_v1.cpp.jinja",
-                  "uriBaseId": "%SRCROOT%"
-                },
-                "region": {
-                  "startLine": 92,
-                  "startColumn": 53,
-                  "endLine": 92,
-                  "endColumn": 68,
-                  "snippet": {
-                    "text": "                                    reinterpret_cast<{{kv_dtype}}*>(value_cache_ptr),"
-                  }
-                }
-              }
-            }
-          ],
-          "fingerprints": {
-            "matchBasedId/v1": "4e0fce404d1a36f1c335c76c62a25feb580fa9cc893dcb9c688e96a0ca34aadc04cbd3ffbbd1dc0f6358ed60047c24095faa86c69f01f698536954667cd6b8dc_5"
-          },
-          "properties": {}
-        },
-        {
           "ruleId": "d879694a-2125-312c-80e2-d2f8812ded4c",
           "kind": "fail",
           "level": "warning",
@@ -6976,6 +6922,37 @@
           ],
           "fingerprints": {
             "matchBasedId/v1": "4e0fce404d1a36f1c335c76c62a25feb580fa9cc893dcb9c688e96a0ca34aadc04cbd3ffbbd1dc0f6358ed60047c24095faa86c69f01f698536954667cd6b8dc_6"
+          },
+          "properties": {}
+        },
+        {
+          "ruleId": "34d0ffe5-3cba-3afc-a266-b9444587120f",
+          "kind": "fail",
+          "level": "warning",
+          "message": {
+            "text": "Detected template variable interpolation in an HTML tag.\nThis is potentially vulnerable to cross-site scripting (XSS)\nattacks because a malicious actor has control over HTML\nbut without the need to use escaped characters. Use explicit\ntags instead.\n"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "csrc/cpp_itfs/pa/pa_v1.cpp.jinja",
+                  "uriBaseId": "%SRCROOT%"
+                },
+                "region": {
+                  "startLine": 92,
+                  "startColumn": 53,
+                  "endLine": 92,
+                  "endColumn": 68,
+                  "snippet": {
+                    "text": "                                    reinterpret_cast<{{kv_dtype}}*>(value_cache_ptr),"
+                  }
+                }
+              }
+            }
+          ],
+          "fingerprints": {
+            "matchBasedId/v1": "4e0fce404d1a36f1c335c76c62a25feb580fa9cc893dcb9c688e96a0ca34aadc04cbd3ffbbd1dc0f6358ed60047c24095faa86c69f01f698536954667cd6b8dc_5"
           },
           "properties": {}
         },
@@ -7038,37 +7015,6 @@
           ],
           "fingerprints": {
             "matchBasedId/v1": "317b979776304bd0afd6da222a271bd9d061ca48beddfc6420c75eb7e1935a321830826ea237a0a1e1feba7d2dd7b604773787a6a07adfab2044288cb9c5f7f0_0"
-          },
-          "properties": {}
-        },
-        {
-          "ruleId": "211e5678-f705-3959-a4ed-88a44377f80b",
-          "kind": "fail",
-          "level": "warning",
-          "message": {
-            "text": "The Python 'compile' function is not secure against maliciously constructed input"
-          },
-          "locations": [
-            {
-              "physicalLocation": {
-                "artifactLocation": {
-                  "uri": "csrc/cpp_itfs/pa/pa_v1.py",
-                  "uriBaseId": "%SRCROOT%"
-                },
-                "region": {
-                  "startLine": 255,
-                  "startColumn": 5,
-                  "endLine": 255,
-                  "endColumn": 26,
-                  "snippet": {
-                    "text": "    compile(**vars(args))"
-                  }
-                }
-              }
-            }
-          ],
-          "fingerprints": {
-            "matchBasedId/v1": "317b979776304bd0afd6da222a271bd9d061ca48beddfc6420c75eb7e1935a321830826ea237a0a1e1feba7d2dd7b604773787a6a07adfab2044288cb9c5f7f0_1"
           },
           "properties": {}
         },
@@ -7538,37 +7484,6 @@
           "properties": {}
         },
         {
-          "ruleId": "6a7fa310-6fcd-3a5d-9910-c8bedab729aa",
-          "kind": "fail",
-          "level": "warning",
-          "message": {
-            "text": "Use `sys.exit` over the python shell `exit` built-in. `exit` is a helper for the interactive shell and may not be available on all Python implementations. https://stackoverflow.com/questions/6501121/difference-between-exit-and-sys-exit-in-python"
-          },
-          "locations": [
-            {
-              "physicalLocation": {
-                "artifactLocation": {
-                  "uri": "gradlib/gradlib/gemm_tuner.py",
-                  "uriBaseId": "%SRCROOT%"
-                },
-                "region": {
-                  "startLine": 175,
-                  "startColumn": 13,
-                  "endLine": 175,
-                  "endColumn": 20,
-                  "snippet": {
-                    "text": "            exit(1)"
-                  }
-                }
-              }
-            }
-          ],
-          "fingerprints": {
-            "matchBasedId/v1": "c3a50f2bb7db14f729355eb6612f34c8a8090d0516142225c73d2d870bc145d8d61daa8009ea3a37bc260a67094376f6130de99653c46d33e5d9671eaf5a22de_0"
-          },
-          "properties": {}
-        },
-        {
           "ruleId": "4a5eeadd-acd8-3cac-9528-71d449350071",
           "kind": "fail",
           "level": "warning",
@@ -7596,6 +7511,37 @@
           ],
           "fingerprints": {
             "matchBasedId/v1": "525709d4f04b97ac68a837947188c1cd1a1ad50df5ce5c0a4d7fde12b3fbf0465de2bbd0b3c61a4866267417ad44cd5847fa2b8e1cffc2968938e917dedb3988_0"
+          },
+          "properties": {}
+        },
+        {
+          "ruleId": "6a7fa310-6fcd-3a5d-9910-c8bedab729aa",
+          "kind": "fail",
+          "level": "warning",
+          "message": {
+            "text": "Use `sys.exit` over the python shell `exit` built-in. `exit` is a helper for the interactive shell and may not be available on all Python implementations. https://stackoverflow.com/questions/6501121/difference-between-exit-and-sys-exit-in-python"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "gradlib/gradlib/gemm_tuner.py",
+                  "uriBaseId": "%SRCROOT%"
+                },
+                "region": {
+                  "startLine": 175,
+                  "startColumn": 13,
+                  "endLine": 175,
+                  "endColumn": 20,
+                  "snippet": {
+                    "text": "            exit(1)"
+                  }
+                }
+              }
+            }
+          ],
+          "fingerprints": {
+            "matchBasedId/v1": "c3a50f2bb7db14f729355eb6612f34c8a8090d0516142225c73d2d870bc145d8d61daa8009ea3a37bc260a67094376f6130de99653c46d33e5d9671eaf5a22de_0"
           },
           "properties": {}
         },
@@ -7941,33 +7887,33 @@
           "properties": {}
         },
         {
-          "ruleId": "a0d4e265-faac-39c9-a82d-835370fbbb69",
+          "ruleId": "6dfcb85c-03a8-3cd8-b9b5-9d4de93d9502",
           "kind": "fail",
           "level": "warning",
           "message": {
-            "text": "time.sleep() call; did you mean to leave this in?"
+            "text": "Function test_reshape_and_cache mutates default dict quantCfg. Python only instantiates default function arguments once and shares the instance across the function calls. If the default function argument is mutated, that will modify the instance used by all future function calls. This can cause unexpected results, or lead to security vulnerabilities whereby one function consumer can view or modify the data of another function consumer. Instead, use a default argument (like None) to indicate that no argument was provided and instantiate a new dictionary at that time. For example: `if quantCfg is None: quantCfg = {}`."
           },
           "locations": [
             {
               "physicalLocation": {
                 "artifactLocation": {
-                  "uri": "op_tests/op_benchmarks/triton/utils/benchmark_utils.py",
+                  "uri": "op_tests/test_kvcache.py",
                   "uriBaseId": "%SRCROOT%"
                 },
                 "region": {
-                  "startLine": 347,
-                  "startColumn": 5,
-                  "endLine": 347,
-                  "endColumn": 20,
+                  "startLine": 119,
+                  "startColumn": 1,
+                  "endLine": 261,
+                  "endColumn": 6,
                   "snippet": {
-                    "text": "    time.sleep(0.5)  # Ensure everything is written before reading"
+                    "text": "def test_reshape_and_cache(\n    ctx_lens: int,\n    bs: int,\n    num_heads: Tuple[int, int],\n    head_size: int,\n    block_size: int,\n    DTyoe_KV: torch.dtype,\n    DTyoe_KVCache: torch.dtype,\n    quantCfg: dict = {},\n):\n    asm_layout = True\n    qhead, kvhead = num_heads\n    num_blocks = (MAX_TOKEN_SUPPORTED + block_size - 1) // block_size\n    # num_blocks = (ctx_lens+1+block_size-1)//block_size\n    max_token_num_support = num_blocks * block_size\n    x = 16 // DTyoe_KVCache.itemsize\n    if asm_layout:\n        k_cache_shape = (bs * num_blocks, kvhead, head_size // x, block_size, x)\n        v_cache_shape = (bs * num_blocks, kvhead, block_size // x, head_size, x)\n        kv_scale_shape = (bs * num_blocks, kvhead, block_size)\n    else:\n        k_cache_shape = (bs * num_blocks, kvhead, head_size // x, block_size, x)\n        v_cache_shape = (bs * num_blocks, kvhead, head_size, block_size)\n        kv_scale_shape = (kvhead, bs * max_token_num_support)\n\n    # ##################################################### prefill part\n    qkv = torch.randn(\n        bs * ctx_lens, qhead + 2 * kvhead, head_size, dtype=DTyoe_KV, device=\"cuda\"\n    )\n    _, key, value = torch.split(qkv, [qhead, kvhead, kvhead], dim=1)\n    device = key.device\n    k_cache = torch.empty(k_cache_shape, dtype=DTyoe_KVCache, device=device)\n    v_cache = torch.empty(v_cache_shape, dtype=DTyoe_KVCache, device=device)\n    if quantCfg:\n        k_scale = torch.empty(kv_scale_shape, device=key.device)\n        v_scale = torch.empty_like(k_scale)\n        quantCfg[\"k_scale\"] = k_scale.clone()\n        quantCfg[\"v_scale\"] = v_scale.clone()\n    slot_mapping = torch.tensor(\n        [\n            bsID * max_token_num_support + i\n            for bsID in range(bs)\n            for i in range(ctx_lens)\n        ]\n    ).cuda()\n\n    k_cache_ref = k_cache.clone()\n    v_cache_ref = v_cache.clone()\n    out_ref, us_ref = run_torch(\n        key.view(bs, ctx_lens, kvhead, head_size),\n        value.view(bs, ctx_lens, kvhead, head_size),\n        k_cache_ref,\n        v_cache_ref,\n        slot_mapping,\n        block_size,\n        x,\n        asm_layout,\n        quantCfg,\n    )\n\n    k_cache_a = k_cache.clone()\n    v_cache_a = v_cache.clone()\n    if quantCfg:\n        quantCfg[\"k_scale\"] = k_scale.clone()\n        quantCfg[\"v_scale\"] = v_scale.clone()\n    out_a, us_a = run_aiter(\n        key,\n        value,\n        k_cache_a,\n        v_cache_a,\n        slot_mapping,\n        block_size,\n        x,\n        asm_layout,\n        quantCfg,\n    )\n\n    print(f\"prefill part: ref vs aiter {us_ref:>8.2f}us vs {us_a:>8.2f}us\")\n    names = [\"k_cache\", \"v_cache\", \"k_scale\", \"v_scale\"]\n    for i, el in enumerate(out_ref):\n        if el is None:\n            continue\n        checkAllclose(\n            el.to(dtypes.fp32),\n            out_a[i].to(dtypes.fp32),\n            msg=f\"{names[i]} {el.shape}\",\n        )\n\n    # ##################################################### decode part\n    qkv = torch.randn(bs, qhead + 2 * kvhead, head_size, dtype=DTyoe_KV, device=\"cuda\")\n    _, key, value = torch.split(qkv, [qhead, kvhead, kvhead], dim=1)\n\n    if quantCfg:\n        quantCfg[\"k_scale\"] = k_scale.clone()\n        quantCfg[\"v_scale\"] = v_scale.clone()\n    slot_mapping = torch.tensor(\n        [bsID * max_token_num_support + ctx_lens for bsID in range(bs)]\n    ).cuda()\n\n    k_cache_ref = k_cache.clone()\n    v_cache_ref = v_cache.clone()\n    out_ref, us_ref = run_torch(\n        key.view(bs, 1, kvhead, head_size),\n        value.view(bs, 1, kvhead, head_size),\n        k_cache_ref,\n        v_cache_ref,\n        slot_mapping,\n        block_size,\n        x,\n        asm_layout,\n        quantCfg,\n    )\n\n    k_cache_a = k_cache.clone()\n    v_cache_a = v_cache.clone()\n    if quantCfg:\n        quantCfg[\"k_scale\"] = k_scale.clone()\n        quantCfg[\"v_scale\"] = v_scale.clone()\n    out_a, us_a = run_aiter(\n        key,\n        value,\n        k_cache_a,\n        v_cache_a,\n        slot_mapping,\n        block_size,\n        x,\n        asm_layout,\n        quantCfg,\n    )\n\n    print(f\"decode part: ref vs aiter {us_ref:>8.2f}us vs {us_a:>8.2f}us\")\n    names = [\"k_cache\", \"v_cache\", \"k_scale\", \"v_scale\"]\n    for i, el in enumerate(out_ref):\n        if el is None:\n            continue\n        checkAllclose(\n            el.to(dtypes.fp32),\n            out_a[i].to(dtypes.fp32),\n            msg=f\"{names[i]} {el.shape}\",\n        )\n    print(\n        f\"finish test {ctx_lens=} {bs=} {num_heads=} {head_size=} {block_size=} {DTyoe_KV=} {DTyoe_KVCache=}\"\n    )"
                   }
                 }
               }
             }
           ],
           "fingerprints": {
-            "matchBasedId/v1": "0aa02431b5937794fbb9838fab71df1227271f5adee5fbb03c66c8c4b591bbbe736f5af44b7947ab37a29cbda24fb8283ae4fd3a2c1b07120c0ab530dd1ecfea_0"
+            "matchBasedId/v1": "78d297c93bad1295b9a7e87aef0bc8a5a3dc7681b75c38e129e51621169a72ce6390388b417135744b5a1d3e39c13d3a03cecff884b6ba66eb86df35b8595fe8_0"
           },
           "properties": {}
         },
@@ -7999,37 +7945,6 @@
           ],
           "fingerprints": {
             "matchBasedId/v1": "99d18b5c86f0461da1d4aef4938d9e2c2cfed9ec81c8fa92f5bbe6d16e86a10e1cac05ddce90cf7e3a63f2da7bc38c21a6fd5dd3880f77013657e4b8b0795562_0"
-          },
-          "properties": {}
-        },
-        {
-          "ruleId": "6dfcb85c-03a8-3cd8-b9b5-9d4de93d9502",
-          "kind": "fail",
-          "level": "warning",
-          "message": {
-            "text": "Function test_reshape_and_cache mutates default dict quantCfg. Python only instantiates default function arguments once and shares the instance across the function calls. If the default function argument is mutated, that will modify the instance used by all future function calls. This can cause unexpected results, or lead to security vulnerabilities whereby one function consumer can view or modify the data of another function consumer. Instead, use a default argument (like None) to indicate that no argument was provided and instantiate a new dictionary at that time. For example: `if quantCfg is None: quantCfg = {}`."
-          },
-          "locations": [
-            {
-              "physicalLocation": {
-                "artifactLocation": {
-                  "uri": "op_tests/test_kvcache.py",
-                  "uriBaseId": "%SRCROOT%"
-                },
-                "region": {
-                  "startLine": 119,
-                  "startColumn": 1,
-                  "endLine": 261,
-                  "endColumn": 6,
-                  "snippet": {
-                    "text": "def test_reshape_and_cache(\n    ctx_lens: int,\n    bs: int,\n    num_heads: Tuple[int, int],\n    head_size: int,\n    block_size: int,\n    DTyoe_KV: torch.dtype,\n    DTyoe_KVCache: torch.dtype,\n    quantCfg: dict = {},\n):\n    asm_layout = True\n    qhead, kvhead = num_heads\n    num_blocks = (MAX_TOKEN_SUPPORTED + block_size - 1) // block_size\n    # num_blocks = (ctx_lens+1+block_size-1)//block_size\n    max_token_num_support = num_blocks * block_size\n    x = 16 // DTyoe_KVCache.itemsize\n    if asm_layout:\n        k_cache_shape = (bs * num_blocks, kvhead, head_size // x, block_size, x)\n        v_cache_shape = (bs * num_blocks, kvhead, block_size // x, head_size, x)\n        kv_scale_shape = (bs * num_blocks, kvhead, block_size)\n    else:\n        k_cache_shape = (bs * num_blocks, kvhead, head_size // x, block_size, x)\n        v_cache_shape = (bs * num_blocks, kvhead, head_size, block_size)\n        kv_scale_shape = (kvhead, bs * max_token_num_support)\n\n    # ##################################################### prefill part\n    qkv = torch.randn(\n        bs * ctx_lens, qhead + 2 * kvhead, head_size, dtype=DTyoe_KV, device=\"cuda\"\n    )\n    _, key, value = torch.split(qkv, [qhead, kvhead, kvhead], dim=1)\n    device = key.device\n    k_cache = torch.empty(k_cache_shape, dtype=DTyoe_KVCache, device=device)\n    v_cache = torch.empty(v_cache_shape, dtype=DTyoe_KVCache, device=device)\n    if quantCfg:\n        k_scale = torch.empty(kv_scale_shape, device=key.device)\n        v_scale = torch.empty_like(k_scale)\n        quantCfg[\"k_scale\"] = k_scale.clone()\n        quantCfg[\"v_scale\"] = v_scale.clone()\n    slot_mapping = torch.tensor(\n        [\n            bsID * max_token_num_support + i\n            for bsID in range(bs)\n            for i in range(ctx_lens)\n        ]\n    ).cuda()\n\n    k_cache_ref = k_cache.clone()\n    v_cache_ref = v_cache.clone()\n    out_ref, us_ref = run_torch(\n        key.view(bs, ctx_lens, kvhead, head_size),\n        value.view(bs, ctx_lens, kvhead, head_size),\n        k_cache_ref,\n        v_cache_ref,\n        slot_mapping,\n        block_size,\n        x,\n        asm_layout,\n        quantCfg,\n    )\n\n    k_cache_a = k_cache.clone()\n    v_cache_a = v_cache.clone()\n    if quantCfg:\n        quantCfg[\"k_scale\"] = k_scale.clone()\n        quantCfg[\"v_scale\"] = v_scale.clone()\n    out_a, us_a = run_aiter(\n        key,\n        value,\n        k_cache_a,\n        v_cache_a,\n        slot_mapping,\n        block_size,\n        x,\n        asm_layout,\n        quantCfg,\n    )\n\n    print(f\"prefill part: ref vs aiter {us_ref:>8.2f}us vs {us_a:>8.2f}us\")\n    names = [\"k_cache\", \"v_cache\", \"k_scale\", \"v_scale\"]\n    for i, el in enumerate(out_ref):\n        if el is None:\n            continue\n        checkAllclose(\n            el.to(dtypes.fp32),\n            out_a[i].to(dtypes.fp32),\n            msg=f\"{names[i]} {el.shape}\",\n        )\n\n    # ##################################################### decode part\n    qkv = torch.randn(bs, qhead + 2 * kvhead, head_size, dtype=DTyoe_KV, device=\"cuda\")\n    _, key, value = torch.split(qkv, [qhead, kvhead, kvhead], dim=1)\n\n    if quantCfg:\n        quantCfg[\"k_scale\"] = k_scale.clone()\n        quantCfg[\"v_scale\"] = v_scale.clone()\n    slot_mapping = torch.tensor(\n        [bsID * max_token_num_support + ctx_lens for bsID in range(bs)]\n    ).cuda()\n\n    k_cache_ref = k_cache.clone()\n    v_cache_ref = v_cache.clone()\n    out_ref, us_ref = run_torch(\n        key.view(bs, 1, kvhead, head_size),\n        value.view(bs, 1, kvhead, head_size),\n        k_cache_ref,\n        v_cache_ref,\n        slot_mapping,\n        block_size,\n        x,\n        asm_layout,\n        quantCfg,\n    )\n\n    k_cache_a = k_cache.clone()\n    v_cache_a = v_cache.clone()\n    if quantCfg:\n        quantCfg[\"k_scale\"] = k_scale.clone()\n        quantCfg[\"v_scale\"] = v_scale.clone()\n    out_a, us_a = run_aiter(\n        key,\n        value,\n        k_cache_a,\n        v_cache_a,\n        slot_mapping,\n        block_size,\n        x,\n        asm_layout,\n        quantCfg,\n    )\n\n    print(f\"decode part: ref vs aiter {us_ref:>8.2f}us vs {us_a:>8.2f}us\")\n    names = [\"k_cache\", \"v_cache\", \"k_scale\", \"v_scale\"]\n    for i, el in enumerate(out_ref):\n        if el is None:\n            continue\n        checkAllclose(\n            el.to(dtypes.fp32),\n            out_a[i].to(dtypes.fp32),\n            msg=f\"{names[i]} {el.shape}\",\n        )\n    print(\n        f\"finish test {ctx_lens=} {bs=} {num_heads=} {head_size=} {block_size=} {DTyoe_KV=} {DTyoe_KVCache=}\"\n    )"
-                  }
-                }
-              }
-            }
-          ],
-          "fingerprints": {
-            "matchBasedId/v1": "78d297c93bad1295b9a7e87aef0bc8a5a3dc7681b75c38e129e51621169a72ce6390388b417135744b5a1d3e39c13d3a03cecff884b6ba66eb86df35b8595fe8_0"
           },
           "properties": {}
         },
